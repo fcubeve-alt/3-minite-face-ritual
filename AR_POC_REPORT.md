@@ -19,10 +19,12 @@
 | 内容包完整性 | ✅ **已验证**（`python tools/validate_content.py`，0 errors） |
 | 每个播放段能否渲染 | ✅ **已验证**（`python tools/simulate_routine.py`，见 §1.3） |
 | 架构约束 | ✅ **已验证**（`python tools/check_architecture.py`，0 errors） |
-| Swift 代码编译 | ❌ 未验证 —— 需在 Mac 上首次构建 |
-| 真机 Face Lock / FPS / 遮挡 | ❌ 未测 —— 需 iPhone |
+| Swift 代码编译 | ✅ **已验证** —— GitHub Actions 的 macOS runner，零编译错误 |
+| 单元测试（71 个） | ✅ **全部通过** |
+| M1 闭环（模拟器 + 合成脸） | ✅ **全部通过** —— 见 §1.2 |
+| 真机 Face Lock / FPS / 遮挡 | ❌ 未测 —— **需 iPhone，这是唯一剩下的一项** |
 
-先在 Mac 上跑通 `make bootstrap && make core-test && make build`，再按 §2 执行真机测试。
+编译与闭环已由 CI 自动验证，不再需要本地 Mac。剩下的只有 §2 的真机测试。
 
 ---
 

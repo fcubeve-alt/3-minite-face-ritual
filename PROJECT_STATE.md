@@ -127,6 +127,25 @@ Subscription 架构（Mock Unlock + StoreKit2 骨架）· Analytics（含 §15 �
   内容校验只看 JSON 结构、golden vector 只验几何数学，两者都答不了
   「播放时这一段脸上会不会是空白」这个问题。
 
+### ✅ CI 上**真实编译并通过**（2026-09-06）
+
+推上 GitHub 后，macOS runner 的实测结果：
+
+```
+✓ 离线检查（架构 / 内容 / 几何）        14s
+✓ 编译 · 单元测试 · M1 闭环           7m16s
+    FaceRitualCore 单元测试   71 个，0 失败
+    M1 闭环 UI 测试            4 个，0 失败（134 秒，走真实流程）
+```
+
+**App 层 34 个文件首次编译零错误** —— 之前那 14 条静态检查确实拦下了会挂的那几类。
+Core 包只出现过一个错误根因（`Bundle.module` 不能作 public 函数默认参数）。
+
+CI 抓到的**真产品 bug**（不是测试问题）：
+> 首页原本 17 点后把主卡片换成 Evening Ritual，而 Evening 是付费的、
+> Morning Core 又不在次级列表里 —— **傍晚之后免费用户根本进不去那个永久免费的核心 routine**。
+> CI 恰好跑在 UTC 18:09，一头撞上。已改为主卡片恒为 Morning（规格 §5.1 本来就这么写）。
+
 ### 已在本机**实际运行验证**的项目
 - `python tools/check_architecture.py` → 57 个 Swift 文件，**10 条规则 0 errors**（已自测确认非空转）
 - `python tools/check_swift_refs.py` → **0 errors**；`--self-test` 三条规则全部命中
@@ -150,7 +169,7 @@ Subscription 架构（Mock Unlock + StoreKit2 骨架）· Analytics（含 §15 �
 
 | 阻塞项 | 原因 | 解除条件 |
 | --- | --- | --- |
-| Swift 代码编译验证 | 开发机是 Windows，无 Swift/Xcode 工具链 | **把仓库推上 GitHub** —— CI 用 macOS runner 编译并跑全部测试，不需要任何人手里有 Mac |
+| ~~Swift 代码编译验证~~ | ~~开发机是 Windows~~ | ✅ **已解除**（2026-09-06）。CI 在 macOS runner 上编译并跑全部测试，全绿。 |
 | 真机 AR POC（Face Lock / FPS / 遮挡 / 转头 / 漂移） | 需要真实 iPhone | 按 `AR_POC_REPORT.md` §2 执行 |
 | HRFFA CoreML 模型 | 转换需 macOS + coremltools；模型文件不在仓库 | 见 `docs/HRFFA_INTEGRATION.md` |
 | ARKit 顶点索引表 | Apple 未公布 1220 顶点语义编号，**拒绝猜测**（画错位置比不画更糟） | 标定工具已做好：真机 Settings → Developer → Provider/内容诊断 → ARKit 顶点标定，点 10 个点导出 JSON |
@@ -159,15 +178,12 @@ Subscription 架构（Mock Unlock + StoreKit2 骨架）· Analytics（含 §15 �
 
 ## ⏭ Next（按顺序）
 
-0. **把仓库推上 GitHub**（Owner 建仓库并给地址）。
-   CI 会在 macOS runner 上编译、跑 83 个单元测试、并在模拟器里跑完整 M1 闭环 ——
-   编译错误列表会自动出现在 Actions 日志里，我据此修完再推，整个循环不需要 Mac。
-1. **（可选）本地 Mac 构建**：`make bootstrap` → Xcode 填 Team → `make core-test` → `make build`
-   - 已用静态检查扫掉几类必然失败的错误（见上表），但**仍会有类型层面的编译错误** ——
-     静态检查器不是编译器，抓不到类型不匹配。
-   - 推起 CI 后，`build` job 的日志就是一份现成的待修清单，不必在 Mac 前一条条试。
-2. **模拟器验证**：用 Mock provider 走通 Home → START → AR Mirror → Done → History
-3. **真机 POC**：按 `AR_POC_REPORT.md` §2 逐项测，填表
+~~0. 推上 GitHub~~ ✅ 已完成，CI 全绿。
+~~1. Mac 首次构建~~ ✅ CI 代劳，编译零错误。
+~~2. 模拟器验证~~ ✅ CI 每次推代码自动跑完整闭环。
+
+1. **真机 POC** —— 现在是**唯一**剩下的 M1 事项。按 `AR_POC_REPORT.md` §2 逐项测、填表。
+   需要：一台 iPhone + 一次 Xcode 真机部署（`make bootstrap && make open`，填 Team）。
 4. **调参**：根据实测调 One Euro 滤波与 `GuidanceThresholds`
 5. **Go / No-Go 判定**（规格 §18）
 6. 通过后进入 M2：Owner + 专业人员替换正式动作与穴位定义

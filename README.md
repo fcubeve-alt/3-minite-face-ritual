@@ -89,8 +89,9 @@ tools/                       跨平台校验脚本（Python，无需 Xcode）
 | | |
 | --- | --- |
 | 已离线验证 | 架构与引用检查 0 errors（12 条规则，每条都反向验证过）；内容包校验 0 errors；9 个 anchor 在 6 种尺度/位置/roll 变换下漂移 < 2e-15 瞳距；Morning Core 9 个播放段全部可渲染且左右对称 |
-| 未验证 | Swift 代码从未编译过（开发机是 Windows，无工具链）。已用静态检查扫掉几类必然失败的错误，但类型层面的错误只有编译器能抓 |
-| 下一步 | Mac 上首次构建 → 模拟器验证 → 真机 AR POC |
+| CI 已验证 | macOS runner 上零编译错误；71 个单元测试 + 4 个 M1 闭环 UI 测试全绿 |
+| 未验证 | 真人脸上的贴合精度 / FPS / 遮挡表现 —— 只能上真机 |
+| 下一步 | 真机 AR POC（`AR_POC_REPORT.md` §2） |
 
 详见 [PROJECT_STATE.md](PROJECT_STATE.md)。
 
