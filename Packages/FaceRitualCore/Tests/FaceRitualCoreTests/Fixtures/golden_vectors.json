@@ -64,6 +64,10 @@
           108.0,
           425.0
         ],
+        "leftMouthCorner": [
+          158.0,
+          405.0
+        ],
         "leftNoseAla": [
           178.0,
           370.0
@@ -75,14 +79,6 @@
         "lowerLipCenter": [
           200.0,
           415.0
-        ],
-        "mouthLeftCorner": [
-          158.0,
-          405.0
-        ],
-        "mouthRightCorner": [
-          242.0,
-          405.0
         ],
         "noseBridgeMid": [
           200.0,
@@ -135,6 +131,10 @@
         "rightJawAngle": [
           292.0,
           425.0
+        ],
+        "rightMouthCorner": [
+          242.0,
+          405.0
         ],
         "rightNoseAla": [
           222.0,
@@ -204,11 +204,11 @@
         },
         "cheek_mid_right": {
           "view": [
-            211.4,
+            257.6,
             357.75
           ],
           "local": [
-            0.114,
+            0.576,
             0.5775
           ],
           "toleranceRadiusPoints": 20.0
@@ -429,6 +429,10 @@
           161.36,
           352.5
         ],
+        "leftMouthCorner": [
+          182.36,
+          344.1
+        ],
         "leftNoseAla": [
           190.76,
           329.4
@@ -440,14 +444,6 @@
         "lowerLipCenter": [
           200.0,
           348.3
-        ],
-        "mouthLeftCorner": [
-          182.36,
-          344.1
-        ],
-        "mouthRightCorner": [
-          217.64,
-          344.1
         ],
         "noseBridgeMid": [
           200.0,
@@ -500,6 +496,10 @@
         "rightJawAngle": [
           238.64,
           352.5
+        ],
+        "rightMouthCorner": [
+          217.64,
+          344.1
         ],
         "rightNoseAla": [
           209.24,
@@ -569,11 +569,11 @@
         },
         "cheek_mid_right": {
           "view": [
-            204.788,
+            224.192,
             324.255
           ],
           "local": [
-            0.114,
+            0.576,
             0.5775
           ],
           "toleranceRadiusPoints": 8.4
@@ -794,6 +794,10 @@
           45.44,
           510.0
         ],
+        "leftMouthCorner": [
+          129.44,
+          476.4
+        ],
         "leftNoseAla": [
           163.04,
           417.6
@@ -805,14 +809,6 @@
         "lowerLipCenter": [
           200.0,
           493.2
-        ],
-        "mouthLeftCorner": [
-          129.44,
-          476.4
-        ],
-        "mouthRightCorner": [
-          270.56,
-          476.4
         ],
         "noseBridgeMid": [
           200.0,
@@ -865,6 +861,10 @@
         "rightJawAngle": [
           354.56,
           510.0
+        ],
+        "rightMouthCorner": [
+          270.56,
+          476.4
         ],
         "rightNoseAla": [
           236.96,
@@ -934,11 +934,11 @@
         },
         "cheek_mid_right": {
           "view": [
-            219.152,
+            296.768,
             397.02
           ],
           "local": [
-            0.114,
+            0.576,
             0.5775
           ],
           "toleranceRadiusPoints": 33.6
@@ -1159,6 +1159,10 @@
           3.0,
           595.0
         ],
+        "leftMouthCorner": [
+          53.0,
+          575.0
+        ],
         "leftNoseAla": [
           73.0,
           540.0
@@ -1170,14 +1174,6 @@
         "lowerLipCenter": [
           95.0,
           585.0
-        ],
-        "mouthLeftCorner": [
-          53.0,
-          575.0
-        ],
-        "mouthRightCorner": [
-          137.0,
-          575.0
         ],
         "noseBridgeMid": [
           95.0,
@@ -1230,6 +1226,10 @@
         "rightJawAngle": [
           187.0,
           595.0
+        ],
+        "rightMouthCorner": [
+          137.0,
+          575.0
         ],
         "rightNoseAla": [
           117.0,
@@ -1299,11 +1299,11 @@
         },
         "cheek_mid_right": {
           "view": [
-            106.4,
+            152.6,
             527.75
           ],
           "local": [
-            0.114,
+            0.576,
             0.5775
           ],
           "toleranceRadiusPoints": 20.0
@@ -1524,6 +1524,10 @@
           73.875676,
           390.452501
         ],
+        "leftMouthCorner": [
+          127.608842,
+          386.88222
+        ],
         "leftNoseAla": [
           157.445567,
           359.775582
@@ -1535,14 +1539,6 @@
         "lowerLipCenter": [
           164.463046,
           409.371499
-        ],
-        "mouthLeftCorner": [
-          127.608842,
-          386.88222
-        ],
-        "mouthRightCorner": [
-          207.497589,
-          412.839648
         ],
         "noseBridgeMid": [
           192.274575,
@@ -1595,6 +1591,10 @@
         "rightJawAngle": [
           248.870075,
           447.311628
+        ],
+        "rightMouthCorner": [
+          207.497589,
+          412.839648
         ],
         "rightNoseAla": [
           199.292054,
@@ -1664,11 +1664,11 @@
         },
         "cheek_mid_right": {
           "view": [
-            192.996313,
-            358.446308
+            236.935124,
+            372.722893
           ],
           "local": [
-            0.114,
+            0.576,
             0.5775
           ],
           "toleranceRadiusPoints": 20.0
@@ -1889,6 +1889,10 @@
           183.11333,
           453.909031
         ],
+        "leftMouthCorner": [
+          215.552792,
+          419.36281
+        ],
         "leftNoseAla": [
           218.487166,
           384.010449
@@ -1900,14 +1904,6 @@
         "lowerLipCenter": [
           252.768968,
           411.718348
-        ],
-        "mouthLeftCorner": [
-          215.552792,
-          419.36281
-        ],
-        "mouthRightCorner": [
-          282.547063,
-          388.122869
         ],
         "noseBridgeMid": [
           219.297602,
@@ -1960,6 +1956,10 @@
         "rightJawAngle": [
           329.862687,
           385.478682
+        ],
+        "rightMouthCorner": [
+          282.547063,
+          388.122869
         ],
         "rightNoseAla": [
           253.579404,
@@ -2029,11 +2029,11 @@
         },
         "cheek_mid_right": {
           "view": [
-            240.56954,
-            361.818855
+            277.416389,
+            344.636887
           ],
           "local": [
-            0.114,
+            0.576,
             0.5775
           ],
           "toleranceRadiusPoints": 17.6

@@ -20,7 +20,7 @@ final class GuidanceQualityTests: XCTestCase {
             .leftBrowInner: Point2D(x: 178, y: 268),
             .rightBrowInner: Point2D(x: 222, y: 268),
             .leftEyeOuter: Point2D(x: 122, y: 300),
-            .mouthLeftCorner: Point2D(x: 158, y: 405),
+            .leftMouthCorner: Point2D(x: 158, y: 405),
             .leftJawAngle: Point2D(x: 108, y: 425),
             .rightJawAngle: Point2D(x: 292, y: 425)
         ]

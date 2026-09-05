@@ -15,8 +15,10 @@
 
 | 项目 | 状态 |
 | --- | --- |
-| 几何层数学正确性 | ✅ **已验证**（Python 参考实现交叉验证，见 §1） |
+| 几何层数学正确性 | ✅ **已验证**（Python 参考实现交叉验证，见 §1.1） |
 | 内容包完整性 | ✅ **已验证**（`python tools/validate_content.py`，0 errors） |
+| 每个播放段能否渲染 | ✅ **已验证**（`python tools/simulate_routine.py`，见 §1.3） |
+| 架构约束 | ✅ **已验证**（`python tools/check_architecture.py`，0 errors） |
 | Swift 代码编译 | ❌ 未验证 —— 需在 Mac 上首次构建 |
 | 真机 Face Lock / FPS / 遮挡 | ❌ 未测 —— 需 iPhone |
 
@@ -63,7 +65,30 @@ OK temple_right           最大漂移 = 7.153e-16 瞳距
 - 不同**脸型**（而非不同尺度）下位置是否合适 —— 需要真人样本；
 - 位置在护理意义上是否正确 —— 这是 Owner + 专业人员的事，工程不做判断。
 
-### 1.2 内容包
+### 1.2 播放段渲染与左右对称（`tools/simulate_routine.py`）
+
+无头跑完整 routine，对每个播放段解析 anchor、采样路径、检查落点：
+
+```
+morning_core  —  5 steps → 9 播放段，180s
+  0   left      18s Temple Circles    circle   1.26瞳距  temple_left
+  1   right     18s Temple Circles    circle   1.26瞳距  temple_right
+  2   left      18s Brow Sweep        line     0.89瞳距  brow_inner_left → temple_left
+  3   right     18s Brow Sweep        line     0.89瞳距  brow_inner_right → temple_right
+  4   left      18s Cheek Lift        curve    0.87瞳距  cheek_mid_left → temple_left
+  5   right     18s Cheek Lift        curve    0.87瞳距  cheek_mid_right → temple_right
+  6   left      18s Jaw Release       arc      1.67瞳距  jaw_angle_left → temple_left
+  7   right     18s Jaw Release       arc      1.67瞳距  jaw_angle_right → temple_right
+  8   none      36s Glabella Hold     hold     0.00瞳距  glabella_center
+每一段都能正常渲染，无问题
+```
+
+**这个检查抓到过一个真实 bug**：`SemanticLandmark.mirrored` 用 `hasPrefix("left")`
+判定侧别，而 `mouthLeftCorner` 把侧别写在名字中间 —— 于是嘴角不翻转，
+右脸 Cheek Lift 的起点被算到脸中间，路径长度 0.87 vs 1.20（差 28%）。
+golden vector 验的是变换不变性，测不出镜像错误；这个 bug 原本只有上真机才会发现。
+
+### 1.3 内容包
 
 ```
 morning_core     type=morning  premium=False steps=5  total=180s

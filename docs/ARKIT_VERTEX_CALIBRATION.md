@@ -33,7 +33,7 @@ ARKit provider 依然能提供正确的 `FaceFrame` 基准（双眼），只是�
 | `chinCenter` | FaceGeometry 必需项 |
 | `leftBrowInner` / `rightBrowInner` | glabella + brow anchor |
 | `leftEyeOuter` / `rightEyeOuter` | temple anchor |
-| `mouthLeftCorner` / `mouthRightCorner` | cheek anchor |
+| `leftMouthCorner` / `rightMouthCorner` | cheek anchor |
 | `leftJawAngle` / `rightJawAngle` | jaw anchor |
 
 **只有 9 个点需要标定**（眼中心已有）。这是刻意的：
@@ -93,8 +93,8 @@ func nearestVertexIndex(to tap: CGPoint, anchor: ARFaceAnchor, camera: ARCamera,
   "rightEyeOuter": 0,
   "leftBrowInner": 0,
   "rightBrowInner": 0,
-  "mouthLeftCorner": 0,
-  "mouthRightCorner": 0,
+  "leftMouthCorner": 0,
+  "rightMouthCorner": 0,
   "leftJawAngle": 0,
   "rightJawAngle": 0
 }

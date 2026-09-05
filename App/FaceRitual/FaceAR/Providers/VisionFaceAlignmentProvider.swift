@@ -33,7 +33,7 @@ final class VisionFaceAlignmentProvider: NSObject, FaceAlignmentProvider {
         .leftBrowInner, .rightBrowInner, .leftBrowOuter, .rightBrowOuter, .leftBrowPeak, .rightBrowPeak,
         .glabella,
         .noseBridgeTop, .noseBridgeMid, .noseTip, .subnasale, .leftNoseAla, .rightNoseAla,
-        .mouthLeftCorner, .mouthRightCorner, .upperLipCenter, .lowerLipCenter,
+        .leftMouthCorner, .rightMouthCorner, .upperLipCenter, .lowerLipCenter,
         .chinCenter, .leftJawAngle, .rightJawAngle
     ]
 
@@ -216,8 +216,8 @@ final class VisionFaceAlignmentProvider: NSObject, FaceAlignmentProvider {
         // --- 口 ---
         let outerLips = points(landmarks.outerLips)
         let (lipLeft, lipRight) = (extreme(outerLips, .minX), extreme(outerLips, .maxX))
-        put(.mouthLeftCorner, isMirrored ? lipLeft : lipRight)
-        put(.mouthRightCorner, isMirrored ? lipRight : lipLeft)
+        put(.leftMouthCorner, isMirrored ? lipLeft : lipRight)
+        put(.rightMouthCorner, isMirrored ? lipRight : lipLeft)
         put(.upperLipCenter, extreme(outerLips, .minY))
         put(.lowerLipCenter, extreme(outerLips, .maxY))
         if let upper = table[.upperLipCenter]?.point, let tip = table[.noseTip]?.point {

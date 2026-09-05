@@ -66,8 +66,8 @@ enum DenseLandmarkLayout: String, CaseIterable {
                 42: .imageRight(.rightEyeInner),
                 45: .imageRight(.rightEyeOuter),
                 // 唇 48–59
-                48: .imageLeft(.mouthLeftCorner),
-                54: .imageRight(.mouthRightCorner),
+                48: .imageLeft(.leftMouthCorner),
+                54: .imageRight(.rightMouthCorner),
                 51: .center(.upperLipCenter),
                 57: .center(.lowerLipCenter)
             ]
@@ -101,8 +101,8 @@ enum DenseLandmarkLayout: String, CaseIterable {
                 96: .imageLeft(.leftEyeCenter),
                 97: .imageRight(.rightEyeCenter),
                 // 唇 76–87
-                76: .imageLeft(.mouthLeftCorner),
-                82: .imageRight(.mouthRightCorner),
+                76: .imageLeft(.leftMouthCorner),
+                82: .imageRight(.rightMouthCorner),
                 79: .center(.upperLipCenter),
                 85: .center(.lowerLipCenter)
             ]

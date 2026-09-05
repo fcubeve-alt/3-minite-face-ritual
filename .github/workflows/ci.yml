@@ -38,6 +38,11 @@ jobs:
         # 改了 anchors.json 却忘了重新生成 golden，会让 Swift 测试断言一份过期的期望值。
         run: python tools/golden/generate_golden.py --check
 
+      - name: 无头跑一遍全部 routine
+        # 验证每个播放段都能真的在脸上画出东西，以及左右两段互为镜像。
+        # 这里抓到过一个真实 bug：嘴角 landmark 镜像不翻转，右脸路径长度偏差 28%。
+        run: python tools/simulate_routine.py
+
   core-tests:
     name: FaceRitualCore 单元测试
     runs-on: macos-14

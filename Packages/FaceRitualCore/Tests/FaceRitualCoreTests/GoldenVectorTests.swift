@@ -223,6 +223,108 @@ final class GoldenVectorTests: XCTestCase {
     }
 }
 
+/// 语义 landmark 的镜像不变量。
+///
+/// 这组测试是补上一个真实 bug 之后加的：
+/// 曾经有 `mouthLeftCorner` 这种把侧别写在名字中间的命名，
+/// 而 `mirrored` 用 `hasPrefix("left")` 判定侧别 —— 于是嘴角**不会翻转**。
+/// 后果是右脸 Cheek Lift 的起点被算到脸中间，路径长度左右差了 38%。
+///
+/// golden vector 验的是「同一个 anchor 在不同尺度/位置/倾斜下不漂移」，
+/// 是另一条性质，抓不到这个。所以需要这组独立的不变量。
+final class SemanticLandmarkMirrorTests: XCTestCase {
+
+    func testMirroringIsAnInvolution() {
+        for landmark in SemanticLandmark.allCases {
+            XCTAssertEqual(
+                landmark.mirrored.mirrored,
+                landmark,
+                "\(landmark.rawValue) 镜像两次应回到自身"
+            )
+        }
+    }
+
+    /// 名字里带 left/right 的点，必须真的能镜像到**另一个**点。
+    /// 这正是当初漏掉的那条：`mouthLeftCorner.mirrored == mouthLeftCorner`。
+    func testEverySidedLandmarkMirrorsToADifferentLandmark() {
+        for landmark in SemanticLandmark.allCases where landmark.side != .none {
+            XCTAssertNotEqual(
+                landmark.mirrored,
+                landmark,
+                "\(landmark.rawValue) 有侧别却镜像到了自己 —— 对侧点缺失或命名不符合约定"
+            )
+            XCTAssertEqual(
+                landmark.mirrored.side,
+                landmark.side == .left ? .right : .left,
+                "\(landmark.rawValue) 镜像后侧别不对"
+            )
+        }
+    }
+
+    func testMidlineLandmarksMirrorToThemselves() {
+        for landmark in SemanticLandmark.allCases where landmark.side == .none {
+            XCTAssertEqual(landmark.mirrored, landmark, "\(landmark.rawValue) 是中线点，不应改变")
+            XCTAssertTrue(landmark.isMidline)
+        }
+    }
+
+    /// 侧别必须能从名字判断出来，且左右两侧成对存在。
+    func testSidedLandmarksComeInPairs() {
+        let sided = SemanticLandmark.allCases.filter { $0.side != .none }
+        let lefts = sided.filter { $0.side == .left }
+        let rights = sided.filter { $0.side == .right }
+        XCTAssertEqual(lefts.count, rights.count, "左右侧 landmark 数量应相等")
+
+        for left in lefts {
+            XCTAssertTrue(
+                rights.contains(left.mirrored),
+                "\(left.rawValue) 找不到对应的右侧点"
+            )
+        }
+    }
+
+    /// 内容里用到的每个 anchor，其左右两版必须解析到**镜像对称**的位置。
+    ///
+    /// 这条直接对应那个 bug 的表现：左右路径长度不一致。
+    func testLeftAndRightAnchorsResolveSymmetrically() throws {
+        let bundle = try BundledContent.makeRepository(failOnValidationError: false).load()
+        let resolver = FaceAnchorResolver()
+        let fixture = try GoldenFixture.load()
+
+        // 用正脸用例（roll = 0），左右对称才有意义。
+        guard let testCase = fixture.cases.first(where: { $0.rollDegrees == 0 && $0.name == "reference" }) else {
+            throw XCTSkip("缺少 reference 用例")
+        }
+        let geometry = testCase.makeGeometry()
+        let frame = try XCTUnwrap(FaceFrame(geometry: geometry))
+
+        for anchor in bundle.anchors.values where anchor.side == .left {
+            let mirroredID = anchor.id.mirrored
+            guard let rightAnchor = bundle.anchors[mirroredID] else {
+                XCTFail("\(anchor.id) 没有对应的右侧 anchor")
+                continue
+            }
+            guard
+                case let .success(left) = resolver.resolve(anchor, geometry: geometry, frame: frame),
+                case let .success(right) = resolver.resolve(rightAnchor, geometry: geometry, frame: frame)
+            else {
+                XCTFail("\(anchor.id) 或其镜像解析失败")
+                continue
+            }
+
+            // 合成脸左右对称，所以两侧的局部坐标应满足 x 相反、y 相同。
+            XCTAssertEqual(
+                left.localPoint.x, -right.localPoint.x, accuracy: 1e-9,
+                "\(anchor.id) 与 \(mirroredID) 的横向位置不对称"
+            )
+            XCTAssertEqual(
+                left.localPoint.y, right.localPoint.y, accuracy: 1e-9,
+                "\(anchor.id) 与 \(mirroredID) 的纵向位置不一致"
+            )
+        }
+    }
+}
+
 // MARK: - Fixture 解码
 
 struct GoldenFixture: Decodable {

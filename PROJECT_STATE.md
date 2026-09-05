@@ -74,6 +74,7 @@ Subscription 架构（Mock Unlock + StoreKit2 骨架）· Analytics（含 §15 �
 | `@MainActor` 与 provider 的 nonisolated 回调冲突 | Swift 5 下编译失败 | 已修 |
 | `PracticeSession` 用合成 Codable | 以后加字段会让**用户历史记录整体解码失败并被静默清空** | 已修（宽容解码 + 坏文件隔离留存） |
 | 空数组字面量的类型推断歧义、retroactive conformance 警告、无用 import | 警告 | 已修 |
+| **`SemanticLandmark.mirrored` 漏掉嘴角** —— `mouthLeftCorner` 把侧别写在名字中间，而 `mirrored` 用 `hasPrefix("left")` 判定，于是嘴角**不翻转** | 右脸 Cheek Lift 起点算到脸中间，路径长度左右差 28%。真机上肉眼可见 | 已修（改名为前缀约定 + 镜像实现加固 + 三层检查） |
 
 ### 本轮新增
 - **`tools/check_architecture.py`** —— 把 ARCHITECTURE.md 的约束变成可执行检查：
@@ -87,12 +88,18 @@ Subscription 架构（Mock Unlock + StoreKit2 骨架）· Analytics（含 §15 �
 - **CI**（`.github/workflows/ci.yml`）：Linux 跑离线检查，macOS 跑 `swift test` 与 App 构建。
 - **`golden --check`**：防止改了 anchors.json 却忘了重新生成 golden。
 - **`docs/CONTENT_AUTHORING.md`**：Owner 替换正式内容的完整指南。
+- **`tools/simulate_routine.py`** —— 无头跑完整 routine，验证每个播放段是否真能在脸上画出东西，
+  并断言同一 step 的左右两段互为镜像。**上面那个嘴角 bug 就是它抓到的。**
+  内容校验只看 JSON 结构、golden vector 只验几何数学，两者都答不了
+  「播放时这一段脸上会不会是空白」这个问题。
 
 ### 已在本机**实际运行验证**的项目
 - `python tools/check_architecture.py` → 54 个 Swift 文件，**0 errors**（且已自测确认非空转）
 - `python tools/validate_content.py` → **0 errors**，1 个预期内 mock 警告
 - `python tools/golden/generate_golden.py` → 9 个 anchor 在 6 种尺度/位置/roll 变换下**最大漂移 2.0e-15 瞳距**
 - `golden --check` 的正反例：篡改 anchors.json 后退出码 1，还原后 0
+- `python tools/simulate_routine.py` → Morning Core 9 个播放段全部可渲染，左右完全对称
+- 三个检查器都做过**故意写错代码的反向验证**，确认不是空转
 
 ---
 
@@ -182,7 +189,12 @@ Subscription 架构（Mock Unlock + StoreKit2 骨架）· Analytics（含 §15 �
    规格 §4 说的是「识别失败不得阻塞 routine」——
    如果我们弹一个必须处理的对话框，那本身就成了阻塞。
 
-7. **`PracticeSession` 改成手写宽容解码。**
+7. **语义 landmark 一律用「侧别做前缀」的命名**（`leftMouthCorner` 而不是 `mouthLeftCorner`）。
+   这不是风格偏好 —— 违反它会让镜像静默失效，而且 golden vector 测不出来。
+   现在有三层防护：命名统一、`mirrored` 对中缀写法也成立、以及
+   Swift 测试 + `validate_content.py` + `simulate_routine.py` 三处独立检查。
+
+8. **`PracticeSession` 改成手写宽容解码。**
    这不是为了这次加的那个字段，而是因为合成 Codable + 「解码失败返回空数组」
    这个组合意味着**以后任何一次加字段都会静默清空所有用户的历史记录**。
    现在缺失字段一律取默认值，坏文件也会改名留存而不是被覆盖。

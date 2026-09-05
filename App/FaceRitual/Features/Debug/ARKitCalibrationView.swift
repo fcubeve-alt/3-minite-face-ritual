@@ -172,8 +172,8 @@ struct ARKitCalibrationView: View {
         case .rightBrowInner: return "你右边眉毛靠鼻子那一端"
         case .leftEyeOuter: return "你左眼靠耳朵那一侧的眼角"
         case .rightEyeOuter: return "你右眼靠耳朵那一侧的眼角"
-        case .mouthLeftCorner: return "你左边的嘴角"
-        case .mouthRightCorner: return "你右边的嘴角"
+        case .leftMouthCorner: return "你左边的嘴角"
+        case .rightMouthCorner: return "你右边的嘴角"
         case .leftJawAngle: return "你左侧下颌骨转角处"
         case .rightJawAngle: return "你右侧下颌骨转角处"
         default: return landmark.rawValue

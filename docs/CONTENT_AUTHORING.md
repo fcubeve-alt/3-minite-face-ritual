@@ -87,7 +87,7 @@ python tools/golden/generate_golden.py
 // 3. 两点之间按比例插值，t ∈ [0,1]
 { "type": "lerp",
   "from": { "type": "landmark", "id": "leftEyeCenter" },
-  "to":   { "type": "landmark", "id": "mouthLeftCorner" },
+  "to":   { "type": "landmark", "id": "leftMouthCorner" },
   "t": 0.55 }
 
 // 4. 多点加权平均（权重自动归一化）
@@ -113,7 +113,7 @@ python tools/golden/generate_golden.py
      glabella
 鼻   noseBridgeTop  noseBridgeMid  noseTip  subnasale
      leftNoseAla  rightNoseAla
-口   mouthLeftCorner  mouthRightCorner  upperLipCenter  lowerLipCenter
+口   leftMouthCorner  rightMouthCorner  upperLipCenter  lowerLipCenter
 轮廓 chinCenter  leftJawAngle  rightJawAngle
      leftCheekbone  rightCheekbone  leftTemple  rightTemple  foreheadCenter
 ```

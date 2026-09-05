@@ -19,7 +19,7 @@ public enum SemanticLandmark: String, Codable, Sendable, CaseIterable {
     case noseBridgeTop, noseBridgeMid, noseTip, subnasale
     case leftNoseAla, rightNoseAla
     // 口
-    case mouthLeftCorner, mouthRightCorner, upperLipCenter, lowerLipCenter
+    case leftMouthCorner, rightMouthCorner, upperLipCenter, lowerLipCenter
     // 轮廓
     case chinCenter, leftJawAngle, rightJawAngle
     case leftCheekbone, rightCheekbone
@@ -27,23 +27,40 @@ public enum SemanticLandmark: String, Codable, Sendable, CaseIterable {
     case foreheadCenter
 
     /// 该点属于哪一侧；用于 anchor 的左右镜像。
+    ///
+    /// 命名约定是**侧别做前缀**（`leftEyeOuter`），但这里不假设它一定在开头。
+    /// 曾经有过 `mouthLeftCorner` 这种把侧别写在中间的命名：
+    /// `hasPrefix` 判定它没有侧别 → 镜像时嘴角不翻转 → 右脸的路径起点算到了脸中间。
+    /// golden vector 测的是变换不变性，抓不到这类镜像错误，只有真机上肉眼可见。
+    /// 所以这里做成对两种写法都成立。
     public var side: BodySide {
         let name = rawValue
-        if name.hasPrefix("left") { return .left }
-        if name.hasPrefix("right") { return .right }
+        if name.hasPrefix("left") || name.contains("Left") { return .left }
+        if name.hasPrefix("right") || name.contains("Right") { return .right }
         return .none
     }
+
+    public var isMidline: Bool { side == .none }
 
     /// 对侧对应点。中线点（如 glabella）返回自身。
     public var mirrored: SemanticLandmark {
         let name = rawValue
-        if name.hasPrefix("left") {
-            let suffix = String(name.dropFirst(4))
-            return SemanticLandmark(rawValue: "right" + suffix) ?? self
+        if name.hasPrefix("left"),
+           let flipped = SemanticLandmark(rawValue: "right" + name.dropFirst(4)) {
+            return flipped
         }
-        if name.hasPrefix("right") {
-            let suffix = String(name.dropFirst(5))
-            return SemanticLandmark(rawValue: "left" + suffix) ?? self
+        if name.hasPrefix("right"),
+           let flipped = SemanticLandmark(rawValue: "left" + name.dropFirst(5)) {
+            return flipped
+        }
+        // 中缀写法的兜底。当前所有命名都是前缀形式，但留着这段更省心。
+        if name.contains("Left"),
+           let flipped = SemanticLandmark(rawValue: name.replacingOccurrences(of: "Left", with: "Right")) {
+            return flipped
+        }
+        if name.contains("Right"),
+           let flipped = SemanticLandmark(rawValue: name.replacingOccurrences(of: "Right", with: "Left")) {
+            return flipped
         }
         return self
     }

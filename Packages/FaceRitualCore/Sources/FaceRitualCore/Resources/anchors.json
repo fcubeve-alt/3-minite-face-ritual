@@ -65,7 +65,7 @@
         "base": {
           "type": "lerp",
           "from": { "type": "landmark", "id": "leftEyeCenter" },
-          "to": { "type": "landmark", "id": "mouthLeftCorner" },
+          "to": { "type": "landmark", "id": "leftMouthCorner" },
           "t": 0.55
         },
         "dx": -0.12,

@@ -100,14 +100,14 @@ final class ContentBundleTests: XCTestCase {
 
     func testAnchorGeometryRuleRoundTripsThroughJSON() throws {
         let rule = AnchorGeometryRule.offset(
-            base: .lerp(from: .landmark(.leftEyeCenter), to: .landmark(.mouthLeftCorner), t: 0.55),
+            base: .lerp(from: .landmark(.leftEyeCenter), to: .landmark(.leftMouthCorner), t: 0.55),
             dx: -0.12,
             dy: 0.03
         )
         let data = try JSONEncoder().encode(rule)
         let decoded = try JSONDecoder().decode(AnchorGeometryRule.self, from: data)
         XCTAssertEqual(decoded, rule)
-        XCTAssertEqual(decoded.referencedLandmarks, [.leftEyeCenter, .mouthLeftCorner])
+        XCTAssertEqual(decoded.referencedLandmarks, [.leftEyeCenter, .leftMouthCorner])
     }
 
     func testMirroringARuleFlipsLandmarksAndHorizontalOffset() {

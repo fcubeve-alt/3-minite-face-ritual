@@ -26,8 +26,12 @@ golden: ## 重新生成几何 golden vectors（改了 anchors.json 后必须跑�
 arch: ## 架构约束 + 轻量 Swift 静态检查（不需要 Xcode）
 	python tools/check_architecture.py
 
+.PHONY: simulate
+simulate: ## 无头跑一遍全部 routine，验证每一段都能在脸上画出东西
+	python tools/simulate_routine.py
+
 .PHONY: check
-check: arch content golden ## 跑所有不依赖 Xcode 的校验
+check: arch content golden simulate ## 跑所有不依赖 Xcode 的校验
 
 # ---------------------------------------------------------------------------
 # 需要 macOS + Xcode

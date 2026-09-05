@@ -33,7 +33,7 @@ SEMANTIC_LANDMARKS = {
     "glabella",
     "noseBridgeTop", "noseBridgeMid", "noseTip", "subnasale",
     "leftNoseAla", "rightNoseAla",
-    "mouthLeftCorner", "mouthRightCorner", "upperLipCenter", "lowerLipCenter",
+    "leftMouthCorner", "rightMouthCorner", "upperLipCenter", "lowerLipCenter",
     "chinCenter", "leftJawAngle", "rightJawAngle",
     "leftCheekbone", "rightCheekbone",
     "leftTemple", "rightTemple",
@@ -75,12 +75,55 @@ def mirror_id(raw: str) -> str:
     return raw
 
 
+def landmark_side(name: str) -> str:
+    """侧别判定必须与 Swift 的 SemanticLandmark.side 完全一致。"""
+    if name.startswith("left") or "Left" in name:
+        return "left"
+    if name.startswith("right") or "Right" in name:
+        return "right"
+    return "none"
+
+
 def mirror_landmark(name: str) -> str:
     if name.startswith("left"):
-        return "right" + name[len("left"):]
+        candidate = "right" + name[len("left"):]
+        if candidate in SEMANTIC_LANDMARKS:
+            return candidate
     if name.startswith("right"):
-        return "left" + name[len("right"):]
+        candidate = "left" + name[len("right"):]
+        if candidate in SEMANTIC_LANDMARKS:
+            return candidate
+    if "Left" in name:
+        candidate = name.replace("Left", "Right")
+        if candidate in SEMANTIC_LANDMARKS:
+            return candidate
+    if "Right" in name:
+        candidate = name.replace("Right", "Left")
+        if candidate in SEMANTIC_LANDMARKS:
+            return candidate
     return name
+
+
+def check_landmark_pairing() -> None:
+    """每个有侧别的 landmark 都必须能镜像到**另一个**存在的 landmark。
+
+    这条检查是在发现 `mouthLeftCorner` 镜像不动之后加的：
+    当时 side 判定用的是 hasPrefix，把它当成了中线点，
+    结果右脸的 anchor 起点算到了脸中间，路径长度左右差 38%。
+    """
+    for name in sorted(SEMANTIC_LANDMARKS):
+        side = landmark_side(name)
+        if side == "none":
+            if mirror_landmark(name) != name:
+                error("SemanticLandmark", f"{name} 被判为中线点，却能镜像到 {mirror_landmark(name)}")
+            continue
+        mirrored = mirror_landmark(name)
+        if mirrored == name:
+            error("SemanticLandmark", f"{name} 有侧别（{side}）却镜像到自己 —— 对侧点缺失或命名不符合约定")
+        elif mirrored not in SEMANTIC_LANDMARKS:
+            error("SemanticLandmark", f"{name} 的对侧点 {mirrored} 不存在")
+        elif landmark_side(mirrored) == side:
+            error("SemanticLandmark", f"{name} 与 {mirrored} 被判为同一侧")
 
 
 def rule_landmarks(rule: dict, path: str) -> set[str]:
@@ -278,6 +321,8 @@ def main() -> int:
         error("content_meta.json", f"schemaVersion 应为 {SCHEMA_VERSION}，实际 {meta.get('schemaVersion')!r}")
     if meta.get("reviewStatus") not in REVIEW_STATUSES:
         error("content_meta.json", f"未知 reviewStatus: {meta.get('reviewStatus')!r}")
+
+    check_landmark_pairing()
 
     anchors_doc = load("anchors.json")
     routines_doc = load("routines.json")
