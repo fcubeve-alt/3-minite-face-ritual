@@ -9,6 +9,9 @@ public struct FaceProviderDescriptor: Identifiable, Hashable {
     public let summary: String
     /// 是否需要 TrueDepth 前置深度相机。
     public let requiresTrueDepth: Bool
+    /// 是否需要摄像头。Mock provider 生成合成脸，不需要 ——
+    /// 这决定了要不要向用户申请摄像头权限（规格 §4：摄像头只在必要时才申请）。
+    public let requiresCamera: Bool
     /// 该 provider 能提供的语义 landmark 集合。
     public let supportedLandmarks: Set<SemanticLandmark>
     /// 是否提供可信的头部姿态（yaw/pitch/roll）。
@@ -21,6 +24,7 @@ public struct FaceProviderDescriptor: Identifiable, Hashable {
         displayName: String,
         summary: String,
         requiresTrueDepth: Bool,
+        requiresCamera: Bool = true,
         supportedLandmarks: Set<SemanticLandmark>,
         providesHeadPose: Bool,
         providesOcclusionEstimate: Bool = false
@@ -29,6 +33,7 @@ public struct FaceProviderDescriptor: Identifiable, Hashable {
         self.displayName = displayName
         self.summary = summary
         self.requiresTrueDepth = requiresTrueDepth
+        self.requiresCamera = requiresCamera
         self.supportedLandmarks = supportedLandmarks
         self.providesHeadPose = providesHeadPose
         self.providesOcclusionEstimate = providesOcclusionEstimate

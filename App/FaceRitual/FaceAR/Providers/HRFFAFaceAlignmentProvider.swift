@@ -45,10 +45,13 @@ final class HRFFAFaceAlignmentProvider: NSObject, FaceAlignmentProvider {
         )
     }
 
-    var isAvailable: Bool { model != nil && layout != nil }
+    var isAvailable: Bool { model != nil && layout != nil && VisionFaceAlignmentProvider.hasFrontCamera }
 
     var unavailableReason: String? {
         guard isAvailable == false else { return nil }
+        if VisionFaceAlignmentProvider.hasFrontCamera == false {
+            return "本机没有可用的前置摄像头（模拟器通常如此）。"
+        }
         return loadFailureReason ?? "未找到 \(HRFFAFaceAlignmentProvider.modelResourceName).mlmodelc，请参考 docs/HRFFA_INTEGRATION.md 转换并加入 App target。"
     }
 

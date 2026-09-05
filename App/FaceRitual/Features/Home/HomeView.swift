@@ -108,6 +108,7 @@ struct HomeView: View {
                 start(routine)
             }
             .buttonStyle(PrimaryButtonStyle())
+            .accessibilityIdentifier(A11yID.homeStart)
         }
         .padding(20)
         .cardBackground(elevated: true)
@@ -183,6 +184,7 @@ struct HomeView: View {
             )
         )
         .accessibilityHint(AppCopy.a11yOpensHistory)
+        .accessibilityIdentifier(A11yID.homeMonthlySummary)
     }
 
     private func statCell(value: String, label: String) -> some View {

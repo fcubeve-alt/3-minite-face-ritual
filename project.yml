@@ -70,6 +70,22 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
 
+  # UI 测试跑在模拟器上。模拟器没有摄像头，provider 会自动回落到 Mock（合成脸），
+  # 于是整条 M1 闭环——除了「真人脸」那一环——都能在 CI 上自动验证。
+  FaceRitualUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - App/FaceRitualUITests
+      # 控件标识两个 target 共用一份，避免字符串对不上导致测试静默失效
+      - path: App/FaceRitual/Features/Components/A11yID.swift
+    dependencies:
+      - target: FaceRitual
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.faceritual.app.uitests
+        TEST_TARGET_NAME: FaceRitual
+
   FaceRitualTests:
     type: bundle.unit-test
     platform: iOS
@@ -95,3 +111,4 @@ schemes:
       gatherCoverageData: true
       targets:
         - FaceRitualTests
+        - FaceRitualUITests

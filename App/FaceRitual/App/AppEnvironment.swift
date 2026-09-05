@@ -27,6 +27,10 @@ final class AppEnvironment: ObservableObject {
     /// 内容加载失败时的致命错误。UI 显示可读的说明而不是白屏。
     @Published private(set) var contentLoadError: String?
 
+    /// UI 自动化测试用的启动参数。带上它就清空本地状态，让每次跑测试的起点一致。
+    /// 只在 DEBUG 生效 —— 发布包里根本没有这段代码。
+    static let uiTestResetArgument = "-FRUITestReset"
+
     init(
         settings: AppSettings = AppSettings(),
         contentRepository: ContentRepository? = nil,
@@ -37,6 +41,12 @@ final class AppEnvironment: ObservableObject {
         haptics: HapticServicing = HapticService(),
         reminders: ReminderScheduler = ReminderScheduler()
     ) {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains(AppEnvironment.uiTestResetArgument) {
+            AppEnvironment.resetLocalStateForUITests()
+        }
+        #endif
+
         self.settings = settings
         self.voice = voice
         self.haptics = haptics
@@ -155,6 +165,18 @@ final class AppEnvironment: ObservableObject {
         practiceStore.currentMonthStats()
     }
 }
+
+#if DEBUG
+extension AppEnvironment {
+    /// 清空 UserDefaults 与练习记录。只给 UI 自动化测试用。
+    static func resetLocalStateForUITests() {
+        if let domain = Bundle.main.bundleIdentifier {
+            UserDefaults.standard.removePersistentDomain(forName: domain)
+        }
+        try? FilePracticeStore.makeDefault().deleteAll()
+    }
+}
+#endif
 
 /// 内容加载失败时的空实现，避免 UI 需要处理 optional repository。
 private final class EmptyContentRepository: ContentRepository, @unchecked Sendable {

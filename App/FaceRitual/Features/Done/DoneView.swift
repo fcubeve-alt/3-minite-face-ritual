@@ -28,6 +28,7 @@ struct DoneView: View {
                     Text(session.completed ? AppCopy.doneTitle : AppCopy.savedTitle)
                         .font(.system(size: 32, weight: .semibold))
                         .foregroundStyle(Theme.textPrimary)
+                        .accessibilityIdentifier(A11yID.doneTitle)
                     Text(summaryLine)
                         .font(.callout)
                         .foregroundStyle(Theme.textSecondary)
@@ -44,6 +45,7 @@ struct DoneView: View {
 
                 Button(AppCopy.backToHome) { dismiss() }
                     .buttonStyle(PrimaryButtonStyle())
+                    .accessibilityIdentifier(A11yID.doneBackToHome)
                     .padding(.horizontal, 24)
                     .padding(.bottom, 24)
             }

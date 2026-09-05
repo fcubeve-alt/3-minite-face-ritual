@@ -17,6 +17,7 @@ struct PlayerHeader: View {
                         .background(.black.opacity(0.35), in: Circle())
                 }
                 .accessibilityLabel(AppCopy.a11yClose)
+                .accessibilityIdentifier(A11yID.playerClose)
                 Spacer()
                 if viewModel.routine.reviewStatus.isPublishable == false {
                     MockContentBadge(compact: true)
@@ -85,9 +86,11 @@ struct PlayerControls: View {
                         .background(Theme.accent, in: Circle())
                 }
                 .accessibilityLabel(viewModel.status == .paused ? AppCopy.a11yResume : AppCopy.a11yPause)
+                .accessibilityIdentifier(A11yID.playerPauseToggle)
                 controlButton("forward.end.fill", size: 18, label: AppCopy.a11yNextMove) {
                     viewModel.skipForward()
                 }
+                .accessibilityIdentifier(A11yID.playerSkipForward)
             }
         }
         .padding(.bottom, 12)

@@ -20,6 +20,7 @@ final class MockFaceAlignmentProvider: NSObject, FaceAlignmentProvider {
         displayName: "Mock (合成脸)",
         summary: "程序生成的动画人脸，不使用摄像头。用于模拟器开发与对照排查。",
         requiresTrueDepth: false,
+        requiresCamera: false,
         supportedLandmarks: Set(SemanticLandmark.allCases),
         providesHeadPose: true,
         providesOcclusionEstimate: false

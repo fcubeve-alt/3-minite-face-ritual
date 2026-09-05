@@ -138,6 +138,7 @@ struct RoutineDetailView: View {
         }
         .buttonStyle(.plain)
         .disabled(isRequestingCamera)
+        .accessibilityIdentifier(A11yID.mode(mode.rawValue))
     }
 
     private var stepList: some View {
@@ -219,7 +220,19 @@ struct RoutineDetailView: View {
     }
 
     /// 规格 §4：摄像头由用户主动开启。权限请求只发生在这里。
+    ///
+    /// 先看**实际会被用到的那个 provider** 需不需要摄像头 ——
+    /// Mock provider 生成的是合成脸，不碰摄像头，那就不该弹权限框。
+    /// 这条同时让模拟器上的自动化测试能跑通整条闭环（模拟器没有摄像头）。
     private func requestCameraThenStart(_ mode: PracticeMode) {
+        let resolved = FaceAlignmentProviderFactory
+            .makeFirstAvailable(preferring: environment.settings.preferredProviderKind)
+            .provider
+        guard resolved.descriptor.requiresCamera else {
+            activeMode = mode
+            return
+        }
+
         switch CameraPermission.status {
         case .authorized:
             activeMode = mode

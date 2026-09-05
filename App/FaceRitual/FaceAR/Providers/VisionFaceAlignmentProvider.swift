@@ -37,8 +37,17 @@ final class VisionFaceAlignmentProvider: NSObject, FaceAlignmentProvider {
         .chinCenter, .leftJawAngle, .rightJawAngle
     ]
 
-    var isAvailable: Bool { true }
-    var unavailableReason: String? { nil }
+    /// 模拟器没有摄像头 —— 这里如实报告，工厂就会自动回落到 Mock provider。
+    /// 之前无条件返回 true，模拟器上会一路走到 start() 才抛错，白屏且没有退路。
+    static var hasFrontCamera: Bool {
+        AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front) != nil
+    }
+
+    var isAvailable: Bool { VisionFaceAlignmentProvider.hasFrontCamera }
+
+    var unavailableReason: String? {
+        isAvailable ? nil : "本机没有可用的前置摄像头（模拟器通常如此）。"
+    }
 
     var onGeometry: ((FaceGeometry) -> Void)?
     var onFailure: ((Error) -> Void)?

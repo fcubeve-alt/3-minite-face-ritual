@@ -306,6 +306,7 @@ DEV_ONLY_SURFACES = (
     "App/FaceRitual/FaceAR/",          # provider 诊断信息，只在 Debug 图层显示
     "App/FaceRitual/Platform/",        # 平台适配层，无直出文案
     "App/FaceRitualTests/",            # 测试断言消息是写给我们自己看的
+    "App/FaceRitualUITests/",          # 同上
 )
 
 CHINESE_LITERAL = re.compile(r'"[^"\n]*[一-鿿][^"\n]*"')

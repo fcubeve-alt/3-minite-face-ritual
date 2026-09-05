@@ -129,7 +129,10 @@ public final class MockEntitlementService: EntitlementService {
         SubscriptionProduct(
             id: "com.faceritual.premium.yearly",
             displayName: "Premium Yearly",
-            placeholderPrice: "TBD",
+            // Owner 2026-09-06 定：年费 29.99。
+            // 用 .99 是因为 App Store 的价格档位历来是 X.99；
+            // 若本意就是 29.90，改这里即可。
+            placeholderPrice: "$29.99",
             period: "year"
         )
     ]

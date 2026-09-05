@@ -106,6 +106,15 @@ Subscription 架构（Mock Unlock + StoreKit2 骨架）· Analytics（含 §15 �
 - **把隐私承诺锁成代码事实**：摄像头文案对用户说「画面留在设备上」。
   查证全工程零联网 API（唯一出网 import 是 StoreKit，只走支付），
   并加了检查规则 —— 谁加网络请求，检查就失败并指回那句文案。
+- **M1 闭环的自动化验证（不需要 Mac）**。
+  关键点：模拟器没有摄像头，所以 Vision / HRFFA / ARKit 现在都**如实报告不可用**，
+  工厂自动回落到 Mock provider（合成动画脸）。于是
+  「打开 App → START → 选模式 → 走完 routine → Done → 记录落盘」
+  这条闭环可以在 GitHub Actions 的 macOS runner 上每次推代码自动跑一遍。
+  测不到的只有「真人脸上的贴合精度 / FPS / 遮挡表现」—— 那些仍需真机。
+  顺带修了两处：Vision provider 原本无条件声称可用（模拟器上会一路走到 start() 才抛错，
+  白屏且没退路）；权限申请原本不看实际 provider 需不需要摄像头。
+- **年费定为 $29.99**（Owner 2026-09-06）。用 .99 是因为 App Store 价格档位历来如此。
 - **`tools/check_swift_refs.py`** —— 无编译器版的 Swift 引用检查：枚举 case、init 参数标签、
   协议一致性。在真实代码库上做过正反验证。已知盲区（字符串插值内、尾随闭包）写在脚本里。
 - **用户面文案全部改为英文并集中到 `AppCopy.swift`**。目标用户是欧美用户（规格 §3/§14），
@@ -141,7 +150,7 @@ Subscription 架构（Mock Unlock + StoreKit2 骨架）· Analytics（含 §15 �
 
 | 阻塞项 | 原因 | 解除条件 |
 | --- | --- | --- |
-| Swift 代码编译验证 | 开发机是 Windows，无 Swift/Xcode 工具链（已验证 `swift`/`swiftc`/`xcodegen` 均不存在） | 在 Mac 上 `make bootstrap && make core-test && make build` |
+| Swift 代码编译验证 | 开发机是 Windows，无 Swift/Xcode 工具链 | **把仓库推上 GitHub** —— CI 用 macOS runner 编译并跑全部测试，不需要任何人手里有 Mac |
 | 真机 AR POC（Face Lock / FPS / 遮挡 / 转头 / 漂移） | 需要真实 iPhone | 按 `AR_POC_REPORT.md` §2 执行 |
 | HRFFA CoreML 模型 | 转换需 macOS + coremltools；模型文件不在仓库 | 见 `docs/HRFFA_INTEGRATION.md` |
 | ARKit 顶点索引表 | Apple 未公布 1220 顶点语义编号，**拒绝猜测**（画错位置比不画更糟） | 标定工具已做好：真机 Settings → Developer → Provider/内容诊断 → ARKit 顶点标定，点 10 个点导出 JSON |
@@ -150,7 +159,10 @@ Subscription 架构（Mock Unlock + StoreKit2 骨架）· Analytics（含 §15 �
 
 ## ⏭ Next（按顺序）
 
-1. **Mac 首次构建**：`make bootstrap` → Xcode 填 Team → `make core-test` → `make build`
+0. **把仓库推上 GitHub**（Owner 建仓库并给地址）。
+   CI 会在 macOS runner 上编译、跑 83 个单元测试、并在模拟器里跑完整 M1 闭环 ——
+   编译错误列表会自动出现在 Actions 日志里，我据此修完再推，整个循环不需要 Mac。
+1. **（可选）本地 Mac 构建**：`make bootstrap` → Xcode 填 Team → `make core-test` → `make build`
    - 已用静态检查扫掉几类必然失败的错误（见上表），但**仍会有类型层面的编译错误** ——
      静态检查器不是编译器，抓不到类型不匹配。
    - 推起 CI 后，`build` job 的日志就是一份现成的待修清单，不必在 Mac 前一条条试。
