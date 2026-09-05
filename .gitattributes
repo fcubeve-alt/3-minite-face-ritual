@@ -1,0 +1,16 @@
+# 在 Windows 上开发、在 macOS 上构建 —— 换行符必须钉死。
+# CRLF 的 Makefile 在 macOS 上会直接跑不起来。
+* text=auto eol=lf
+
+*.swift   text eol=lf
+*.json    text eol=lf
+*.yml     text eol=lf
+*.py      text eol=lf
+*.md      text eol=lf
+Makefile  text eol=lf
+
+# 二进制
+*.docx    binary
+*.png     binary
+*.jpg     binary
+*.mlmodel binary
