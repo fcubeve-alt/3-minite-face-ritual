@@ -283,6 +283,9 @@ private struct ARMirrorContent: View {
                     .background(Theme.accent, in: Circle())
             }
             .accessibilityLabel(viewModel.status == .paused ? AppCopy.a11yResume : AppCopy.a11yPause)
+            // Watch 模式用的是这个独立的按钮，不是 PlayerControls 里那个 ——
+            // identifier 两处都要有，否则自动化测试在 Watch 模式下找不到播放器。
+            .accessibilityIdentifier(A11yID.playerPauseToggle)
         }
         .padding(.bottom, 26)
         .padding(.horizontal, 30)

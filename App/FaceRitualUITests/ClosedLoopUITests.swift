@@ -136,9 +136,16 @@ final class ClosedLoopUITests: XCTestCase {
     /// 里有 4 个是左右两段，展开后共 9 段），只是不消耗真实时长。
     private func walkThroughAllSegments() {
         let skip = waitFor(A11yID.playerSkipForward, message: "播放器没有出现")
+        let doneTitle = element(A11yID.doneTitle)
 
-        // 多点几次无妨：走完最后一段就会进入 Done，按钮随之消失。
-        for _ in 0..<12 where skip.exists {
+        // 不能用 `skip.exists` 当循环条件：
+        // routine 走完后 Done 页以 fullScreenCover 盖上来，播放器界面还在它下面，
+        // 元素依然「存在」但已经点不到了 —— XCUITest 会尝试把它滚动到可见处，
+        // 然后报 "Failed to scroll to visible"。
+        // 所以改成：Done 一出现就停，并用 isHittable 而不是 exists。
+        for _ in 0..<15 {
+            if doneTitle.exists { return }
+            guard skip.isHittable else { return }
             skip.tap()
         }
     }
