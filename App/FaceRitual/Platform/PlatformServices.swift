@@ -59,9 +59,17 @@ protocol VoiceCueServicing: AnyObject {
 
 /// 语音提示。用系统 TTS 而不是录音：
 /// M1 阶段动作内容还会反复替换，录音会立刻过期。
+///
+/// 音频会话由 `VoiceAudioSession` 管理 —— 说话时压低背景音乐，说完还回去。
+/// 不管的话会把用户正在放的歌整个掐掉。
 final class VoiceCueService: NSObject, VoiceCueServicing {
     private let synthesizer = AVSpeechSynthesizer()
     var isEnabled: Bool = true
+
+    override init() {
+        super.init()
+        synthesizer.delegate = self
+    }
 
     func speak(_ text: String) {
         guard isEnabled, text.isEmpty == false else { return }
@@ -69,6 +77,8 @@ final class VoiceCueService: NSObject, VoiceCueServicing {
         if synthesizer.isSpeaking {
             synthesizer.stopSpeaking(at: .immediate)
         }
+        VoiceAudioSession.begin()
+
         let utterance = AVSpeechUtterance(string: text)
         utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 0.92
         utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
@@ -77,6 +87,22 @@ final class VoiceCueService: NSObject, VoiceCueServicing {
 
     func stop() {
         synthesizer.stopSpeaking(at: .immediate)
+        VoiceAudioSession.end()
+    }
+}
+
+extension VoiceCueService: AVSpeechSynthesizerDelegate {
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
+        // 只有在没有后续语句排队时才释放，否则连续两句之间会有一次多余的音量起落。
+        if synthesizer.isSpeaking == false {
+            VoiceAudioSession.end()
+        }
+    }
+
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
+        if synthesizer.isSpeaking == false {
+            VoiceAudioSession.end()
+        }
     }
 }
 

@@ -92,6 +92,10 @@ final class RoutineSessionViewModel: ObservableObject {
             environment.analytics.track(.watchModeUsed(routineID: routine.id))
         }
 
+        // 用户全程双手在脸上，3–5 分钟不会碰屏幕。
+        // 不阻止自动锁屏的话，动作做到一半屏幕就黑了。
+        ScreenWakeLock.shared.acquire()
+
         let ticker = DisplayLinkTicker { [weak self] delta in
             self?.tick(delta)
         }
@@ -99,6 +103,37 @@ final class RoutineSessionViewModel: ObservableObject {
         ticker.start()
         engine.start()
     }
+
+    // MARK: - 前后台
+
+    /// 进入后台。
+    ///
+    /// 必须把摄像头关掉 —— 后台还开着相机既费电又是用户信任问题，
+    /// 而且规格 §4 说摄像头「随时可以关闭」，切走就是最明确的一次「随时」。
+    func handleEnteredBackground() {
+        guard didFinish == false else { return }
+        wasRunningBeforeBackground = engine.status == .running || engine.status == .preparing
+        if wasRunningBeforeBackground {
+            engine.pause()
+        }
+        guidance?.stop()
+        environment.voice.stop()
+        ScreenWakeLock.shared.releaseAll()
+    }
+
+    /// 回到前台。
+    ///
+    /// **刻意保持暂停**：用户刚切回来，手还没抬起来。
+    /// 自动继续会让他直接错过一整个动作，而且没有任何好处。
+    func handleReturnedToForeground(viewSize: CGSize) {
+        guard didFinish == false else { return }
+        ScreenWakeLock.shared.acquire()
+        if usesCamera, viewSize.width > 0 {
+            startGuidance(viewSize: viewSize)
+        }
+    }
+
+    private var wasRunningBeforeBackground = false
 
     func pause() {
         engine.pause()
@@ -142,6 +177,7 @@ final class RoutineSessionViewModel: ObservableObject {
         ticker = nil
         guidance?.stop()
         environment.voice.stop()
+        ScreenWakeLock.shared.release()
     }
 
     // MARK: - 播放器事件
@@ -273,12 +309,16 @@ final class RoutineSessionViewModel: ObservableObject {
     func startGuidance(viewSize: CGSize) {
         guard let guidance else { return }
         guidance.start(viewSize: viewSize, isMirrored: environment.settings.mirrorPreview)
-        if let notice = guidance.fallbackNotice {
+        // 回落只上报一次：切后台再回来会重新 start，重复上报会让漏斗数据虚高。
+        if let notice = guidance.fallbackNotice, didReportProviderFallback == false {
+            didReportProviderFallback = true
             environment.analytics.track(
                 .guidanceFallback(routineID: routine.id, from: mode, to: mode, reason: notice)
             )
         }
     }
+
+    private var didReportProviderFallback = false
 
     /// AR 中途退回 Coach。**计时与动作序列不中断** —— 规格 §4：识别失败不得阻塞 routine。
     ///

@@ -333,6 +333,65 @@ def check_user_facing_copy_is_english() -> None:
 
 
 # ---------------------------------------------------------------------------
+# 9. 纯图标按钮必须有无障碍标签
+# ---------------------------------------------------------------------------
+def check_icon_buttons_have_accessibility_labels() -> None:
+    """只有图标、没有文字的按钮，VoiceOver 只会念一句「按钮」。
+
+    播放器的暂停 / 上一步 / 下一步 / 关闭全是这种，
+    不给标签等于视障用户完全没法用 —— 这不是加分项，是能不能用的问题。
+
+    判据：`Button` 之后的窗口内出现 `Image(systemName:`，
+    但没有 `Text(` / `Label(` / `.accessibilityLabel(`。
+    """
+    # 用大括号配对确定按钮的真实范围，而不是固定窗口。
+    # 窗口太窄会漏掉挂在后面的修饰符，太宽会串到相邻控件的 Text 上 —— 两头都不对。
+    satisfied = (".accessibilityLabel(", ".accessibilityElement(", "Text(", "Label(")
+
+    for path in swift_files(APP):
+        lines = strip_comments_and_strings(path.read_text(encoding="utf-8")).splitlines()
+        original = path.read_text(encoding="utf-8").splitlines()
+
+        for index, line in enumerate(lines):
+            if re.search(r"\bButton\s*[({]", line) is None:
+                continue
+            # 带文字的构造（Button("Close") { … }）直接跳过。
+            # 注意此处用原文：字符串已被 strip 掉，只能靠 AppCopy. 前缀判断。
+            if re.search(r'Button\s*\(\s*(?:"|AppCopy\.)', original[index]):
+                continue
+
+            # 从 Button 起按大括号深度走到闭包结束
+            depth = 0
+            end = index
+            for cursor in range(index, min(len(lines), index + 60)):
+                depth += lines[cursor].count("{") - lines[cursor].count("}")
+                end = cursor
+                if cursor > index and depth <= 0:
+                    break
+
+            # 闭包结束后紧跟的修饰符链（以 "." 开头的行）也算按钮的一部分。
+            # 链中间可能夹注释 —— 注释已被 strip 成空行，要跳过而不是就此停下。
+            tail = end + 1
+            while tail < len(lines):
+                stripped = lines[tail].strip()
+                if stripped == "" or stripped.startswith("."):
+                    tail += 1
+                    continue
+                break
+
+            region = original[index:tail]
+            if any("Image(systemName:" in item for item in region) is False:
+                continue
+            if any(any(token in item for token in satisfied) for item in region):
+                continue
+
+            error(
+                f"{rel(path)}:{index + 1}",
+                "纯图标按钮缺少 .accessibilityLabel —— VoiceOver 只会念「按钮」，用户无法操作",
+            )
+
+
+# ---------------------------------------------------------------------------
 def main() -> int:
     print("架构与静态检查\n")
 
@@ -345,6 +404,7 @@ def main() -> int:
         ("括号配对", check_bracket_balance),
         ("动作内容零硬编码", check_no_hardcoded_content),
         ("用户面文案为英文", check_user_facing_copy_is_english),
+        ("纯图标按钮有无障碍标签", check_icon_buttons_have_accessibility_labels),
     ]
 
     for name, check in checks:

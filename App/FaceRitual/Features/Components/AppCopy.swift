@@ -179,6 +179,38 @@ enum AppCopy {
         "Prices shown are placeholders for testing. Final pricing, the annual plan "
         + "and subscription terms are confirmed before launch."
 
+    // MARK: - 无障碍
+    //
+    // 播放器全是纯图标按钮。不给标签的话 VoiceOver 只会念「按钮」，
+    // 用户根本无法操作 —— 这不是加分项，是能不能用的问题。
+
+    static let a11yClose = "Close"
+    static let a11yPause = "Pause"
+    static let a11yResume = "Resume"
+    static let a11yPreviousMove = "Previous move"
+    static let a11yNextMove = "Next move"
+    static let a11ySettings = "Settings"
+    /// 参数：剩余秒数、总动作数里的第几个。
+    static func a11yTimeRemaining(seconds: Int) -> String {
+        "\(seconds) seconds left in this move"
+    }
+
+    static func a11yProgress(current: Int, total: Int) -> String {
+        "Move \(current) of \(total)"
+    }
+
+    /// AR overlay 是纯视觉的，对 VoiceOver 没有意义 —— 整体隐藏，
+    /// 由语音提示（voiceCue）承担同样的信息。
+    static let a11yCameraPreview = "Camera preview with movement guidance"
+
+    /// 月度汇总卡是一个包着多段文字的按钮。
+    /// 不合成一条的话 VoiceOver 会念成「3、rituals、9、minutes…」这种碎片。
+    static func a11yMonthlySummary(rituals: Int, minutes: Int, days: Int) -> String {
+        "This month: \(rituals) rituals, \(minutes) minutes, \(days) active days"
+    }
+
+    static let a11yOpensHistory = "Opens your practice history"
+
     // MARK: - 内容加载失败（正常情况下用户看不到）
 
     static let contentUnavailableTitle = "Content could not be loaded"

@@ -234,3 +234,78 @@ final class EntitlementPolicyTests: XCTestCase {
         }
     }
 }
+
+
+/// 规格 §15 点名要求的五个 AR analytics 事件。
+///
+/// 事件名是**对外契约**：POC 与后续留存分析都按这些名字取数。
+/// 有人手滑改成 driver-friendly 的命名，报表会静默断掉而不会报错 ——
+/// 所以在这里钉死。
+final class AnalyticsContractTests: XCTestCase {
+
+    func testSpecRequiredAREventNamesAreExact() {
+        let routineID: RoutineID = "r"
+        let stepID: RoutineStepID = "s"
+
+        let expected: [(AnalyticsEvent, String)] = [
+            (.arMirrorStarted(routineID: routineID, providerID: "vision"), "arMirrorStarted"),
+            (.arStepCompleted(routineID: routineID, stepID: stepID, quality: .good), "arStepCompleted"),
+            (.faceLockLost(routineID: routineID, stepID: stepID, hint: .handCoveringFace), "faceLockLost"),
+            (.guidanceFallback(routineID: routineID, from: .arMirror, to: .coach, reason: "x"), "guidanceFallback"),
+            (.watchModeUsed(routineID: routineID), "watchModeUsed")
+        ]
+
+        for (event, name) in expected {
+            XCTAssertEqual(event.name, name, "规格 §15 指定的事件名不能改")
+        }
+    }
+
+    /// 规格 §17 的 AR 指标要能算出来，靠的是这两个事件带的参数。
+    func testARQualityEventsCarryTheMetricsTheSpecAsksFor() {
+        let lock = AnalyticsEvent.faceLockAcquired(providerID: "vision", secondsToLock: 1.25)
+        XCTAssertEqual(lock.parameters["provider"], "vision")
+        XCTAssertEqual(lock.parameters["seconds_to_lock"], "1.25")
+
+        let quality = AnalyticsEvent.arSessionQuality(
+            providerID: "vision",
+            averageFPS: 29.4,
+            averageLatencyMS: 18.2,
+            lockLossCount: 3
+        )
+        XCTAssertEqual(quality.parameters["avg_fps"], "29.4")
+        XCTAssertEqual(quality.parameters["avg_latency_ms"], "18.2")
+        XCTAssertEqual(quality.parameters["lock_loss_count"], "3")
+    }
+
+    /// 每个事件都必须能取到名字与参数，不能有漏写的 case。
+    func testEveryEventProducesNameAndParameters() {
+        let samples: [AnalyticsEvent] = [
+            .appOpened(isFirstLaunch: true),
+            .homeViewed(greeting: "Good morning"),
+            .routineStarted(routineID: "r", type: .morning, mode: .coach),
+            .routineCompleted(routineID: "r", mode: .arMirror, secondsCompleted: 180),
+            .routineAbandoned(routineID: "r", mode: .coach, secondsCompleted: 42, atStepIndex: 2),
+            .modeSelected(mode: .watch, routineID: "r"),
+            .cameraPermissionRequested,
+            .cameraPermissionResult(granted: true),
+            .paywallViewed(source: "home"),
+            .purchaseAttempted(productID: "p"),
+            .purchaseResult(productID: "p", success: false),
+            .mockUnlockToggled(enabled: true),
+            .reminderScheduled(kind: "morning", hour: 8, minute: 0),
+            .reminderCancelled(kind: "evening"),
+            .contentValidationIssues(errorCount: 0, warningCount: 1)
+        ]
+
+        for event in samples {
+            XCTAssertFalse(event.name.isEmpty, "事件缺少名字")
+            for (key, value) in event.parameters {
+                XCTAssertFalse(key.isEmpty, "\(event.name) 有空参数名")
+                XCTAssertFalse(
+                    value.contains(where: \.isNewline),
+                    "\(event.name) 的参数值不应含换行"
+                )
+            }
+        }
+    }
+}

@@ -33,9 +33,13 @@ private struct ARMirrorContent: View {
     @EnvironmentObject private var environment: AppEnvironment
     @Environment(\.dismiss) private var dismiss
 
+    @Environment(\.scenePhase) private var scenePhase
+
     @ObservedObject var viewModel: RoutineSessionViewModel
     @ObservedObject var guidance: ARGuidanceController
 
+    /// 记住最后一次布局尺寸：回到前台重启 AR 会话时要用。
+    @State private var lastViewSize: CGSize = .zero
     @State private var showExitConfirm = false
     @State private var showDone = false
     /// 连续这么久锁不上，才认为「AR 对这位用户当下不好用」。
@@ -61,6 +65,7 @@ private struct ARMirrorContent: View {
                 } else {
                     CameraPreviewRepresentable(controller: guidance)
                         .ignoresSafeArea()
+                        .accessibilityLabel(AppCopy.a11yCameraPreview)
 
                     AROverlayRenderer(
                         frame: guidance.guidanceFrame,
@@ -93,10 +98,12 @@ private struct ARMirrorContent: View {
                 }
             }
             .onAppear {
+                lastViewSize = proxy.size
                 viewModel.startGuidance(viewSize: proxy.size)
                 viewModel.start()
             }
             .onChange(of: proxy.size) { _, newSize in
+                lastViewSize = newSize
                 guidance.updateViewSize(newSize)
             }
         }
@@ -111,6 +118,18 @@ private struct ARMirrorContent: View {
             if finished { showDone = true }
         }
         .onDisappear { viewModel.abandon() }
+        // 切后台必须关摄像头：后台开着相机既费电，也是用户信任问题。
+        // 回到前台保持暂停，由用户自己按播放 —— 他刚切回来，手还没抬起来。
+        .onChange(of: scenePhase) { _, phase in
+            switch phase {
+            case .active:
+                viewModel.handleReturnedToForeground(viewSize: lastViewSize)
+            case .inactive, .background:
+                viewModel.handleEnteredBackground()
+            @unknown default:
+                break
+            }
+        }
         .statusBarHidden()
     }
 
@@ -263,6 +282,7 @@ private struct ARMirrorContent: View {
                     .frame(width: 56, height: 56)
                     .background(Theme.accent, in: Circle())
             }
+            .accessibilityLabel(viewModel.status == .paused ? AppCopy.a11yResume : AppCopy.a11yPause)
         }
         .padding(.bottom, 26)
         .padding(.horizontal, 30)

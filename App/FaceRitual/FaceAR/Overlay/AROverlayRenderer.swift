@@ -32,6 +32,9 @@ struct AROverlayRenderer: View {
             }
         }
         .allowsHitTesting(false)
+        // 纯视觉图层，逐个元素念出来只会干扰。
+        // 同样的信息由 voiceCue 承担（规格 §6.2 把语音列为节奏的一部分）。
+        .accessibilityHidden(true)
         .animation(.easeOut(duration: 0.12), value: frame.overlayOpacity)
     }
 

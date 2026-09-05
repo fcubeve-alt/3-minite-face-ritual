@@ -129,6 +129,9 @@ Evening Core、全部 Quick Rituals、StoreKit 真实接入、提醒文案、Onb
 - [x] T11.8 `tools/check_swift_refs.py`：枚举 case / init 标签 / 协议一致性检查
 - [x] T11.9 用户面文案改英文并集中到 `AppCopy.swift`（规格 §3/§14）
 - [O] T11.10 `AppCopy.swift` 中标 ⚠️ 的文案需 Owner 与法务确认
+- [x] T11.11 运行时护栏：屏幕常亮、切后台停摄像头、语音 duck 背景音乐
+- [x] T11.12 无障碍标签（纯图标按钮 + 合成汇总卡）+ 防回潮检查
+- [x] T11.13 Analytics 契约测试：钉死规格 §15 的五个 AR 事件名
 
 ---
 

@@ -16,6 +16,7 @@ struct PlayerHeader: View {
                         .padding(10)
                         .background(.black.opacity(0.35), in: Circle())
                 }
+                .accessibilityLabel(AppCopy.a11yClose)
                 Spacer()
                 if viewModel.routine.reviewStatus.isPublishable == false {
                     MockContentBadge(compact: true)
@@ -32,6 +33,7 @@ struct PlayerHeader: View {
                 }
             }
             .frame(height: 3)
+            .accessibilityHidden(true)
 
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 3) {
@@ -70,7 +72,7 @@ struct PlayerControls: View {
             countdown
 
             HStack(spacing: 34) {
-                controlButton("backward.end.fill", size: 18) {
+                controlButton("backward.end.fill", size: 18, label: AppCopy.a11yPreviousMove) {
                     viewModel.skipBackward()
                 }
                 Button {
@@ -82,7 +84,8 @@ struct PlayerControls: View {
                         .frame(width: 62, height: 62)
                         .background(Theme.accent, in: Circle())
                 }
-                controlButton("forward.end.fill", size: 18) {
+                .accessibilityLabel(viewModel.status == .paused ? AppCopy.a11yResume : AppCopy.a11yPause)
+                controlButton("forward.end.fill", size: 18, label: AppCopy.a11yNextMove) {
                     viewModel.skipForward()
                 }
             }
@@ -91,6 +94,13 @@ struct PlayerControls: View {
     }
 
     private var countdown: some View {
+        countdownVisual
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(AppCopy.a11yTimeRemaining(seconds: viewModel.secondsRemaining))
+            .accessibilityValue(repetitionText ?? "")
+    }
+
+    private var countdownVisual: some View {
         ZStack {
             ProgressRing(progress: 1 - viewModel.segmentProgress, lineWidth: 4)
                 .frame(width: 74, height: 74)
@@ -114,7 +124,12 @@ struct PlayerControls: View {
         return "\(min(viewModel.completedRepetitions + 1, total))/\(total)"
     }
 
-    private func controlButton(_ systemName: String, size: CGFloat, action: @escaping () -> Void) -> some View {
+    private func controlButton(
+        _ systemName: String,
+        size: CGFloat,
+        label: String,
+        action: @escaping () -> Void
+    ) -> some View {
         Button(action: action) {
             Image(systemName: systemName)
                 .font(.system(size: size))
@@ -122,6 +137,7 @@ struct PlayerControls: View {
                 .frame(width: 48, height: 48)
                 .background(.white.opacity(0.10), in: Circle())
         }
+        .accessibilityLabel(label)
     }
 }
 

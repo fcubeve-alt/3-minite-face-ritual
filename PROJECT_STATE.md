@@ -88,6 +88,16 @@ Subscription 架构（Mock Unlock + StoreKit2 骨架）· Analytics（含 §15 �
 - **CI**（`.github/workflows/ci.yml`）：Linux 跑离线检查，macOS 跑 `swift test` 与 App 构建。
 - **`golden --check`**：防止改了 anchors.json 却忘了重新生成 golden。
 - **`docs/CONTENT_AUTHORING.md`**：Owner 替换正式内容的完整指南。
+- **修掉四个真机上一定会咬人的运行时缺陷**：
+  | 缺陷 | 后果 |
+  | --- | --- |
+  | 播放期间没阻止自动锁屏 | 3–5 分钟不碰屏幕，动作做到一半黑屏，routine 直接断 |
+  | 切后台没停摄像头会话 | 后台开着相机：耗电 + 用户信任问题；回来后播放器状态也不对 |
+  | 语音提示没配 AVAudioSession | 直接掐掉用户正在放的音乐（而「边听歌边做 3 分钟」正是主场景） |
+  | 播放器全是纯图标按钮，零 accessibilityLabel | VoiceOver 只念「按钮」，视障用户完全无法操作 |
+- **切后台的行为**：暂停 + 关摄像头 + 释放常亮；回到前台**保持暂停**由用户自己按播放 ——
+  他刚切回来手还没抬起来，自动继续只会让他白白错过一个动作。
+  跨后台的丢锁次数与首次锁定耗时改为累计/只记一次，否则 POC 指标会被后台切换污染。
 - **`tools/check_swift_refs.py`** —— 无编译器版的 Swift 引用检查：枚举 case、init 参数标签、
   协议一致性。在真实代码库上做过正反验证。已知盲区（字符串插值内、尾随闭包）写在脚本里。
 - **用户面文案全部改为英文并集中到 `AppCopy.swift`**。目标用户是欧美用户（规格 §3/§14），
@@ -101,13 +111,15 @@ Subscription 架构（Mock Unlock + StoreKit2 骨架）· Analytics（含 §15 �
   「播放时这一段脸上会不会是空白」这个问题。
 
 ### 已在本机**实际运行验证**的项目
-- `python tools/check_architecture.py` → 55 个 Swift 文件，**8 条规则 0 errors**（已自测确认非空转）
+- `python tools/check_architecture.py` → 56 个 Swift 文件，**9 条规则 0 errors**（已自测确认非空转）
 - `python tools/check_swift_refs.py` → **0 errors**；`--self-test` 三条规则全部命中
 - `python tools/validate_content.py` → **0 errors**，1 个预期内 mock 警告
 - `python tools/golden/generate_golden.py` → 9 个 anchor 在 6 种尺度/位置/roll 变换下**最大漂移 2.0e-15 瞳距**
 - `golden --check` 的正反例：篡改 anchors.json 后退出码 1，还原后 0
 - `python tools/simulate_routine.py` → Morning Core 9 个播放段全部可渲染，左右完全对称
-- 四个检查器共 12 条规则，每条都做过**故意写错代码的反向验证**，确认不是空转
+- 四个检查器共 13 条规则，每条都做过**故意写错代码的反向验证**，确认不是空转。
+  无障碍那条第一版用固定窗口判断，牙齿测试直接不过（窗口串到了相邻控件的 Text 上），
+  改成按大括号配对确定按钮范围后才通过 —— 这也是为什么每条规则都要反向验证
 
 ---
 

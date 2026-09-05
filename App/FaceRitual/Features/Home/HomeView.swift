@@ -48,6 +48,7 @@ struct HomeView: View {
                 } label: {
                     Image(systemName: "gearshape")
                 }
+                .accessibilityLabel(AppCopy.a11ySettings)
             }
         }
         .fullScreenCover(item: $activeRoutine) { routine in
@@ -172,6 +173,16 @@ struct HomeView: View {
             .cardBackground()
         }
         .buttonStyle(.plain)
+        // 合成一条：否则会被念成「3、rituals、9、minutes、2、days、按钮」。
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(
+            AppCopy.a11yMonthlySummary(
+                rituals: stats.sessionCount,
+                minutes: Int(stats.totalMinutes.rounded()),
+                days: stats.activeDays
+            )
+        )
+        .accessibilityHint(AppCopy.a11yOpensHistory)
     }
 
     private func statCell(value: String, label: String) -> some View {

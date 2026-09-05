@@ -9,6 +9,7 @@ import FaceRitualCore
 struct CoachPlayerView: View {
     @EnvironmentObject private var environment: AppEnvironment
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
     @StateObject private var viewModel: RoutineSessionViewModel
 
     @State private var showExitConfirm = false
@@ -52,6 +53,16 @@ struct CoachPlayerView: View {
         }
         .onAppear { viewModel.start() }
         .onDisappear { viewModel.abandon() }
+        .onChange(of: scenePhase) { _, phase in
+            switch phase {
+            case .active:
+                viewModel.handleReturnedToForeground(viewSize: .zero)
+            case .inactive, .background:
+                viewModel.handleEnteredBackground()
+            @unknown default:
+                break
+            }
+        }
         .statusBarHidden()
     }
 }

@@ -78,13 +78,21 @@ final class ARGuidanceController: ObservableObject {
     var onFaceLockLost: ((GuidanceHint) -> Void)?
     var onFaceLockAcquired: ((Double) -> Void)?
 
-    var lockLossCount: Int { lockTracker.lockLossCount }
-    var timeToFirstLock: Double? { lockTracker.timeToFirstLock }
+    /// 跨会话累计。切后台再回来会重启 provider 并新建 lockTracker，
+    /// 只读当前 tracker 会把之前的丢锁次数清零 —— 那是 POC 报告要的数据，不能丢。
+    private var lockLossBeforeRestart = 0
+
+    var lockLossCount: Int { lockLossBeforeRestart + lockTracker.lockLossCount }
+    /// 只记录**整场会话**的首次锁定耗时（规格 §17 的核心 AR 指标）。
+    /// 切后台再回来重新锁上不算「首次」，否则这个数字会被后台切换污染。
+    private var firstLockSeconds: Double?
+
+    var timeToFirstLock: Double? { firstLockSeconds }
     var performanceSummary: String {
         performance.summaryLine(
             providerID: providerDescriptor.id,
-            lockLossCount: lockTracker.lockLossCount,
-            timeToFirstLock: lockTracker.timeToFirstLock
+            lockLossCount: lockLossCount,
+            timeToFirstLock: firstLockSeconds
         )
     }
     var performanceMonitor: PerformanceMonitor { performance }
@@ -111,7 +119,9 @@ final class ARGuidanceController: ObservableObject {
         smoother.reset()
         lostSince = nil
         continuousLostSeconds = 0
-        hasReportedFirstLock = false
+        // 首次 lock 只报一次：切后台再回来重新锁上不算「首次」，
+        // 否则 timeToFirstLock 这个指标会被后台切换污染。
+        lockLossBeforeRestart += lockTracker.lockLossCount
         lockTracker = FaceLockTracker()
         lockTracker.start(at: CACurrentMediaTime())
         performance.start(targetFrameRate: targetFrameRate)
@@ -200,6 +210,7 @@ final class ARGuidanceController: ObservableObject {
         }
         if let seconds = lockTracker.timeToFirstLock, hasReportedFirstLock == false {
             hasReportedFirstLock = true
+            firstLockSeconds = seconds
             onFaceLockAcquired?(seconds)
         }
 
