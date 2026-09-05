@@ -1,0 +1,81 @@
+name: CI
+
+# 两层：
+#  1. checks —— 不需要 Xcode，任何机器都能跑。开发机是 Windows，日常靠它兜底。
+#  2. build  —— macOS runner 上做真实编译与测试。这是 Windows 上做不到的那部分。
+#
+# build 失败是常态而非意外：M1 阶段大量 Swift 代码从未编译过，
+# 这个 job 的价值就是把「哪里编译不过」变成一份可读的清单。
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: 离线检查（架构 / 内容 / 几何）
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 架构约束与静态检查
+        run: python tools/check_architecture.py
+
+      - name: 内容包校验
+        run: python tools/validate_content.py
+
+      - name: Golden vectors 是否最新
+        # 改了 anchors.json 却忘了重新生成 golden，会让 Swift 测试断言一份过期的期望值。
+        run: python tools/golden/generate_golden.py --check
+
+  core-tests:
+    name: FaceRitualCore 单元测试
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 显示工具链版本
+        run: swift --version
+
+      - name: swift test
+        working-directory: Packages/FaceRitualCore
+        run: swift test --enable-code-coverage
+
+  build:
+    name: iOS App 构建
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 XcodeGen
+        run: brew install xcodegen
+
+      - name: 生成 Xcode 工程
+        run: xcodegen generate
+
+      - name: 构建（模拟器，不签名）
+        run: |
+          xcodebuild build \
+            -project FaceRitual.xcodeproj \
+            -scheme FaceRitual \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            | tee build.log
+
+      - name: 上传构建日志
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+          if-no-files-found: ignore

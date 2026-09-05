@@ -1,0 +1,104 @@
+{
+  "_comment": [
+    "M1 测试 Anchor —— 规格 §8 第一阶段只建 3–5 个。",
+    "目的不是证明医学穴位准确性，而是验证：不同用户的脸上，目标位置能否稳定跟随 Face Geometry。",
+    "全部为纯几何定义，不含任何穴位含义、疗效或医学主张。",
+    "只需定义左侧，右侧由 FaceAnchor.mirroredToOppositeSide() 自动生成。",
+    "坐标约定：dx > 0 朝用户的右侧，dy > 0 朝脸的下方，单位 = 瞳距。",
+    "正式穴位/区域定义由 Owner + 专业资料重新审核后替换本文件。"
+  ],
+  "anchors": [
+    {
+      "id": "glabella_center",
+      "name": "Glabella (眉心区)",
+      "side": "none",
+      "rule": {
+        "type": "offset",
+        "base": {
+          "type": "midpoint",
+          "a": { "type": "landmark", "id": "leftBrowInner" },
+          "b": { "type": "landmark", "id": "rightBrowInner" }
+        },
+        "dx": 0.0,
+        "dy": 0.05
+      },
+      "toleranceRadius": 0.14,
+      "poseConstraints": { "maxYawDegrees": 30, "maxPitchDegrees": 25, "maxRollDegrees": 35 },
+      "confidenceThreshold": 0.5,
+      "reviewStatus": "mock_unreviewed",
+      "version": "0.1.0-mock"
+    },
+    {
+      "id": "brow_inner_left",
+      "name": "Inner Brow Left (左眉头区)",
+      "side": "left",
+      "rule": { "type": "landmark", "id": "leftBrowInner" },
+      "toleranceRadius": 0.12,
+      "poseConstraints": { "maxYawDegrees": 28, "maxPitchDegrees": 22, "maxRollDegrees": 30 },
+      "confidenceThreshold": 0.55,
+      "safetyNote": "靠近眼周。正式内容需专业安全审查后才能定义按压力度与禁忌。",
+      "reviewStatus": "mock_unreviewed",
+      "version": "0.1.0-mock"
+    },
+    {
+      "id": "temple_left",
+      "name": "Temple Left (左太阳穴区)",
+      "side": "left",
+      "rule": {
+        "type": "offset",
+        "base": { "type": "landmark", "id": "leftEyeOuter" },
+        "dx": -0.30,
+        "dy": -0.08
+      },
+      "toleranceRadius": 0.18,
+      "poseConstraints": { "maxYawDegrees": 22, "maxPitchDegrees": 25, "maxRollDegrees": 30 },
+      "confidenceThreshold": 0.5,
+      "reviewStatus": "mock_unreviewed",
+      "version": "0.1.0-mock"
+    },
+    {
+      "id": "cheek_mid_left",
+      "name": "Mid Cheek Left (左中颊区)",
+      "side": "left",
+      "rule": {
+        "type": "offset",
+        "base": {
+          "type": "lerp",
+          "from": { "type": "landmark", "id": "leftEyeCenter" },
+          "to": { "type": "landmark", "id": "mouthLeftCorner" },
+          "t": 0.55
+        },
+        "dx": -0.12,
+        "dy": 0.0
+      },
+      "toleranceRadius": 0.20,
+      "poseConstraints": { "maxYawDegrees": 20, "maxPitchDegrees": 25, "maxRollDegrees": 30 },
+      "confidenceThreshold": 0.5,
+      "reviewStatus": "mock_unreviewed",
+      "version": "0.1.0-mock"
+    },
+    {
+      "id": "jaw_angle_left",
+      "name": "Jaw Angle Left (左下颌角区)",
+      "side": "left",
+      "rule": {
+        "type": "offset",
+        "base": {
+          "type": "weighted",
+          "items": [
+            { "landmark": "leftJawAngle", "weight": 0.7 },
+            { "landmark": "chinCenter", "weight": 0.3 }
+          ]
+        },
+        "dx": 0.0,
+        "dy": 0.0
+      },
+      "toleranceRadius": 0.20,
+      "poseConstraints": { "maxYawDegrees": 18, "maxPitchDegrees": 22, "maxRollDegrees": 28 },
+      "confidenceThreshold": 0.5,
+      "safetyNote": "靠近下颌/颈部。正式内容需专业安全审查与禁忌说明。",
+      "reviewStatus": "mock_unreviewed",
+      "version": "0.1.0-mock"
+    }
+  ]
+}

@@ -1,0 +1,2197 @@
+{
+  "_comment": "由 tools/golden/generate_golden.py 生成。请勿手工编辑。Swift 测试断言自己的 FaceFrame / AnchorResolver / PathSampler 与这里一致。",
+  "generator": "tools/golden/generate_golden.py",
+  "sampleCount": 72,
+  "cases": [
+    {
+      "name": "reference",
+      "eyeMidpoint": [
+        200.0,
+        300.0
+      ],
+      "interocularDistance": 100.0,
+      "rollDegrees": 0.0,
+      "landmarks": {
+        "chinCenter": [
+          200.0,
+          472.0
+        ],
+        "foreheadCenter": [
+          200.0,
+          228.0
+        ],
+        "glabella": [
+          200.0,
+          272.0
+        ],
+        "leftBrowInner": [
+          178.0,
+          268.0
+        ],
+        "leftBrowOuter": [
+          120.0,
+          268.0
+        ],
+        "leftBrowPeak": [
+          148.0,
+          260.0
+        ],
+        "leftCheekbone": [
+          122.0,
+          342.0
+        ],
+        "leftEyeCenter": [
+          150.0,
+          300.0
+        ],
+        "leftEyeInner": [
+          175.0,
+          302.0
+        ],
+        "leftEyeLower": [
+          150.0,
+          310.0
+        ],
+        "leftEyeOuter": [
+          122.0,
+          300.0
+        ],
+        "leftEyeUpper": [
+          150.0,
+          288.0
+        ],
+        "leftJawAngle": [
+          108.0,
+          425.0
+        ],
+        "leftNoseAla": [
+          178.0,
+          370.0
+        ],
+        "leftTemple": [
+          95.0,
+          282.0
+        ],
+        "lowerLipCenter": [
+          200.0,
+          415.0
+        ],
+        "mouthLeftCorner": [
+          158.0,
+          405.0
+        ],
+        "mouthRightCorner": [
+          242.0,
+          405.0
+        ],
+        "noseBridgeMid": [
+          200.0,
+          325.0
+        ],
+        "noseBridgeTop": [
+          200.0,
+          290.0
+        ],
+        "noseTip": [
+          200.0,
+          362.0
+        ],
+        "rightBrowInner": [
+          222.0,
+          268.0
+        ],
+        "rightBrowOuter": [
+          280.0,
+          268.0
+        ],
+        "rightBrowPeak": [
+          252.0,
+          260.0
+        ],
+        "rightCheekbone": [
+          278.0,
+          342.0
+        ],
+        "rightEyeCenter": [
+          250.0,
+          300.0
+        ],
+        "rightEyeInner": [
+          225.0,
+          302.0
+        ],
+        "rightEyeLower": [
+          250.0,
+          310.0
+        ],
+        "rightEyeOuter": [
+          278.0,
+          300.0
+        ],
+        "rightEyeUpper": [
+          250.0,
+          288.0
+        ],
+        "rightJawAngle": [
+          292.0,
+          425.0
+        ],
+        "rightNoseAla": [
+          222.0,
+          370.0
+        ],
+        "rightTemple": [
+          305.0,
+          282.0
+        ],
+        "subnasale": [
+          200.0,
+          378.0
+        ],
+        "upperLipCenter": [
+          200.0,
+          395.0
+        ]
+      },
+      "frame": {
+        "origin": [
+          200.0,
+          300.0
+        ],
+        "xAxis": [
+          1.0,
+          0.0
+        ],
+        "yAxis": [
+          -0.0,
+          1.0
+        ],
+        "scale": 100.0
+      },
+      "anchors": {
+        "brow_inner_left": {
+          "view": [
+            178.0,
+            268.0
+          ],
+          "local": [
+            -0.22,
+            -0.32
+          ],
+          "toleranceRadiusPoints": 12.0
+        },
+        "brow_inner_right": {
+          "view": [
+            222.0,
+            268.0
+          ],
+          "local": [
+            0.22,
+            -0.32
+          ],
+          "toleranceRadiusPoints": 12.0
+        },
+        "cheek_mid_left": {
+          "view": [
+            142.4,
+            357.75
+          ],
+          "local": [
+            -0.576,
+            0.5775
+          ],
+          "toleranceRadiusPoints": 20.0
+        },
+        "cheek_mid_right": {
+          "view": [
+            211.4,
+            357.75
+          ],
+          "local": [
+            0.114,
+            0.5775
+          ],
+          "toleranceRadiusPoints": 20.0
+        },
+        "glabella_center": {
+          "view": [
+            200.0,
+            273.0
+          ],
+          "local": [
+            0.0,
+            -0.27
+          ],
+          "toleranceRadiusPoints": 14.0
+        },
+        "jaw_angle_left": {
+          "view": [
+            135.6,
+            439.1
+          ],
+          "local": [
+            -0.644,
+            1.391
+          ],
+          "toleranceRadiusPoints": 20.0
+        },
+        "jaw_angle_right": {
+          "view": [
+            264.4,
+            439.1
+          ],
+          "local": [
+            0.644,
+            1.391
+          ],
+          "toleranceRadiusPoints": 20.0
+        },
+        "temple_left": {
+          "view": [
+            92.0,
+            292.0
+          ],
+          "local": [
+            -1.08,
+            -0.08
+          ],
+          "toleranceRadiusPoints": 18.0
+        },
+        "temple_right": {
+          "view": [
+            308.0,
+            292.0
+          ],
+          "local": [
+            1.08,
+            -0.08
+          ],
+          "toleranceRadiusPoints": 18.0
+        }
+      },
+      "paths": [
+        {
+          "stepID": "mock_step_01_temple_circles",
+          "kind": "circle",
+          "pointCount": 72,
+          "first": [
+            92.0,
+            272.0
+          ],
+          "middle": [
+            91.115333,
+            311.980425
+          ],
+          "last": [
+            92.0,
+            272.0
+          ],
+          "center": [
+            92.0,
+            292.0
+          ]
+        },
+        {
+          "stepID": "mock_step_02_brow_sweep",
+          "kind": "line",
+          "pointCount": 72,
+          "first": [
+            178.0,
+            268.0
+          ],
+          "middle": [
+            134.394366,
+            280.169014
+          ],
+          "last": [
+            92.0,
+            292.0
+          ],
+          "center": null
+        },
+        {
+          "stepID": "mock_step_03_cheek_lift",
+          "kind": "curve",
+          "pointCount": 72,
+          "first": [
+            142.4,
+            357.75
+          ],
+          "middle": [
+            108.116598,
+            331.102694
+          ],
+          "last": [
+            92.0,
+            292.0
+          ],
+          "center": null
+        },
+        {
+          "stepID": "mock_step_04_jaw_release",
+          "kind": "arc",
+          "pointCount": 72,
+          "first": [
+            135.6,
+            439.1
+          ],
+          "middle": [
+            140.306443,
+            356.469104
+          ],
+          "last": [
+            92.0,
+            292.0
+          ],
+          "center": [
+            26.468857,
+            391.434689
+          ]
+        },
+        {
+          "stepID": "mock_step_05_glabella_hold",
+          "kind": "hold",
+          "pointCount": 1,
+          "first": [
+            200.0,
+            273.0
+          ],
+          "middle": [
+            200.0,
+            273.0
+          ],
+          "last": [
+            200.0,
+            273.0
+          ],
+          "center": null
+        }
+      ]
+    },
+    {
+      "name": "far_small_face",
+      "eyeMidpoint": [
+        200.0,
+        300.0
+      ],
+      "interocularDistance": 42.0,
+      "rollDegrees": 0.0,
+      "landmarks": {
+        "chinCenter": [
+          200.0,
+          372.24
+        ],
+        "foreheadCenter": [
+          200.0,
+          269.76
+        ],
+        "glabella": [
+          200.0,
+          288.24
+        ],
+        "leftBrowInner": [
+          190.76,
+          286.56
+        ],
+        "leftBrowOuter": [
+          166.4,
+          286.56
+        ],
+        "leftBrowPeak": [
+          178.16,
+          283.2
+        ],
+        "leftCheekbone": [
+          167.24,
+          317.64
+        ],
+        "leftEyeCenter": [
+          179.0,
+          300.0
+        ],
+        "leftEyeInner": [
+          189.5,
+          300.84
+        ],
+        "leftEyeLower": [
+          179.0,
+          304.2
+        ],
+        "leftEyeOuter": [
+          167.24,
+          300.0
+        ],
+        "leftEyeUpper": [
+          179.0,
+          294.96
+        ],
+        "leftJawAngle": [
+          161.36,
+          352.5
+        ],
+        "leftNoseAla": [
+          190.76,
+          329.4
+        ],
+        "leftTemple": [
+          155.9,
+          292.44
+        ],
+        "lowerLipCenter": [
+          200.0,
+          348.3
+        ],
+        "mouthLeftCorner": [
+          182.36,
+          344.1
+        ],
+        "mouthRightCorner": [
+          217.64,
+          344.1
+        ],
+        "noseBridgeMid": [
+          200.0,
+          310.5
+        ],
+        "noseBridgeTop": [
+          200.0,
+          295.8
+        ],
+        "noseTip": [
+          200.0,
+          326.04
+        ],
+        "rightBrowInner": [
+          209.24,
+          286.56
+        ],
+        "rightBrowOuter": [
+          233.6,
+          286.56
+        ],
+        "rightBrowPeak": [
+          221.84,
+          283.2
+        ],
+        "rightCheekbone": [
+          232.76,
+          317.64
+        ],
+        "rightEyeCenter": [
+          221.0,
+          300.0
+        ],
+        "rightEyeInner": [
+          210.5,
+          300.84
+        ],
+        "rightEyeLower": [
+          221.0,
+          304.2
+        ],
+        "rightEyeOuter": [
+          232.76,
+          300.0
+        ],
+        "rightEyeUpper": [
+          221.0,
+          294.96
+        ],
+        "rightJawAngle": [
+          238.64,
+          352.5
+        ],
+        "rightNoseAla": [
+          209.24,
+          329.4
+        ],
+        "rightTemple": [
+          244.1,
+          292.44
+        ],
+        "subnasale": [
+          200.0,
+          332.76
+        ],
+        "upperLipCenter": [
+          200.0,
+          339.9
+        ]
+      },
+      "frame": {
+        "origin": [
+          200.0,
+          300.0
+        ],
+        "xAxis": [
+          1.0,
+          0.0
+        ],
+        "yAxis": [
+          -0.0,
+          1.0
+        ],
+        "scale": 42.0
+      },
+      "anchors": {
+        "brow_inner_left": {
+          "view": [
+            190.76,
+            286.56
+          ],
+          "local": [
+            -0.22,
+            -0.32
+          ],
+          "toleranceRadiusPoints": 5.04
+        },
+        "brow_inner_right": {
+          "view": [
+            209.24,
+            286.56
+          ],
+          "local": [
+            0.22,
+            -0.32
+          ],
+          "toleranceRadiusPoints": 5.04
+        },
+        "cheek_mid_left": {
+          "view": [
+            175.808,
+            324.255
+          ],
+          "local": [
+            -0.576,
+            0.5775
+          ],
+          "toleranceRadiusPoints": 8.4
+        },
+        "cheek_mid_right": {
+          "view": [
+            204.788,
+            324.255
+          ],
+          "local": [
+            0.114,
+            0.5775
+          ],
+          "toleranceRadiusPoints": 8.4
+        },
+        "glabella_center": {
+          "view": [
+            200.0,
+            288.66
+          ],
+          "local": [
+            0.0,
+            -0.27
+          ],
+          "toleranceRadiusPoints": 5.88
+        },
+        "jaw_angle_left": {
+          "view": [
+            172.952,
+            358.422
+          ],
+          "local": [
+            -0.644,
+            1.391
+          ],
+          "toleranceRadiusPoints": 8.4
+        },
+        "jaw_angle_right": {
+          "view": [
+            227.048,
+            358.422
+          ],
+          "local": [
+            0.644,
+            1.391
+          ],
+          "toleranceRadiusPoints": 8.4
+        },
+        "temple_left": {
+          "view": [
+            154.64,
+            296.64
+          ],
+          "local": [
+            -1.08,
+            -0.08
+          ],
+          "toleranceRadiusPoints": 7.56
+        },
+        "temple_right": {
+          "view": [
+            245.36,
+            296.64
+          ],
+          "local": [
+            1.08,
+            -0.08
+          ],
+          "toleranceRadiusPoints": 7.56
+        }
+      },
+      "paths": [
+        {
+          "stepID": "mock_step_01_temple_circles",
+          "kind": "circle",
+          "pointCount": 72,
+          "first": [
+            154.64,
+            288.24
+          ],
+          "middle": [
+            154.26844,
+            305.031778
+          ],
+          "last": [
+            154.64,
+            288.24
+          ],
+          "center": [
+            154.64,
+            296.64
+          ]
+        },
+        {
+          "stepID": "mock_step_02_brow_sweep",
+          "kind": "line",
+          "pointCount": 72,
+          "first": [
+            190.76,
+            286.56
+          ],
+          "middle": [
+            172.445634,
+            291.670986
+          ],
+          "last": [
+            154.64,
+            296.64
+          ],
+          "center": null
+        },
+        {
+          "stepID": "mock_step_03_cheek_lift",
+          "kind": "curve",
+          "pointCount": 72,
+          "first": [
+            175.808,
+            324.255
+          ],
+          "middle": [
+            161.408971,
+            313.063132
+          ],
+          "last": [
+            154.64,
+            296.64
+          ],
+          "center": null
+        },
+        {
+          "stepID": "mock_step_04_jaw_release",
+          "kind": "arc",
+          "pointCount": 72,
+          "first": [
+            172.952,
+            358.422
+          ],
+          "middle": [
+            174.928706,
+            323.717024
+          ],
+          "last": [
+            154.64,
+            296.64
+          ],
+          "center": [
+            127.11692,
+            338.40257
+          ]
+        },
+        {
+          "stepID": "mock_step_05_glabella_hold",
+          "kind": "hold",
+          "pointCount": 1,
+          "first": [
+            200.0,
+            288.66
+          ],
+          "middle": [
+            200.0,
+            288.66
+          ],
+          "last": [
+            200.0,
+            288.66
+          ],
+          "center": null
+        }
+      ]
+    },
+    {
+      "name": "near_large_face",
+      "eyeMidpoint": [
+        200.0,
+        300.0
+      ],
+      "interocularDistance": 168.0,
+      "rollDegrees": 0.0,
+      "landmarks": {
+        "chinCenter": [
+          200.0,
+          588.96
+        ],
+        "foreheadCenter": [
+          200.0,
+          179.04
+        ],
+        "glabella": [
+          200.0,
+          252.96
+        ],
+        "leftBrowInner": [
+          163.04,
+          246.24
+        ],
+        "leftBrowOuter": [
+          65.6,
+          246.24
+        ],
+        "leftBrowPeak": [
+          112.64,
+          232.8
+        ],
+        "leftCheekbone": [
+          68.96,
+          370.56
+        ],
+        "leftEyeCenter": [
+          116.0,
+          300.0
+        ],
+        "leftEyeInner": [
+          158.0,
+          303.36
+        ],
+        "leftEyeLower": [
+          116.0,
+          316.8
+        ],
+        "leftEyeOuter": [
+          68.96,
+          300.0
+        ],
+        "leftEyeUpper": [
+          116.0,
+          279.84
+        ],
+        "leftJawAngle": [
+          45.44,
+          510.0
+        ],
+        "leftNoseAla": [
+          163.04,
+          417.6
+        ],
+        "leftTemple": [
+          23.6,
+          269.76
+        ],
+        "lowerLipCenter": [
+          200.0,
+          493.2
+        ],
+        "mouthLeftCorner": [
+          129.44,
+          476.4
+        ],
+        "mouthRightCorner": [
+          270.56,
+          476.4
+        ],
+        "noseBridgeMid": [
+          200.0,
+          342.0
+        ],
+        "noseBridgeTop": [
+          200.0,
+          283.2
+        ],
+        "noseTip": [
+          200.0,
+          404.16
+        ],
+        "rightBrowInner": [
+          236.96,
+          246.24
+        ],
+        "rightBrowOuter": [
+          334.4,
+          246.24
+        ],
+        "rightBrowPeak": [
+          287.36,
+          232.8
+        ],
+        "rightCheekbone": [
+          331.04,
+          370.56
+        ],
+        "rightEyeCenter": [
+          284.0,
+          300.0
+        ],
+        "rightEyeInner": [
+          242.0,
+          303.36
+        ],
+        "rightEyeLower": [
+          284.0,
+          316.8
+        ],
+        "rightEyeOuter": [
+          331.04,
+          300.0
+        ],
+        "rightEyeUpper": [
+          284.0,
+          279.84
+        ],
+        "rightJawAngle": [
+          354.56,
+          510.0
+        ],
+        "rightNoseAla": [
+          236.96,
+          417.6
+        ],
+        "rightTemple": [
+          376.4,
+          269.76
+        ],
+        "subnasale": [
+          200.0,
+          431.04
+        ],
+        "upperLipCenter": [
+          200.0,
+          459.6
+        ]
+      },
+      "frame": {
+        "origin": [
+          200.0,
+          300.0
+        ],
+        "xAxis": [
+          1.0,
+          0.0
+        ],
+        "yAxis": [
+          -0.0,
+          1.0
+        ],
+        "scale": 168.0
+      },
+      "anchors": {
+        "brow_inner_left": {
+          "view": [
+            163.04,
+            246.24
+          ],
+          "local": [
+            -0.22,
+            -0.32
+          ],
+          "toleranceRadiusPoints": 20.16
+        },
+        "brow_inner_right": {
+          "view": [
+            236.96,
+            246.24
+          ],
+          "local": [
+            0.22,
+            -0.32
+          ],
+          "toleranceRadiusPoints": 20.16
+        },
+        "cheek_mid_left": {
+          "view": [
+            103.232,
+            397.02
+          ],
+          "local": [
+            -0.576,
+            0.5775
+          ],
+          "toleranceRadiusPoints": 33.6
+        },
+        "cheek_mid_right": {
+          "view": [
+            219.152,
+            397.02
+          ],
+          "local": [
+            0.114,
+            0.5775
+          ],
+          "toleranceRadiusPoints": 33.6
+        },
+        "glabella_center": {
+          "view": [
+            200.0,
+            254.64
+          ],
+          "local": [
+            0.0,
+            -0.27
+          ],
+          "toleranceRadiusPoints": 23.52
+        },
+        "jaw_angle_left": {
+          "view": [
+            91.808,
+            533.688
+          ],
+          "local": [
+            -0.644,
+            1.391
+          ],
+          "toleranceRadiusPoints": 33.6
+        },
+        "jaw_angle_right": {
+          "view": [
+            308.192,
+            533.688
+          ],
+          "local": [
+            0.644,
+            1.391
+          ],
+          "toleranceRadiusPoints": 33.6
+        },
+        "temple_left": {
+          "view": [
+            18.56,
+            286.56
+          ],
+          "local": [
+            -1.08,
+            -0.08
+          ],
+          "toleranceRadiusPoints": 30.24
+        },
+        "temple_right": {
+          "view": [
+            381.44,
+            286.56
+          ],
+          "local": [
+            1.08,
+            -0.08
+          ],
+          "toleranceRadiusPoints": 30.24
+        }
+      },
+      "paths": [
+        {
+          "stepID": "mock_step_01_temple_circles",
+          "kind": "circle",
+          "pointCount": 72,
+          "first": [
+            18.56,
+            252.96
+          ],
+          "middle": [
+            17.07376,
+            320.127113
+          ],
+          "last": [
+            18.56,
+            252.96
+          ],
+          "center": [
+            18.56,
+            286.56
+          ]
+        },
+        {
+          "stepID": "mock_step_02_brow_sweep",
+          "kind": "line",
+          "pointCount": 72,
+          "first": [
+            163.04,
+            246.24
+          ],
+          "middle": [
+            89.782535,
+            266.683944
+          ],
+          "last": [
+            18.56,
+            286.56
+          ],
+          "center": null
+        },
+        {
+          "stepID": "mock_step_03_cheek_lift",
+          "kind": "curve",
+          "pointCount": 72,
+          "first": [
+            103.232,
+            397.02
+          ],
+          "middle": [
+            45.635885,
+            352.252527
+          ],
+          "last": [
+            18.56,
+            286.56
+          ],
+          "center": null
+        },
+        {
+          "stepID": "mock_step_04_jaw_release",
+          "kind": "arc",
+          "pointCount": 72,
+          "first": [
+            91.808,
+            533.688
+          ],
+          "middle": [
+            99.714825,
+            394.868095
+          ],
+          "last": [
+            18.56,
+            286.56
+          ],
+          "center": [
+            -91.532319,
+            453.610278
+          ]
+        },
+        {
+          "stepID": "mock_step_05_glabella_hold",
+          "kind": "hold",
+          "pointCount": 1,
+          "first": [
+            200.0,
+            254.64
+          ],
+          "middle": [
+            200.0,
+            254.64
+          ],
+          "last": [
+            200.0,
+            254.64
+          ],
+          "center": null
+        }
+      ]
+    },
+    {
+      "name": "offcenter",
+      "eyeMidpoint": [
+        95.0,
+        470.0
+      ],
+      "interocularDistance": 100.0,
+      "rollDegrees": 0.0,
+      "landmarks": {
+        "chinCenter": [
+          95.0,
+          642.0
+        ],
+        "foreheadCenter": [
+          95.0,
+          398.0
+        ],
+        "glabella": [
+          95.0,
+          442.0
+        ],
+        "leftBrowInner": [
+          73.0,
+          438.0
+        ],
+        "leftBrowOuter": [
+          15.0,
+          438.0
+        ],
+        "leftBrowPeak": [
+          43.0,
+          430.0
+        ],
+        "leftCheekbone": [
+          17.0,
+          512.0
+        ],
+        "leftEyeCenter": [
+          45.0,
+          470.0
+        ],
+        "leftEyeInner": [
+          70.0,
+          472.0
+        ],
+        "leftEyeLower": [
+          45.0,
+          480.0
+        ],
+        "leftEyeOuter": [
+          17.0,
+          470.0
+        ],
+        "leftEyeUpper": [
+          45.0,
+          458.0
+        ],
+        "leftJawAngle": [
+          3.0,
+          595.0
+        ],
+        "leftNoseAla": [
+          73.0,
+          540.0
+        ],
+        "leftTemple": [
+          -10.0,
+          452.0
+        ],
+        "lowerLipCenter": [
+          95.0,
+          585.0
+        ],
+        "mouthLeftCorner": [
+          53.0,
+          575.0
+        ],
+        "mouthRightCorner": [
+          137.0,
+          575.0
+        ],
+        "noseBridgeMid": [
+          95.0,
+          495.0
+        ],
+        "noseBridgeTop": [
+          95.0,
+          460.0
+        ],
+        "noseTip": [
+          95.0,
+          532.0
+        ],
+        "rightBrowInner": [
+          117.0,
+          438.0
+        ],
+        "rightBrowOuter": [
+          175.0,
+          438.0
+        ],
+        "rightBrowPeak": [
+          147.0,
+          430.0
+        ],
+        "rightCheekbone": [
+          173.0,
+          512.0
+        ],
+        "rightEyeCenter": [
+          145.0,
+          470.0
+        ],
+        "rightEyeInner": [
+          120.0,
+          472.0
+        ],
+        "rightEyeLower": [
+          145.0,
+          480.0
+        ],
+        "rightEyeOuter": [
+          173.0,
+          470.0
+        ],
+        "rightEyeUpper": [
+          145.0,
+          458.0
+        ],
+        "rightJawAngle": [
+          187.0,
+          595.0
+        ],
+        "rightNoseAla": [
+          117.0,
+          540.0
+        ],
+        "rightTemple": [
+          200.0,
+          452.0
+        ],
+        "subnasale": [
+          95.0,
+          548.0
+        ],
+        "upperLipCenter": [
+          95.0,
+          565.0
+        ]
+      },
+      "frame": {
+        "origin": [
+          95.0,
+          470.0
+        ],
+        "xAxis": [
+          1.0,
+          0.0
+        ],
+        "yAxis": [
+          -0.0,
+          1.0
+        ],
+        "scale": 100.0
+      },
+      "anchors": {
+        "brow_inner_left": {
+          "view": [
+            73.0,
+            438.0
+          ],
+          "local": [
+            -0.22,
+            -0.32
+          ],
+          "toleranceRadiusPoints": 12.0
+        },
+        "brow_inner_right": {
+          "view": [
+            117.0,
+            438.0
+          ],
+          "local": [
+            0.22,
+            -0.32
+          ],
+          "toleranceRadiusPoints": 12.0
+        },
+        "cheek_mid_left": {
+          "view": [
+            37.4,
+            527.75
+          ],
+          "local": [
+            -0.576,
+            0.5775
+          ],
+          "toleranceRadiusPoints": 20.0
+        },
+        "cheek_mid_right": {
+          "view": [
+            106.4,
+            527.75
+          ],
+          "local": [
+            0.114,
+            0.5775
+          ],
+          "toleranceRadiusPoints": 20.0
+        },
+        "glabella_center": {
+          "view": [
+            95.0,
+            443.0
+          ],
+          "local": [
+            0.0,
+            -0.27
+          ],
+          "toleranceRadiusPoints": 14.0
+        },
+        "jaw_angle_left": {
+          "view": [
+            30.6,
+            609.1
+          ],
+          "local": [
+            -0.644,
+            1.391
+          ],
+          "toleranceRadiusPoints": 20.0
+        },
+        "jaw_angle_right": {
+          "view": [
+            159.4,
+            609.1
+          ],
+          "local": [
+            0.644,
+            1.391
+          ],
+          "toleranceRadiusPoints": 20.0
+        },
+        "temple_left": {
+          "view": [
+            -13.0,
+            462.0
+          ],
+          "local": [
+            -1.08,
+            -0.08
+          ],
+          "toleranceRadiusPoints": 18.0
+        },
+        "temple_right": {
+          "view": [
+            203.0,
+            462.0
+          ],
+          "local": [
+            1.08,
+            -0.08
+          ],
+          "toleranceRadiusPoints": 18.0
+        }
+      },
+      "paths": [
+        {
+          "stepID": "mock_step_01_temple_circles",
+          "kind": "circle",
+          "pointCount": 72,
+          "first": [
+            -13.0,
+            442.0
+          ],
+          "middle": [
+            -13.884667,
+            481.980425
+          ],
+          "last": [
+            -13.0,
+            442.0
+          ],
+          "center": [
+            -13.0,
+            462.0
+          ]
+        },
+        {
+          "stepID": "mock_step_02_brow_sweep",
+          "kind": "line",
+          "pointCount": 72,
+          "first": [
+            73.0,
+            438.0
+          ],
+          "middle": [
+            29.394366,
+            450.169014
+          ],
+          "last": [
+            -13.0,
+            462.0
+          ],
+          "center": null
+        },
+        {
+          "stepID": "mock_step_03_cheek_lift",
+          "kind": "curve",
+          "pointCount": 72,
+          "first": [
+            37.4,
+            527.75
+          ],
+          "middle": [
+            3.116598,
+            501.102694
+          ],
+          "last": [
+            -13.0,
+            462.0
+          ],
+          "center": null
+        },
+        {
+          "stepID": "mock_step_04_jaw_release",
+          "kind": "arc",
+          "pointCount": 72,
+          "first": [
+            30.6,
+            609.1
+          ],
+          "middle": [
+            35.306443,
+            526.469104
+          ],
+          "last": [
+            -13.0,
+            462.0
+          ],
+          "center": [
+            -78.531143,
+            561.434689
+          ]
+        },
+        {
+          "stepID": "mock_step_05_glabella_hold",
+          "kind": "hold",
+          "pointCount": 1,
+          "first": [
+            95.0,
+            443.0
+          ],
+          "middle": [
+            95.0,
+            443.0
+          ],
+          "last": [
+            95.0,
+            443.0
+          ],
+          "center": null
+        }
+      ]
+    },
+    {
+      "name": "roll_plus_18",
+      "eyeMidpoint": [
+        200.0,
+        300.0
+      ],
+      "interocularDistance": 100.0,
+      "rollDegrees": 18.0,
+      "landmarks": {
+        "chinCenter": [
+          146.849077,
+          463.581721
+        ],
+        "foreheadCenter": [
+          222.249224,
+          231.523931
+        ],
+        "glabella": [
+          208.652476,
+          273.370418
+        ],
+        "leftBrowInner": [
+          188.9653,
+          262.767818
+        ],
+        "leftBrowOuter": [
+          133.804023,
+          244.844832
+        ],
+        "leftBrowPeak": [
+          162.905741,
+          245.888856
+        ],
+        "leftCheekbone": [
+          112.838878,
+          315.841048
+        ],
+        "leftEyeCenter": [
+          152.447174,
+          284.54915
+        ],
+        "leftEyeInner": [
+          175.605553,
+          294.176688
+        ],
+        "leftEyeLower": [
+          149.357004,
+          294.059715
+        ],
+        "leftEyeOuter": [
+          125.817592,
+          275.896674
+        ],
+        "leftEyeUpper": [
+          156.155378,
+          273.136472
+        ],
+        "leftJawAngle": [
+          73.875676,
+          390.452501
+        ],
+        "leftNoseAla": [
+          157.445567,
+          359.775582
+        ],
+        "leftTemple": [
+          105.701372,
+          250.434198
+        ],
+        "lowerLipCenter": [
+          164.463046,
+          409.371499
+        ],
+        "mouthLeftCorner": [
+          127.608842,
+          386.88222
+        ],
+        "mouthRightCorner": [
+          207.497589,
+          412.839648
+        ],
+        "noseBridgeMid": [
+          192.274575,
+          323.776413
+        ],
+        "noseBridgeTop": [
+          203.09017,
+          290.489435
+        ],
+        "noseTip": [
+          180.840946,
+          358.965504
+        ],
+        "rightBrowInner": [
+          230.811787,
+          276.364565
+        ],
+        "rightBrowOuter": [
+          285.973065,
+          294.287551
+        ],
+        "rightBrowPeak": [
+          261.815619,
+          278.026623
+        ],
+        "rightCheekbone": [
+          261.203695,
+          364.047699
+        ],
+        "rightEyeCenter": [
+          247.552826,
+          315.45085
+        ],
+        "rightEyeInner": [
+          223.158379,
+          309.627538
+        ],
+        "rightEyeLower": [
+          244.462656,
+          324.961415
+        ],
+        "rightEyeOuter": [
+          274.182408,
+          324.103326
+        ],
+        "rightEyeUpper": [
+          251.26103,
+          304.038172
+        ],
+        "rightJawAngle": [
+          248.870075,
+          447.311628
+        ],
+        "rightNoseAla": [
+          199.292054,
+          373.37233
+        ],
+        "rightTemple": [
+          305.42324,
+          315.327767
+        ],
+        "subnasale": [
+          175.896674,
+          374.182408
+        ],
+        "upperLipCenter": [
+          170.643386,
+          390.350369
+        ]
+      },
+      "frame": {
+        "origin": [
+          200.0,
+          300.0
+        ],
+        "xAxis": [
+          0.951057,
+          0.309017
+        ],
+        "yAxis": [
+          -0.309017,
+          0.951057
+        ],
+        "scale": 100.0
+      },
+      "anchors": {
+        "brow_inner_left": {
+          "view": [
+            188.9653,
+            262.767818
+          ],
+          "local": [
+            -0.22,
+            -0.32
+          ],
+          "toleranceRadiusPoints": 12.0
+        },
+        "brow_inner_right": {
+          "view": [
+            230.811787,
+            276.364565
+          ],
+          "local": [
+            0.22,
+            -0.32
+          ],
+          "toleranceRadiusPoints": 12.0
+        },
+        "cheek_mid_left": {
+          "view": [
+            127.373413,
+            337.124135
+          ],
+          "local": [
+            -0.576,
+            0.5775
+          ],
+          "toleranceRadiusPoints": 20.0
+        },
+        "cheek_mid_right": {
+          "view": [
+            192.996313,
+            358.446308
+          ],
+          "local": [
+            0.114,
+            0.5775
+          ],
+          "toleranceRadiusPoints": 20.0
+        },
+        "glabella_center": {
+          "view": [
+            208.343459,
+            274.321474
+          ],
+          "local": [
+            0.0,
+            -0.27
+          ],
+          "toleranceRadiusPoints": 14.0
+        },
+        "jaw_angle_left": {
+          "view": [
+            95.767696,
+            412.391267
+          ],
+          "local": [
+            -0.644,
+            1.391
+          ],
+          "toleranceRadiusPoints": 20.0
+        },
+        "jaw_angle_right": {
+          "view": [
+            218.263776,
+            452.192656
+          ],
+          "local": [
+            0.644,
+            1.391
+          ],
+          "toleranceRadiusPoints": 20.0
+        },
+        "temple_left": {
+          "view": [
+            99.758032,
+            259.017712
+          ],
+          "local": [
+            -1.08,
+            -0.08
+          ],
+          "toleranceRadiusPoints": 18.0
+        },
+        "temple_right": {
+          "view": [
+            305.18624,
+            325.765383
+          ],
+          "local": [
+            1.08,
+            -0.08
+          ],
+          "toleranceRadiusPoints": 18.0
+        }
+      },
+      "paths": [
+        {
+          "stepID": "mock_step_01_temple_circles",
+          "kind": "circle",
+          "pointCount": 72,
+          "first": [
+            105.938372,
+            239.996582
+          ],
+          "middle": [
+            92.742373,
+            277.746848
+          ],
+          "last": [
+            105.938372,
+            239.996582
+          ],
+          "center": [
+            99.758032,
+            259.017712
+          ]
+        },
+        {
+          "stepID": "mock_step_02_brow_sweep",
+          "kind": "line",
+          "pointCount": 72,
+          "first": [
+            188.9653,
+            262.767818
+          ],
+          "middle": [
+            143.733446,
+            260.866356
+          ],
+          "last": [
+            99.758032,
+            259.017712
+          ],
+          "center": null
+        },
+        {
+          "stepID": "mock_step_03_cheek_lift",
+          "kind": "curve",
+          "pointCount": 72,
+          "first": [
+            127.373413,
+            337.124135
+          ],
+          "middle": [
+            103.002431,
+            301.186887
+          ],
+          "last": [
+            99.758032,
+            259.017712
+          ],
+          "center": null
+        },
+        {
+          "stepID": "mock_step_04_jaw_release",
+          "kind": "arc",
+          "pointCount": 72,
+          "first": [
+            95.767696,
+            412.391267
+          ],
+          "middle": [
+            125.778141,
+            335.258986
+          ],
+          "last": [
+            99.758032,
+            259.017712
+          ],
+          "center": [
+            6.707203,
+            333.335485
+          ]
+        },
+        {
+          "stepID": "mock_step_05_glabella_hold",
+          "kind": "hold",
+          "pointCount": 1,
+          "first": [
+            208.343459,
+            274.321474
+          ],
+          "middle": [
+            208.343459,
+            274.321474
+          ],
+          "last": [
+            208.343459,
+            274.321474
+          ],
+          "center": null
+        }
+      ]
+    },
+    {
+      "name": "roll_minus_25",
+      "eyeMidpoint": [
+        210.0,
+        320.0
+      ],
+      "interocularDistance": 88.0,
+      "rollDegrees": -25.0,
+      "landmarks": {
+        "chinCenter": [
+          273.9675,
+          457.178747
+        ],
+        "foreheadCenter": [
+          183.222907,
+          262.576339
+        ],
+        "glabella": [
+          199.586686,
+          297.668576
+        ],
+        "leftBrowInner": [
+          180.552951,
+          302.660262
+        ],
+        "leftBrowOuter": [
+          134.295002,
+          324.230698
+        ],
+        "leftBrowPeak": [
+          153.651193,
+          307.436978
+        ],
+        "leftCheekbone": [
+          163.411004,
+          382.505653
+        ],
+        "leftEyeCenter": [
+          170.122457,
+          338.595204
+        ],
+        "leftEyeInner": [
+          190.805037,
+          330.892703
+        ],
+        "leftEyeLower": [
+          173.841498,
+          346.570712
+        ],
+        "leftEyeOuter": [
+          147.791033,
+          349.008517
+        ],
+        "leftEyeUpper": [
+          165.659609,
+          329.024593
+        ],
+        "leftJawAngle": [
+          183.11333,
+          453.909031
+        ],
+        "leftNoseAla": [
+          218.487166,
+          384.010449
+        ],
+        "leftTemple": [
+          119.562887,
+          344.694012
+        ],
+        "lowerLipCenter": [
+          252.768968,
+          411.718348
+        ],
+        "mouthLeftCorner": [
+          215.552792,
+          419.36281
+        ],
+        "mouthRightCorner": [
+          282.547063,
+          388.122869
+        ],
+        "noseBridgeMid": [
+          219.297602,
+          339.938771
+        ],
+        "noseBridgeTop": [
+          206.280959,
+          312.024491
+        ],
+        "noseTip": [
+          233.058052,
+          369.448153
+        ],
+        "rightBrowInner": [
+          215.645189,
+          286.296483
+        ],
+        "rightBrowOuter": [
+          261.903138,
+          264.726047
+        ],
+        "rightBrowPeak": [
+          236.596482,
+          268.758954
+        ],
+        "rightCheekbone": [
+          287.828937,
+          324.488618
+        ],
+        "rightEyeCenter": [
+          249.877543,
+          301.404796
+        ],
+        "rightEyeInner": [
+          230.682579,
+          312.2975
+        ],
+        "rightEyeLower": [
+          253.596583,
+          309.380305
+        ],
+        "rightEyeOuter": [
+          272.208967,
+          290.991483
+        ],
+        "rightEyeUpper": [
+          245.414694,
+          291.834186
+        ],
+        "rightJawAngle": [
+          329.862687,
+          385.478682
+        ],
+        "rightNoseAla": [
+          253.579404,
+          367.64667
+        ],
+        "rightTemple": [
+          287.048566,
+          266.594157
+        ],
+        "subnasale": [
+          239.008517,
+          382.208967
+        ],
+        "upperLipCenter": [
+          245.330887,
+          395.767331
+        ]
+      },
+      "frame": {
+        "origin": [
+          210.0,
+          320.0
+        ],
+        "xAxis": [
+          0.906308,
+          -0.422618
+        ],
+        "yAxis": [
+          0.422618,
+          0.906308
+        ],
+        "scale": 88.0
+      },
+      "anchors": {
+        "brow_inner_left": {
+          "view": [
+            180.552951,
+            302.660262
+          ],
+          "local": [
+            -0.22,
+            -0.32
+          ],
+          "toleranceRadiusPoints": 10.56
+        },
+        "brow_inner_right": {
+          "view": [
+            215.645189,
+            286.296483
+          ],
+          "local": [
+            0.22,
+            -0.32
+          ],
+          "toleranceRadiusPoints": 10.56
+        },
+        "cheek_mid_left": {
+          "view": [
+            185.538531,
+            387.480236
+          ],
+          "local": [
+            -0.576,
+            0.5775
+          ],
+          "toleranceRadiusPoints": 17.6
+        },
+        "cheek_mid_right": {
+          "view": [
+            240.56954,
+            361.818855
+          ],
+          "local": [
+            0.114,
+            0.5775
+          ],
+          "toleranceRadiusPoints": 17.6
+        },
+        "glabella_center": {
+          "view": [
+            199.95859,
+            298.466127
+          ],
+          "local": [
+            0.0,
+            -0.27
+          ],
+          "toleranceRadiusPoints": 12.32
+        },
+        "jaw_angle_left": {
+          "view": [
+            210.369581,
+            454.889946
+          ],
+          "local": [
+            -0.644,
+            1.391
+          ],
+          "toleranceRadiusPoints": 17.6
+        },
+        "jaw_angle_right": {
+          "view": [
+            313.094131,
+            406.988701
+          ],
+          "local": [
+            0.644,
+            1.391
+          ],
+          "toleranceRadiusPoints": 17.6
+        },
+        "temple_left": {
+          "view": [
+            120.889275,
+            353.785233
+          ],
+          "local": [
+            -1.08,
+            -0.08
+          ],
+          "toleranceRadiusPoints": 15.84
+        },
+        "temple_right": {
+          "view": [
+            293.16026,
+            273.453954
+          ],
+          "local": [
+            1.08,
+            -0.08
+          ],
+          "toleranceRadiusPoints": 15.84
+        }
+      },
+      "paths": [
+        {
+          "stepID": "mock_step_01_temple_circles",
+          "kind": "circle",
+          "pointCount": 72,
+          "first": [
+            113.451194,
+            337.834216
+          ],
+          "middle": [
+            127.61451,
+            370.049649
+          ],
+          "last": [
+            113.451194,
+            337.834216
+          ],
+          "center": [
+            120.889275,
+            353.785233
+          ]
+        },
+        {
+          "stepID": "mock_step_02_brow_sweep",
+          "kind": "line",
+          "pointCount": 72,
+          "first": [
+            180.552951,
+            302.660262
+          ],
+          "middle": [
+            150.300946,
+            328.582783
+          ],
+          "last": [
+            120.889275,
+            353.785233
+          ],
+          "center": null
+        },
+        {
+          "stepID": "mock_step_03_cheek_lift",
+          "kind": "curve",
+          "pointCount": 72,
+          "first": [
+            185.538531,
+            387.480236
+          ],
+          "middle": [
+            148.285533,
+            378.977792
+          ],
+          "last": [
+            120.889275,
+            353.785233
+          ],
+          "center": null
+        },
+        {
+          "stepID": "mock_step_04_jaw_release",
+          "kind": "arc",
+          "pointCount": 72,
+          "first": [
+            210.369581,
+            454.889946
+          ],
+          "middle": [
+            183.392443,
+            387.237259
+          ],
+          "last": [
+            120.889275,
+            353.785233
+          ],
+          "center": [
+            105.605022,
+            457.460753
+          ]
+        },
+        {
+          "stepID": "mock_step_05_glabella_hold",
+          "kind": "hold",
+          "pointCount": 1,
+          "first": [
+            199.95859,
+            298.466127
+          ],
+          "middle": [
+            199.95859,
+            298.466127
+          ],
+          "last": [
+            199.95859,
+            298.466127
+          ],
+          "center": null
+        }
+      ]
+    }
+  ]
+}

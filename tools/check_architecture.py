@@ -1,0 +1,336 @@
+#!/usr/bin/env python3
+"""架构约束检查器 + 轻量 Swift 静态检查。
+
+存在的理由有两个：
+
+1. ARCHITECTURE.md 里那些「必须如此」的约束（Core 不许依赖 ARKit、
+   只有一个文件允许出现 landmark 编号、领域模型里不许有对错判断）
+   如果只写在文档里，迟早会被改掉。这里把它们变成可执行的检查。
+
+2. 这台开发机没有 Swift 工具链。以下几类错误在 Mac 上会直接编译失败，
+   但用纯文本分析就能提前抓到，省一轮 Mac 上的往返：
+   - `@objc` 方法所在的类没继承 NSObject
+   - 用了高于部署目标的 API
+   - 花括号/圆括号不配对
+
+它不是编译器，抓不到类型错误。但它抓到的每一条都是真错。
+
+用法:
+    python tools/check_architecture.py
+退出码 0 = 无 error。
+"""
+
+from __future__ import annotations
+
+import pathlib
+import re
+import sys
+
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+CORE = ROOT / "Packages" / "FaceRitualCore" / "Sources" / "FaceRitualCore"
+APP = ROOT / "App"
+
+issues: list[tuple[str, str, str]] = []
+
+
+def error(where: str, message: str) -> None:
+    issues.append(("error", where, message))
+
+
+def warn(where: str, message: str) -> None:
+    issues.append(("warning", where, message))
+
+
+def rel(path: pathlib.Path) -> str:
+    return str(path.relative_to(ROOT)).replace("\\", "/")
+
+
+def swift_files(base: pathlib.Path) -> list[pathlib.Path]:
+    return sorted(base.rglob("*.swift"))
+
+
+def strip_comments_and_strings(text: str) -> str:
+    """粗略去掉注释与字符串字面量，避免在注释里误报。"""
+    text = re.sub(r"/\*.*?\*/", " ", text, flags=re.DOTALL)
+    text = re.sub(r"//[^\n]*", " ", text)
+    text = re.sub(r'"""(?:.|\n)*?"""', '""', text)
+    text = re.sub(r'"(?:\\.|[^"\\\n])*"', '""', text)
+    return text
+
+
+# ---------------------------------------------------------------------------
+# 1. Core 不得依赖任何 Apple 平台框架
+# ---------------------------------------------------------------------------
+FORBIDDEN_CORE_IMPORTS = {
+    "ARKit", "Vision", "CoreML", "UIKit", "SwiftUI", "AVFoundation",
+    "SceneKit", "Metal", "CoreImage", "QuartzCore", "AppKit", "StoreKit",
+    "UserNotifications", "CoreGraphics", "Combine",
+}
+
+
+def check_core_isolation() -> None:
+    """ARCHITECTURE.md §0：业务层不绑定 provider —— 靠这条编译期隔离保证。"""
+    for path in swift_files(CORE):
+        for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            match = re.match(r"\s*import\s+([A-Za-z_][A-Za-z0-9_]*)", line)
+            if not match:
+                continue
+            module = match.group(1)
+            if module in FORBIDDEN_CORE_IMPORTS:
+                error(
+                    f"{rel(path)}:{lineno}",
+                    f"FaceRitualCore 不得 import {module} —— 它必须保持平台无关"
+                    f"（ARCHITECTURE.md §0）",
+                )
+
+
+# ---------------------------------------------------------------------------
+# 2. 只有一个文件允许出现稠密 landmark 编号
+# ---------------------------------------------------------------------------
+LANDMARK_INDEX_ALLOWLIST = {"App/FaceRitual/FaceAR/Providers/DenseLandmarkLayout.swift"}
+
+
+def check_landmark_index_containment() -> None:
+    """规格 §15：业务层不得依赖某个 landmark provider 的编号。
+
+    检查手段：找 `.imageLeft(` / `.imageRight(` 这类布局槽位语法，
+    以及形如 `Array(36...41)` 的编号区间。真正的编号表只应存在于允许清单里。
+    """
+    pattern = re.compile(r"\b(?:imageLeft|imageRight)\s*\(|Array\(\s*\d+\s*\.\.\.\s*\d+\s*\)")
+    for base in (CORE, APP):
+        for path in swift_files(base):
+            if rel(path) in LANDMARK_INDEX_ALLOWLIST:
+                continue
+            if "Tests" in rel(path):
+                continue
+            body = strip_comments_and_strings(path.read_text(encoding="utf-8"))
+            for lineno, line in enumerate(body.splitlines(), 1):
+                if pattern.search(line):
+                    error(
+                        f"{rel(path)}:{lineno}",
+                        "landmark 编号只允许出现在 DenseLandmarkLayout.swift",
+                    )
+
+
+# ---------------------------------------------------------------------------
+# 3. 领域模型里不得出现「做对/做错」判断
+# ---------------------------------------------------------------------------
+VERDICT_WORDS = re.compile(
+    r"\b(isCorrect|isIncorrect|correctness|isWrong|accuracyScore|"
+    r"movementScore|performanceScore|isPerformedCorrectly)\b"
+)
+
+
+def check_no_correctness_verdict() -> None:
+    """规格 §10：MVP 不承诺实时纠错，领域模型里根本不该有这个概念。"""
+    for base in (CORE, APP):
+        for path in swift_files(base):
+            body = strip_comments_and_strings(path.read_text(encoding="utf-8"))
+            for lineno, line in enumerate(body.splitlines(), 1):
+                if VERDICT_WORDS.search(line):
+                    error(
+                        f"{rel(path)}:{lineno}",
+                        "领域模型不得包含「做对/做错」判断（规格 §10）。"
+                        "如确需实验性纠错，走 MovementSpec.trackingSupport 并逐动作验证。",
+                    )
+
+
+# ---------------------------------------------------------------------------
+# 4. @objc 方法所在的类必须继承 NSObject
+# ---------------------------------------------------------------------------
+CLASS_DECL = re.compile(r"^\s*(?:public\s+|internal\s+|private\s+|fileprivate\s+)?(?:final\s+)?class\s+(\w+)\s*(?::\s*([^{]+))?")
+
+
+def check_objc_requires_nsobject() -> None:
+    """这条在 Mac 上会直接编译失败：
+    'method cannot be marked @objc because its class is not @objc compatible'。
+    CADisplayLink(target:selector:) 是最常见的触发点。
+    """
+    for base in (CORE, APP):
+        for path in swift_files(base):
+            lines = path.read_text(encoding="utf-8").splitlines()
+            current_class: str | None = None
+            current_inherits: list[str] = []
+            class_indent = 0
+
+            for lineno, line in enumerate(lines, 1):
+                decl = CLASS_DECL.match(line)
+                if decl:
+                    current_class = decl.group(1)
+                    current_inherits = [
+                        part.strip() for part in (decl.group(2) or "").split(",") if part.strip()
+                    ]
+                    class_indent = len(line) - len(line.lstrip())
+                    continue
+
+                if current_class and line.strip() and not line.startswith(" " * (class_indent + 1)):
+                    # 缩进回到类声明层级或更外层 → 认为已经离开这个类
+                    if not line.strip().startswith("}"):
+                        current_class = None
+
+                if "@objc" in line and current_class:
+                    # NSObject 或任何以 NS/UI/AV/CA 开头的 ObjC 基类都算合格
+                    ok = any(
+                        base_name == "NSObject" or base_name.startswith(("NS", "UI", "AV", "CA", "SK", "MK"))
+                        for base_name in current_inherits
+                    )
+                    if not ok:
+                        error(
+                            f"{rel(path)}:{lineno}",
+                            f"类 {current_class} 用了 @objc 但没继承 NSObject —— Mac 上会直接编译失败。"
+                            f"当前继承: {current_inherits or '(无)'}",
+                        )
+
+
+# ---------------------------------------------------------------------------
+# 5. API 可用性 vs 部署目标
+# ---------------------------------------------------------------------------
+# 这些 API 需要的最低 iOS 版本。只列我们实际用到、且容易踩的。
+API_MIN_IOS = {
+    r"\.topBarTrailing\b": 17,
+    r"\.topBarLeading\b": 17,
+    r"MainActor\.assumeIsolated\b": 17,
+    r"ContentUnavailableView\b": 17,
+    r"@Observable\b": 17,
+    r"\.scrollContentBackground\b": 16,
+    r"NavigationStack\b": 16,
+    r"\.contentTransition\b": 16,
+}
+
+# onChange 的双参数版是 iOS 17；单参数版在 17 起废弃。单独处理。
+ONCHANGE_TWO_PARAM = re.compile(r"\.onChange\s*\(\s*of:[^)]*\)\s*\{\s*[^,{}]+,\s*[^,{}]+\s+in")
+
+
+def deployment_target() -> int:
+    text = (ROOT / "project.yml").read_text(encoding="utf-8")
+    match = re.search(r'IPHONEOS_DEPLOYMENT_TARGET:\s*"?(\d+)', text)
+    return int(match.group(1)) if match else 0
+
+
+def check_api_availability() -> None:
+    target = deployment_target()
+    if target == 0:
+        warn("project.yml", "读不到 IPHONEOS_DEPLOYMENT_TARGET，跳过 API 可用性检查")
+        return
+
+    for path in swift_files(APP):
+        body = strip_comments_and_strings(path.read_text(encoding="utf-8"))
+        for lineno, line in enumerate(body.splitlines(), 1):
+            for pattern, min_ios in API_MIN_IOS.items():
+                if re.search(pattern, line) and min_ios > target:
+                    error(
+                        f"{rel(path)}:{lineno}",
+                        f"{pattern.strip('\\b')} 需要 iOS {min_ios}，"
+                        f"但部署目标是 iOS {target}",
+                    )
+            if ONCHANGE_TWO_PARAM.search(line) and target < 17:
+                error(
+                    f"{rel(path)}:{lineno}",
+                    f"onChange 的双参数闭包需要 iOS 17，但部署目标是 iOS {target}。"
+                    f"改用单参数版或提高部署目标。",
+                )
+
+    # 反向检查：目标 >= 17 时不该再用已废弃的单参数 onChange
+    if target >= 17:
+        single = re.compile(r"\.onChange\s*\(\s*of:[^)]*\)\s*\{\s*[A-Za-z_][\w]*\s+in")
+        for path in swift_files(APP):
+            body = strip_comments_and_strings(path.read_text(encoding="utf-8"))
+            for lineno, line in enumerate(body.splitlines(), 1):
+                if single.search(line) and not ONCHANGE_TWO_PARAM.search(line):
+                    warn(f"{rel(path)}:{lineno}", "onChange 单参数版在 iOS 17 起已废弃")
+
+
+# ---------------------------------------------------------------------------
+# 6. 括号配对
+# ---------------------------------------------------------------------------
+def check_bracket_balance() -> None:
+    for base in (CORE, APP):
+        for path in swift_files(base):
+            body = strip_comments_and_strings(path.read_text(encoding="utf-8"))
+            for opener, closer, name in (("{", "}", "花括号"), ("(", ")", "圆括号"), ("[", "]", "方括号")):
+                delta = body.count(opener) - body.count(closer)
+                if delta != 0:
+                    error(
+                        rel(path),
+                        f"{name}不配对：{opener} 比 {closer} 多 {delta} 个"
+                        if delta > 0
+                        else f"{name}不配对：{closer} 比 {opener} 多 {-delta} 个",
+                    )
+
+
+# ---------------------------------------------------------------------------
+# 7. 动作内容不得硬编码进 Swift
+# ---------------------------------------------------------------------------
+def check_no_hardcoded_content() -> None:
+    """Owner 指令：不能把任何测试动作硬编码进 UI 或业务逻辑。
+
+    检查手段：内容 JSON 里的 routine / step id 不应出现在 Swift 源码里
+    （测试与示意图布局除外 —— 它们本来就要引用具体 id）。
+    """
+    import json
+
+    content_dir = CORE / "Resources"
+    routines = json.loads((content_dir / "routines.json").read_text(encoding="utf-8"))
+    ids = set()
+    for routine in routines["routines"]:
+        ids.add(routine["id"])
+        for step in routine["steps"]:
+            ids.add(step["id"])
+
+    allow = {
+        "Packages/FaceRitualCore/Tests",       # 测试当然要引用具体 id
+        "App/FaceRitualTests",
+    }
+    for base in (CORE, APP):
+        for path in swift_files(base):
+            relpath = rel(path)
+            if any(relpath.startswith(prefix) for prefix in allow):
+                continue
+            text = path.read_text(encoding="utf-8")
+            for content_id in ids:
+                if f'"{content_id}"' in text:
+                    error(
+                        relpath,
+                        f"内容 id {content_id!r} 被硬编码进了 Swift。"
+                        f"动作内容必须只存在于 Resources/*.json。",
+                    )
+
+
+# ---------------------------------------------------------------------------
+def main() -> int:
+    print("架构与静态检查\n")
+
+    checks = [
+        ("Core 平台隔离", check_core_isolation),
+        ("landmark 编号收敛", check_landmark_index_containment),
+        ("无对错判断（规格 §10）", check_no_correctness_verdict),
+        ("@objc 需 NSObject", check_objc_requires_nsobject),
+        ("API 可用性 vs 部署目标", check_api_availability),
+        ("括号配对", check_bracket_balance),
+        ("动作内容零硬编码", check_no_hardcoded_content),
+    ]
+
+    for name, check in checks:
+        before = len(issues)
+        check()
+        added = len(issues) - before
+        status = "OK" if added == 0 else f"{added} 个问题"
+        print(f"  [{status:>8}] {name}")
+
+    errors = [i for i in issues if i[0] == "error"]
+    warnings = [i for i in issues if i[0] == "warning"]
+
+    if issues:
+        print()
+        for severity, where, message in issues:
+            print(f"  [{severity}] {where}\n           {message}")
+
+    core_count = len(swift_files(CORE))
+    app_count = len(swift_files(APP))
+    print(f"\n已检查 {core_count + app_count} 个 Swift 文件（Core {core_count} / App {app_count}）")
+    print(f"errors={len(errors)} warnings={len(warnings)}")
+    return 1 if errors else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

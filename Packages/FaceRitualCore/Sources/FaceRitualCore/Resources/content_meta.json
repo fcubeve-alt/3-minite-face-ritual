@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "contentVersion": "0.1.0-mock",
+  "reviewStatus": "mock_unreviewed",
+  "note": "M1 测试内容包。全部动作与位置均为占位 Mock Data，仅用于验证 App 系统、Routine Player 与 AR 链路是否跑通。不代表任何按摩方法、穴位定义或护理功效。正式内容由 Owner + 专业人员重新筛选与审核后替换本文件，代码无需改动。"
+}

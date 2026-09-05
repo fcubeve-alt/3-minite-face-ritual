@@ -1,0 +1,403 @@
+{
+  "_comment": [
+    "M1 测试 Routine —— 全部为占位 Mock Data。",
+    "存在的唯一目的：验证 Home → START → Coach/AR Mirror → Routine Player → 自动计时/换动作 → Done → 保存记录 这条闭环，",
+    "以及 Movement Specification 能否驱动 AR Overlay Renderer。",
+    "这里的动作名称、顺序、时长、路径都不是专业设计，不代表任何按摩方法或功效。",
+    "正式动作清单由 Owner + 专业人员重新筛选和人工审核后替换本文件，UI 与播放器代码无需改动。",
+    "anchor 引用只写 _left，播放器按当前段的解剖学侧自动改写为 _right。"
+  ],
+  "routines": [
+    {
+      "id": "morning_core",
+      "title": "Morning Ritual",
+      "subtitle": "Mock routine · 系统联调用",
+      "type": "morning",
+      "isPremium": false,
+      "reviewStatus": "mock_unreviewed",
+      "version": "0.1.0-mock",
+      "safetyNote": "测试内容，未经专业审核。正式发布前必须完成安全审查与禁忌说明。",
+      "steps": [
+        {
+          "id": "mock_step_01_temple_circles",
+          "title": "Temple Circles",
+          "mediaAsset": "coach_placeholder_01",
+          "durationSeconds": 36,
+          "side": "leftThenRight",
+          "shortCue": "Slow circles at the temple",
+          "voiceCue": "Slow circles at your temple.",
+          "hapticCue": "cycle",
+          "movement": {
+            "startAnchor": "temple_left",
+            "pathType": "circle",
+            "pathGeometry": { "radius": 0.20, "sweepDegrees": 360, "clockwise": true },
+            "direction": "clockwise",
+            "gestureHint": "twoFinger",
+            "tempo": 20,
+            "repetitions": 6,
+            "occlusionPolicy": "continueGuidance",
+            "trackingSupport": "guidanceOnly",
+            "version": "0.1.0-mock"
+          },
+          "reviewStatus": "mock_unreviewed",
+          "version": "0.1.0-mock"
+        },
+        {
+          "id": "mock_step_02_brow_sweep",
+          "title": "Brow Sweep",
+          "mediaAsset": "coach_placeholder_02",
+          "durationSeconds": 36,
+          "side": "leftThenRight",
+          "shortCue": "Sweep outward along the brow",
+          "voiceCue": "Sweep outward along the brow.",
+          "hapticCue": "cycle",
+          "movement": {
+            "startAnchor": "brow_inner_left",
+            "endAnchor": "temple_left",
+            "pathType": "line",
+            "direction": "outward",
+            "gestureHint": "fingertips",
+            "tempo": 20,
+            "repetitions": 6,
+            "occlusionPolicy": "continueGuidance",
+            "trackingSupport": "guidanceOnly",
+            "version": "0.1.0-mock"
+          },
+          "safetyNote": "眼周区域。正式内容需专业安全审查。",
+          "reviewStatus": "mock_unreviewed",
+          "version": "0.1.0-mock"
+        },
+        {
+          "id": "mock_step_03_cheek_lift",
+          "title": "Cheek Lift",
+          "mediaAsset": "coach_placeholder_03",
+          "durationSeconds": 36,
+          "side": "leftThenRight",
+          "shortCue": "Lift from cheek toward temple",
+          "voiceCue": "Lift from the cheek up toward the temple.",
+          "hapticCue": "cycle",
+          "movement": {
+            "startAnchor": "cheek_mid_left",
+            "endAnchor": "temple_left",
+            "pathType": "curve",
+            "pathGeometry": {
+              "controlOffsets": [{ "along": 0.5, "perpendicular": -0.22 }]
+            },
+            "direction": "upward",
+            "gestureHint": "twoFinger",
+            "tempo": 15,
+            "repetitions": 4,
+            "occlusionPolicy": "continueGuidance",
+            "trackingSupport": "guidanceOnly",
+            "version": "0.1.0-mock"
+          },
+          "reviewStatus": "mock_unreviewed",
+          "version": "0.1.0-mock"
+        },
+        {
+          "id": "mock_step_04_jaw_release",
+          "title": "Jaw Release",
+          "mediaAsset": "coach_placeholder_04",
+          "durationSeconds": 36,
+          "side": "leftThenRight",
+          "shortCue": "Arc from jaw angle up to temple",
+          "voiceCue": "Trace an arc from the jaw up to the temple.",
+          "hapticCue": "cycle",
+          "movement": {
+            "startAnchor": "jaw_angle_left",
+            "endAnchor": "temple_left",
+            "pathType": "arc",
+            "pathGeometry": {
+              "controlOffsets": [{ "along": 0.5, "perpendicular": 0.28 }]
+            },
+            "direction": "upward",
+            "gestureHint": "fingertips",
+            "tempo": 12,
+            "repetitions": 3,
+            "occlusionPolicy": "continueGuidance",
+            "trackingSupport": "guidanceOnly",
+            "version": "0.1.0-mock"
+          },
+          "safetyNote": "下颌/颈部区域。正式内容需专业安全审查与禁忌说明。",
+          "reviewStatus": "mock_unreviewed",
+          "version": "0.1.0-mock"
+        },
+        {
+          "id": "mock_step_05_glabella_hold",
+          "title": "Glabella Hold",
+          "mediaAsset": "coach_placeholder_05",
+          "durationSeconds": 36,
+          "side": "none",
+          "shortCue": "Rest one finger between the brows",
+          "voiceCue": "Rest one finger between your brows and breathe.",
+          "hapticCue": "hold",
+          "movement": {
+            "startAnchor": "glabella_center",
+            "pathType": "hold",
+            "direction": "none",
+            "gestureHint": "singleFinger",
+            "holdSeconds": 6,
+            "tempo": 10,
+            "repetitions": 6,
+            "occlusionPolicy": "continueGuidance",
+            "trackingSupport": "guidanceOnly",
+            "version": "0.1.0-mock"
+          },
+          "reviewStatus": "mock_unreviewed",
+          "version": "0.1.0-mock"
+        }
+      ]
+    },
+    {
+      "id": "evening_core",
+      "title": "Evening Ritual",
+      "subtitle": "Mock routine · 骨架占位",
+      "type": "evening",
+      "isPremium": true,
+      "reviewStatus": "mock_unreviewed",
+      "version": "0.1.0-mock",
+      "safetyNote": "测试内容，未经专业审核。",
+      "steps": [
+        {
+          "id": "mock_evening_01",
+          "title": "Jaw Release",
+          "mediaAsset": "coach_placeholder_04",
+          "durationSeconds": 60,
+          "side": "leftThenRight",
+          "shortCue": "Slow arc along the jaw",
+          "voiceCue": "Slow arc along the jaw.",
+          "movement": {
+            "startAnchor": "jaw_angle_left",
+            "endAnchor": "temple_left",
+            "pathType": "arc",
+            "pathGeometry": { "controlOffsets": [{ "along": 0.5, "perpendicular": 0.28 }] },
+            "direction": "upward",
+            "gestureHint": "fingertips",
+            "tempo": 10,
+            "repetitions": 5,
+            "version": "0.1.0-mock"
+          },
+          "reviewStatus": "mock_unreviewed"
+        },
+        {
+          "id": "mock_evening_02",
+          "title": "Cheek Release",
+          "mediaAsset": "coach_placeholder_03",
+          "durationSeconds": 60,
+          "side": "leftThenRight",
+          "shortCue": "Slow lift along the cheek",
+          "voiceCue": "Slow lift along the cheek.",
+          "movement": {
+            "startAnchor": "cheek_mid_left",
+            "endAnchor": "temple_left",
+            "pathType": "curve",
+            "pathGeometry": { "controlOffsets": [{ "along": 0.5, "perpendicular": -0.22 }] },
+            "direction": "upward",
+            "gestureHint": "twoFinger",
+            "tempo": 10,
+            "repetitions": 5,
+            "version": "0.1.0-mock"
+          },
+          "reviewStatus": "mock_unreviewed"
+        },
+        {
+          "id": "mock_evening_03",
+          "title": "Temple Circles",
+          "mediaAsset": "coach_placeholder_01",
+          "durationSeconds": 60,
+          "side": "leftThenRight",
+          "shortCue": "Slow circles at the temple",
+          "voiceCue": "Slow circles at the temple.",
+          "movement": {
+            "startAnchor": "temple_left",
+            "pathType": "circle",
+            "pathGeometry": { "radius": 0.20, "sweepDegrees": 360, "clockwise": false },
+            "direction": "counterClockwise",
+            "gestureHint": "twoFinger",
+            "tempo": 15,
+            "repetitions": 7,
+            "version": "0.1.0-mock"
+          },
+          "reviewStatus": "mock_unreviewed"
+        },
+        {
+          "id": "mock_evening_04",
+          "title": "Brow Sweep",
+          "mediaAsset": "coach_placeholder_02",
+          "durationSeconds": 60,
+          "side": "leftThenRight",
+          "shortCue": "Sweep outward along the brow",
+          "voiceCue": "Sweep outward along the brow.",
+          "movement": {
+            "startAnchor": "brow_inner_left",
+            "endAnchor": "temple_left",
+            "pathType": "line",
+            "direction": "outward",
+            "gestureHint": "fingertips",
+            "tempo": 12,
+            "repetitions": 6,
+            "version": "0.1.0-mock"
+          },
+          "reviewStatus": "mock_unreviewed"
+        },
+        {
+          "id": "mock_evening_05",
+          "title": "Glabella Hold",
+          "mediaAsset": "coach_placeholder_05",
+          "durationSeconds": 60,
+          "side": "none",
+          "shortCue": "Rest one finger between the brows",
+          "voiceCue": "Rest one finger between your brows and breathe.",
+          "movement": {
+            "startAnchor": "glabella_center",
+            "pathType": "hold",
+            "gestureHint": "singleFinger",
+            "holdSeconds": 10,
+            "tempo": 6,
+            "repetitions": 6,
+            "version": "0.1.0-mock"
+          },
+          "reviewStatus": "mock_unreviewed"
+        }
+      ]
+    },
+    {
+      "id": "quick_depuff",
+      "title": "De-Puff",
+      "subtitle": "Mock routine",
+      "type": "quick",
+      "isPremium": true,
+      "reviewStatus": "mock_unreviewed",
+      "version": "0.1.0-mock",
+      "steps": [
+        {
+          "id": "mock_depuff_01",
+          "title": "Brow Sweep",
+          "mediaAsset": "coach_placeholder_02",
+          "durationSeconds": 60,
+          "side": "leftThenRight",
+          "shortCue": "Sweep outward along the brow",
+          "movement": {
+            "startAnchor": "brow_inner_left",
+            "endAnchor": "temple_left",
+            "pathType": "line",
+            "direction": "outward",
+            "gestureHint": "fingertips",
+            "tempo": 20,
+            "repetitions": 10,
+            "version": "0.1.0-mock"
+          },
+          "reviewStatus": "mock_unreviewed"
+        },
+        {
+          "id": "mock_depuff_02",
+          "title": "Cheek Lift",
+          "mediaAsset": "coach_placeholder_03",
+          "durationSeconds": 60,
+          "side": "leftThenRight",
+          "shortCue": "Lift from cheek toward temple",
+          "movement": {
+            "startAnchor": "cheek_mid_left",
+            "endAnchor": "temple_left",
+            "pathType": "curve",
+            "pathGeometry": { "controlOffsets": [{ "along": 0.5, "perpendicular": -0.22 }] },
+            "direction": "upward",
+            "gestureHint": "twoFinger",
+            "tempo": 15,
+            "repetitions": 8,
+            "version": "0.1.0-mock"
+          },
+          "reviewStatus": "mock_unreviewed"
+        },
+        {
+          "id": "mock_depuff_03",
+          "title": "Jaw Release",
+          "mediaAsset": "coach_placeholder_04",
+          "durationSeconds": 60,
+          "side": "leftThenRight",
+          "shortCue": "Arc from jaw angle up to temple",
+          "movement": {
+            "startAnchor": "jaw_angle_left",
+            "endAnchor": "temple_left",
+            "pathType": "arc",
+            "pathGeometry": { "controlOffsets": [{ "along": 0.5, "perpendicular": 0.28 }] },
+            "direction": "upward",
+            "gestureHint": "fingertips",
+            "tempo": 12,
+            "repetitions": 6,
+            "version": "0.1.0-mock"
+          },
+          "reviewStatus": "mock_unreviewed"
+        }
+      ]
+    },
+    {
+      "id": "quick_tired_eyes",
+      "title": "Tired Eyes",
+      "subtitle": "Mock routine",
+      "type": "quick",
+      "isPremium": true,
+      "reviewStatus": "mock_unreviewed",
+      "version": "0.1.0-mock",
+      "safetyNote": "眼周区域。正式内容需专业安全审查与禁忌说明。",
+      "steps": [
+        {
+          "id": "mock_eyes_01",
+          "title": "Temple Circles",
+          "mediaAsset": "coach_placeholder_01",
+          "durationSeconds": 60,
+          "side": "leftThenRight",
+          "shortCue": "Slow circles at the temple",
+          "movement": {
+            "startAnchor": "temple_left",
+            "pathType": "circle",
+            "pathGeometry": { "radius": 0.18, "sweepDegrees": 360, "clockwise": true },
+            "direction": "clockwise",
+            "gestureHint": "twoFinger",
+            "tempo": 20,
+            "repetitions": 10,
+            "version": "0.1.0-mock"
+          },
+          "reviewStatus": "mock_unreviewed"
+        },
+        {
+          "id": "mock_eyes_02",
+          "title": "Inner Brow Hold",
+          "mediaAsset": "coach_placeholder_05",
+          "durationSeconds": 60,
+          "side": "leftThenRight",
+          "shortCue": "Rest a finger at the inner brow",
+          "movement": {
+            "startAnchor": "brow_inner_left",
+            "pathType": "hold",
+            "gestureHint": "singleFinger",
+            "holdSeconds": 6,
+            "tempo": 10,
+            "repetitions": 5,
+            "version": "0.1.0-mock"
+          },
+          "safetyNote": "眼周区域。",
+          "reviewStatus": "mock_unreviewed"
+        },
+        {
+          "id": "mock_eyes_03",
+          "title": "Glabella Hold",
+          "mediaAsset": "coach_placeholder_05",
+          "durationSeconds": 60,
+          "side": "none",
+          "shortCue": "Rest one finger between the brows",
+          "movement": {
+            "startAnchor": "glabella_center",
+            "pathType": "hold",
+            "gestureHint": "singleFinger",
+            "holdSeconds": 8,
+            "tempo": 8,
+            "repetitions": 8,
+            "version": "0.1.0-mock"
+          },
+          "reviewStatus": "mock_unreviewed"
+        }
+      ]
+    }
+  ]
+}
