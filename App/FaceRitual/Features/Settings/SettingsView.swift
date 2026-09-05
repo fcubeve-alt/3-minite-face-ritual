@@ -18,27 +18,27 @@ struct SettingsView: View {
         }
         .scrollContentBackground(.hidden)
         .background(Theme.background)
-        .navigationTitle("Settings")
+        .navigationTitle(AppCopy.settingsTitle)
         .navigationBarTitleDisplayMode(.inline)
-        .alert("清除所有练习记录？", isPresented: $showResetConfirm) {
-            Button("取消", role: .cancel) {}
-            Button("清除", role: .destructive) {
+        .alert(AppCopy.clearHistoryTitle, isPresented: $showResetConfirm) {
+            Button(AppCopy.cancel, role: .cancel) {}
+            Button(AppCopy.clearHistoryConfirm, role: .destructive) {
                 try? environment.practiceStore.deleteAll()
             }
         } message: {
-            Text("此操作不可撤销。")
+            Text(AppCopy.clearHistoryMessage)
         }
     }
 
     // MARK: - 分区
 
     private var practiceSection: some View {
-        Section("Practice") {
-            Toggle("语音提示", isOn: Binding(
+        Section(AppCopy.sectionPractice) {
+            Toggle(AppCopy.voiceCues, isOn: Binding(
                 get: { settings.voiceEnabled },
                 set: { settings.voiceEnabled = $0; environment.syncFeedbackSettings() }
             ))
-            Toggle("震动反馈", isOn: Binding(
+            Toggle(AppCopy.haptics, isOn: Binding(
                 get: { settings.hapticsEnabled },
                 set: { settings.hapticsEnabled = $0; environment.syncFeedbackSettings() }
             ))
@@ -51,9 +51,9 @@ struct SettingsView: View {
                 reminderRow(kind)
             }
         } header: {
-            Text("Reminders")
+            Text(AppCopy.sectionReminders)
         } footer: {
-            Text("提醒只是轻轻提示你照顾一下自己；错过了不会有任何惩罚。")
+            Text(AppCopy.remindersFooter)
         }
     }
 
@@ -74,7 +74,7 @@ struct SettingsView: View {
             ))
             if setting.isEnabled {
                 DatePicker(
-                    "时间",
+                    AppCopy.reminderTime,
                     selection: Binding(
                         get: {
                             Calendar.current.date(
@@ -99,56 +99,49 @@ struct SettingsView: View {
     private var subscriptionSection: some View {
         Section {
             HStack {
-                Text("当前状态")
+                Text(AppCopy.subscriptionStatus)
                 Spacer()
-                Text(environment.entitlementLevel == .premium ? "Premium" : "Free")
+                Text(environment.entitlementLevel == .premium ? AppCopy.statusPremium : AppCopy.statusFree)
                     .foregroundStyle(Theme.textSecondary)
             }
-            if let mock = environment.entitlement as? MockEntitlementService {
-                Toggle("Mock Unlock（开发用）", isOn: Binding(
-                    get: { environment.entitlementLevel == .premium },
-                    set: { unlocked in
-                        mock.setMockUnlocked(unlocked)
-                        environment.analytics.track(.mockUnlockToggled(enabled: unlocked))
-                    }
-                ))
-            }
         } header: {
-            Text("Subscription")
-        } footer: {
-            Text("M1 阶段使用 Mock Unlock。真实订阅（StoreKit）已接线但未启用；最终价格与条款是 Owner 待决策项。")
+            Text(AppCopy.sectionSubscription)
         }
     }
 
     private var cameraSection: some View {
         Section {
             HStack {
-                Text("摄像头权限")
+                Text(AppCopy.cameraPermission)
                 Spacer()
                 Text(cameraStatusText)
                     .foregroundStyle(Theme.textSecondary)
             }
-            Button("在系统设置中管理") { CameraPermission.openSettings() }
-            Toggle("镜像预览（像照镜子）", isOn: Binding(
+            Button(AppCopy.manageInSystemSettings) { CameraPermission.openSettings() }
+            Toggle(AppCopy.mirrorPreview, isOn: Binding(
                 get: { settings.mirrorPreview },
                 set: { settings.mirrorPreview = $0 }
             ))
         } header: {
-            Text("Camera")
+            Text(AppCopy.sectionCamera)
         } footer: {
-            Text("摄像头只在你主动打开 AR Mirror 时才会启用，随时可以关闭。Coach 模式完全不使用摄像头。")
+            Text(AppCopy.cameraFooter)
         }
     }
 
     private var cameraStatusText: String {
         switch CameraPermission.status {
-        case .authorized: return "已允许"
-        case .denied: return "已拒绝"
-        case .restricted: return "受限"
-        case .notDetermined: return "未询问"
+        case .authorized: return AppCopy.permissionAllowed
+        case .denied: return AppCopy.permissionDenied
+        case .restricted: return AppCopy.permissionRestricted
+        case .notDetermined: return AppCopy.permissionNotAsked
         }
     }
 
+    /// 开发面。只有团队会看，保留中文；用户面文案统一在 `AppCopy`。
+    ///
+    /// Mock Unlock 放在这里而不是 Subscription 区：它是开发开关，
+    /// 普通用户不该在订阅设置里看到「Mock」这种字眼。
     private var developerSection: some View {
         Section {
             Picker("Face Alignment Provider", selection: Binding(
@@ -163,30 +156,40 @@ struct SettingsView: View {
                 get: { settings.showDebugOverlay },
                 set: { settings.showDebugOverlay = $0 }
             ))
+            if let mock = environment.entitlement as? MockEntitlementService {
+                Toggle("Mock Unlock（跳过付费墙）", isOn: Binding(
+                    get: { environment.entitlementLevel == .premium },
+                    set: { unlocked in
+                        mock.setMockUnlocked(unlocked)
+                        environment.analytics.track(.mockUnlockToggled(enabled: unlocked))
+                    }
+                ))
+            }
             NavigationLink("Provider / 内容诊断") {
                 DebugView()
             }
         } header: {
             Text("Developer")
         } footer: {
-            Text("Provider 可运行时切换，用于 AR POC 的三方横评。切换后下次开始 AR Mirror 生效。")
+            Text("Provider 可运行时切换，用于 AR POC 的三方横评，切换后下次开始 AR Mirror 生效。"
+                 + "订阅走 Mock Unlock；真实 StoreKit 已接线但未启用，最终价格与条款是 Owner 待决策项。")
         }
     }
 
     private var aboutSection: some View {
         Section {
             HStack {
-                Text("内容版本")
+                Text(AppCopy.contentVersion)
                 Spacer()
                 Text(environment.content.meta.contentVersion)
                     .font(.system(.body, design: .monospaced))
                     .foregroundStyle(Theme.textSecondary)
             }
-            Button("清除练习记录", role: .destructive) { showResetConfirm = true }
+            Button(AppCopy.clearHistory, role: .destructive) { showResetConfirm = true }
         } header: {
-            Text("About")
+            Text(AppCopy.sectionAbout)
         } footer: {
-            Text("本 App 提供的是日常护理引导，不构成医学诊断、治疗建议或疗效承诺。")
+            Text(AppCopy.medicalDisclaimer)
         }
     }
 }

@@ -25,7 +25,7 @@ struct DoneView: View {
                     .foregroundStyle(session.completed ? Theme.accent : Theme.textSecondary)
 
                 VStack(spacing: 8) {
-                    Text(session.completed ? "Done." : "Saved.")
+                    Text(session.completed ? AppCopy.doneTitle : AppCopy.savedTitle)
                         .font(.system(size: 32, weight: .semibold))
                         .foregroundStyle(Theme.textPrimary)
                     Text(summaryLine)
@@ -42,7 +42,7 @@ struct DoneView: View {
 
                 Spacer()
 
-                Button("Back to home") { dismiss() }
+                Button(AppCopy.backToHome) { dismiss() }
                     .buttonStyle(PrimaryButtonStyle())
                     .padding(.horizontal, 24)
                     .padding(.bottom, 24)
@@ -60,11 +60,11 @@ struct DoneView: View {
 
     private var monthCard: some View {
         HStack(spacing: 0) {
-            monthCell(value: "\(stats.sessionCount)", label: "this month")
+            monthCell(value: "\(stats.sessionCount)", label: AppCopy.thisMonthShort)
             divider
-            monthCell(value: "\(Int(stats.totalMinutes.rounded()))", label: "minutes")
+            monthCell(value: "\(Int(stats.totalMinutes.rounded()))", label: AppCopy.statMinutes)
             divider
-            monthCell(value: "\(stats.activeDays)", label: "days")
+            monthCell(value: "\(stats.activeDays)", label: AppCopy.statDays)
         }
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity)

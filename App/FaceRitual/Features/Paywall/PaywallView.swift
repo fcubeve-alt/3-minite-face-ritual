@@ -31,14 +31,14 @@ struct PaywallView: View {
                 .padding(20)
             }
             .background(Theme.background)
-            .navigationTitle("Premium")
+            .navigationTitle(AppCopy.premium)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Close") { dismiss() }
+                    Button(AppCopy.close) { dismiss() }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Restore") {
+                    Button(AppCopy.restore) {
                         Task { try? await environment.entitlement.restore() }
                     }
                 }
@@ -52,10 +52,10 @@ struct PaywallView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Morning Ritual 永久免费")
+            Text(AppCopy.morningIsFreeForever)
                 .font(.system(size: 22, weight: .semibold))
                 .foregroundStyle(Theme.textPrimary)
-            Text("Premium 解锁 Evening Ritual 与全部 Quick Rituals。")
+            Text(AppCopy.premiumUnlocks)
                 .font(.callout)
                 .foregroundStyle(Theme.textSecondary)
         }
@@ -64,10 +64,10 @@ struct PaywallView: View {
     /// 与规格 §11 的表格一一对应，不多承诺一项。
     private var benefits: some View {
         VStack(alignment: .leading, spacing: 12) {
-            benefitRow("checkmark.circle.fill", "Morning Core", "免费用户也永久包含", included: true)
-            benefitRow("moon.stars.fill", "Evening Ritual", "约 5 分钟的舒缓 routine")
-            benefitRow("sparkles", "全部 Quick Rituals", "De-Puff · Tired Eyes 等")
-            benefitRow("faceid", "全部 routine 的 AR Mirror", "免费用户可在 Morning Core 内体验")
+            benefitRow("checkmark.circle.fill", AppCopy.benefitMorningTitle, AppCopy.benefitMorningSubtitle, included: true)
+            benefitRow("moon.stars.fill", AppCopy.benefitEveningTitle, AppCopy.benefitEveningSubtitle)
+            benefitRow("sparkles", AppCopy.benefitQuickTitle, AppCopy.benefitQuickSubtitle)
+            benefitRow("faceid", AppCopy.benefitARTitle, AppCopy.benefitARSubtitle)
         }
     }
 
@@ -119,8 +119,8 @@ struct PaywallView: View {
 
     private var disclaimer: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("价格为待测试的占位值，最终定价、年费方案与订阅条款上线前确认。")
-            Text("本 App 提供日常护理引导，不构成医学诊断、治疗建议或疗效承诺。")
+            Text(AppCopy.pricePlaceholderNotice)
+            Text(AppCopy.medicalDisclaimer)
         }
         .font(.caption)
         .foregroundStyle(Theme.textTertiary)
@@ -138,7 +138,8 @@ struct PaywallView: View {
             } catch {
                 environment.analytics.track(.purchaseResult(productID: product.id, success: false))
                 await MainActor.run {
-                    errorMessage = error.localizedDescription
+                    // 原始错误进 analytics，不进用户界面。
+                    errorMessage = AppCopy.purchaseFailed
                     isPurchasing = false
                 }
             }

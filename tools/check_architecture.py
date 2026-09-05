@@ -297,6 +297,42 @@ def check_no_hardcoded_content() -> None:
 
 
 # ---------------------------------------------------------------------------
+# 8. 用户可见界面不得出现中文字面量
+# ---------------------------------------------------------------------------
+# 只有团队自己看的界面，中文更省事。其余一律走 AppCopy。
+DEV_ONLY_SURFACES = (
+    "App/FaceRitual/Features/Debug/",
+    "App/FaceRitual/Features/Settings/SettingsView.swift",
+    "App/FaceRitual/FaceAR/",          # provider 诊断信息，只在 Debug 图层显示
+    "App/FaceRitual/Platform/",        # 平台适配层，无直出文案
+    "App/FaceRitualTests/",            # 测试断言消息是写给我们自己看的
+)
+
+CHINESE_LITERAL = re.compile(r'"[^"\n]*[一-鿿][^"\n]*"')
+
+
+def check_user_facing_copy_is_english() -> None:
+    """规格 §3 / §14：目标用户是欧美用户，主流程要用他们看得懂的语言。
+
+    用户可见界面里的中文字面量一律视为漏改 —— 文案统一放 `AppCopy`，
+    这样 Owner 与法务审文案（规格 §19）只需要看一个文件。
+    """
+    for path in swift_files(APP):
+        relative = rel(path)
+        if any(relative.startswith(prefix) for prefix in DEV_ONLY_SURFACES):
+            continue
+        for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            stripped = line.strip()
+            if stripped.startswith("//") or stripped.startswith("*"):
+                continue
+            for match in CHINESE_LITERAL.finditer(line):
+                error(
+                    f"{relative}:{lineno}",
+                    f"用户可见界面出现中文字面量 {match.group(0)[:40]} —— 应改为 AppCopy 常量",
+                )
+
+
+# ---------------------------------------------------------------------------
 def main() -> int:
     print("架构与静态检查\n")
 
@@ -308,6 +344,7 @@ def main() -> int:
         ("API 可用性 vs 部署目标", check_api_availability),
         ("括号配对", check_bracket_balance),
         ("动作内容零硬编码", check_no_hardcoded_content),
+        ("用户面文案为英文", check_user_facing_copy_is_english),
     ]
 
     for name, check in checks:

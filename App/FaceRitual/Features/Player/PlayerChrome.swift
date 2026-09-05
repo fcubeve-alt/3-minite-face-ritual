@@ -137,7 +137,7 @@ struct PrepareCountdownOverlay: View {
                     .font(.system(size: 84, weight: .light, design: .rounded))
                     .foregroundStyle(Theme.textPrimary)
                     .contentTransition(.numericText())
-                Text("Get ready")
+                Text(AppCopy.getReady)
                     .font(.callout)
                     .foregroundStyle(Theme.textSecondary)
             }
@@ -152,11 +152,11 @@ struct ExitConfirmationModifier: ViewModifier {
     let onConfirm: () -> Void
 
     func body(content: Content) -> some View {
-        content.alert("结束这次练习？", isPresented: $isPresented) {
-            Button("继续练习", role: .cancel) {}
-            Button("结束", role: .destructive, action: onConfirm)
+        content.alert(AppCopy.exitTitle, isPresented: $isPresented) {
+            Button(AppCopy.keepPracticing, role: .cancel) {}
+            Button(AppCopy.endSession, role: .destructive, action: onConfirm)
         } message: {
-            Text("已完成的部分会被保存。")
+            Text(AppCopy.exitMessage)
         }
     }
 }

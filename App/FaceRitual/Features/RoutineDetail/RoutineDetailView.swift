@@ -36,7 +36,7 @@ struct RoutineDetailView: View {
         .toolbar {
             if presentedModally {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Close") { dismiss() }
+                    Button(AppCopy.close) { dismiss() }
                 }
             }
         }
@@ -46,12 +46,12 @@ struct RoutineDetailView: View {
         .sheet(isPresented: $showPaywall) {
             PaywallView(source: "routine_\(routine.id.rawValue)")
         }
-        .alert("需要摄像头权限", isPresented: $cameraDeniedAlert) {
-            Button("打开设置") { CameraPermission.openSettings() }
-            Button("改用 Coach 模式") { activeMode = .coach }
-            Button("取消", role: .cancel) {}
+        .alert(AppCopy.cameraNeededTitle, isPresented: $cameraDeniedAlert) {
+            Button(AppCopy.openSettings) { CameraPermission.openSettings() }
+            Button(AppCopy.useCoachInstead) { activeMode = .coach }
+            Button(AppCopy.cancel, role: .cancel) {}
         } message: {
-            Text("AR Mirror 需要前置摄像头才能在你的脸上显示动作路线。你也可以继续使用不需要摄像头的 Coach 模式。")
+            Text(AppCopy.cameraNeededMessage)
         }
     }
 
@@ -78,7 +78,7 @@ struct RoutineDetailView: View {
 
     private var modePicker: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("How do you want to practice?")
+            Text(AppCopy.howToPractice)
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundStyle(Theme.textPrimary)
 
@@ -115,7 +115,7 @@ struct RoutineDetailView: View {
                             .font(.system(size: 16, weight: .medium))
                             .foregroundStyle(Theme.textPrimary)
                         if mode == .watch {
-                            Text("实验")
+                            Text(AppCopy.experimentalTag)
                                 .font(.system(size: 9, weight: .semibold))
                                 .padding(.horizontal, 5)
                                 .padding(.vertical, 2)
@@ -142,7 +142,7 @@ struct RoutineDetailView: View {
 
     private var stepList: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("In this ritual")
+            Text(AppCopy.inThisRitual)
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundStyle(Theme.textPrimary)
 

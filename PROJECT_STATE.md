@@ -88,18 +88,26 @@ Subscription 架构（Mock Unlock + StoreKit2 骨架）· Analytics（含 §15 �
 - **CI**（`.github/workflows/ci.yml`）：Linux 跑离线检查，macOS 跑 `swift test` 与 App 构建。
 - **`golden --check`**：防止改了 anchors.json 却忘了重新生成 golden。
 - **`docs/CONTENT_AUTHORING.md`**：Owner 替换正式内容的完整指南。
+- **`tools/check_swift_refs.py`** —— 无编译器版的 Swift 引用检查：枚举 case、init 参数标签、
+  协议一致性。在真实代码库上做过正反验证。已知盲区（字符串插值内、尾随闭包）写在脚本里。
+- **用户面文案全部改为英文并集中到 `AppCopy.swift`**。目标用户是欧美用户（规格 §3/§14），
+  之前 UI 是中英混杂。开发面（Settings→Developer / Diagnostics / ARKit 标定）保留中文。
+  新增架构检查「用户面文案为英文」防止回潮。
+- **不再把技术错误摊给用户**：AR 出错时显示中性说明 + 退回 Coach 的入口，
+  底层原因（缺模型、provider 回落…）只在 Debug 图层显示；购买失败同理。
 - **`tools/simulate_routine.py`** —— 无头跑完整 routine，验证每个播放段是否真能在脸上画出东西，
   并断言同一 step 的左右两段互为镜像。**上面那个嘴角 bug 就是它抓到的。**
   内容校验只看 JSON 结构、golden vector 只验几何数学，两者都答不了
   「播放时这一段脸上会不会是空白」这个问题。
 
 ### 已在本机**实际运行验证**的项目
-- `python tools/check_architecture.py` → 54 个 Swift 文件，**0 errors**（且已自测确认非空转）
+- `python tools/check_architecture.py` → 55 个 Swift 文件，**8 条规则 0 errors**（已自测确认非空转）
+- `python tools/check_swift_refs.py` → **0 errors**；`--self-test` 三条规则全部命中
 - `python tools/validate_content.py` → **0 errors**，1 个预期内 mock 警告
 - `python tools/golden/generate_golden.py` → 9 个 anchor 在 6 种尺度/位置/roll 变换下**最大漂移 2.0e-15 瞳距**
 - `golden --check` 的正反例：篡改 anchors.json 后退出码 1，还原后 0
 - `python tools/simulate_routine.py` → Morning Core 9 个播放段全部可渲染，左右完全对称
-- 三个检查器都做过**故意写错代码的反向验证**，确认不是空转
+- 四个检查器共 12 条规则，每条都做过**故意写错代码的反向验证**，确认不是空转
 
 ---
 
@@ -148,6 +156,9 @@ Subscription 架构（Mock Unlock + StoreKit2 骨架）· Analytics（含 §15 �
 2. **是否投入 HRFFA CoreML 模型转换。**
    Vision 基线已可跑通全流程；HRFFA 是否值得多背一个模型，建议**先看 POC 里 Vision 的实测表现再决定**。
 3. **摄像头权限文案的最终措辞**（`project.yml` 里的 `NSCameraUsageDescription`）—— 涉及合规。
+   注意它要和 `AppCopy.cameraNeededMessage` 语义一致。
+4. **`AppCopy.swift` 里标 ⚠️ 的文案**：医学免责声明、Watch & Breathe 的措辞、
+   价格占位说明、摄像头说明。这几条涉及合规与产品承诺，工程侧只给了中性草稿。
 
 ### 影响 M2
 4. **Morning / Evening / Quick Ritual 的正式动作清单**（顺序、时长、示范素材）—— 规格 §14 明确不得由 Claude 发明。
@@ -194,7 +205,12 @@ Subscription 架构（Mock Unlock + StoreKit2 骨架）· Analytics（含 §15 �
    现在有三层防护：命名统一、`mirrored` 对中缀写法也成立、以及
    Swift 测试 + `validate_content.py` + `simulate_routine.py` 三处独立检查。
 
-8. **`PracticeSession` 改成手写宽容解码。**
+8. **用户可见文案一律英文，且集中在 `AppCopy.swift`。**
+   规格 §19 把最终文案、免责声明、摄像头说明、订阅条款列为 Owner 待办 ——
+   集中一处后你和法务只需要看一个文件，不必翻遍 UI 代码。
+   标了 ⚠️ 的条目是上线前必须确认的。
+
+9. **`PracticeSession` 改成手写宽容解码。**
    这不是为了这次加的那个字段，而是因为合成 Codable + 「解码失败返回空数组」
    这个组合意味着**以后任何一次加字段都会静默清空所有用户的历史记录**。
    现在缺失字段一律取默认值，坏文件也会改名留存而不是被覆盖。

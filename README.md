@@ -47,6 +47,7 @@ make check
 - `make arch` —— 架构约束 + 轻量 Swift 静态检查（Core 平台隔离、landmark 编号收敛、
   无对错判断、`@objc` 需 NSObject、API 可用性 vs 部署目标、括号配对、动作内容零硬编码）
 - `make content` —— 内容包 JSON 校验
+- `make refs` —— Swift 引用检查（枚举 case / init 参数标签 / 协议一致性）
 - `make golden` —— 重新生成几何 golden vectors
 - `make simulate` —— 无头跑一遍全部 routine，验证每个播放段都能在脸上画出东西、且左右互为镜像
 
@@ -86,7 +87,7 @@ tools/                       跨平台校验脚本（Python，无需 Xcode）
 
 | | |
 | --- | --- |
-| 已离线验证 | 架构检查 0 errors；内容包校验 0 errors；9 个 anchor 在 6 种尺度/位置/roll 变换下漂移 < 2e-15 瞳距；Morning Core 9 个播放段全部可渲染且左右对称 |
+| 已离线验证 | 架构与引用检查 0 errors（12 条规则，每条都反向验证过）；内容包校验 0 errors；9 个 anchor 在 6 种尺度/位置/roll 变换下漂移 < 2e-15 瞳距；Morning Core 9 个播放段全部可渲染且左右对称 |
 | 未验证 | Swift 代码从未编译过（开发机是 Windows，无工具链）。已用静态检查扫掉几类必然失败的错误，但类型层面的错误只有编译器能抓 |
 | 下一步 | Mac 上首次构建 → 模拟器验证 → 真机 AR POC |
 

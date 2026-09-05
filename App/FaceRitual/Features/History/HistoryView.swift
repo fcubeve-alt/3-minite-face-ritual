@@ -26,7 +26,7 @@ struct HistoryView: View {
                     emptyState
                 } else {
                     VStack(alignment: .leading, spacing: 10) {
-                        Text("Recent")
+                        Text(AppCopy.recent)
                             .font(.system(size: 17, weight: .semibold))
                             .foregroundStyle(Theme.textPrimary)
                         ForEach(sessions) { session in
@@ -38,7 +38,7 @@ struct HistoryView: View {
             .padding(20)
         }
         .background(Theme.background)
-        .navigationTitle("History")
+        .navigationTitle(AppCopy.historyTitle)
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             sessions = environment.practiceStore.recentSessions(limit: 60)
@@ -47,16 +47,16 @@ struct HistoryView: View {
 
     private var summaryCard: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("This month")
+            Text(AppCopy.thisMonth)
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundStyle(Theme.textPrimary)
 
             HStack(spacing: 0) {
-                cell("\(stats.sessionCount)", "rituals")
-                cell("\(Int(stats.totalMinutes.rounded()))", "minutes")
-                cell("\(stats.activeDays)", "active days")
+                cell("\(stats.sessionCount)", AppCopy.statRituals)
+                cell("\(Int(stats.totalMinutes.rounded()))", AppCopy.statMinutes)
+                cell("\(stats.activeDays)", AppCopy.activeDays)
                 // 连续天数只做正向展示；断了也不提示、不惩罚。
-                cell("\(stats.currentStreakDays)", "day streak")
+                cell("\(stats.currentStreakDays)", AppCopy.dayStreak)
             }
         }
         .padding(18)
@@ -97,7 +97,7 @@ struct HistoryView: View {
                     .font(.footnote.monospacedDigit())
                     .foregroundStyle(Theme.textPrimary)
                 if session.completed == false {
-                    Text("partial")
+                    Text(AppCopy.partialSession)
                         .font(.caption2)
                         .foregroundStyle(Theme.textTertiary)
                 }
@@ -109,10 +109,10 @@ struct HistoryView: View {
 
     private var emptyState: some View {
         VStack(spacing: 8) {
-            Text("还没有记录")
+            Text(AppCopy.historyEmptyTitle)
                 .font(.callout)
                 .foregroundStyle(Theme.textSecondary)
-            Text("完成一次 ritual 后会出现在这里。")
+            Text(AppCopy.historyEmptyBody)
                 .font(.footnote)
                 .foregroundStyle(Theme.textTertiary)
         }

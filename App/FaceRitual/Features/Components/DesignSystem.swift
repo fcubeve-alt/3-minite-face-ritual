@@ -29,7 +29,7 @@ struct MockContentBadge: View {
         HStack(spacing: 4) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: compact ? 9 : 10, weight: .bold))
-            Text(compact ? "MOCK" : "MOCK CONTENT · 未经专业审核")
+            Text(compact ? AppCopy.mockBadgeShort : AppCopy.mockBadgeFull)
                 .font(.system(size: compact ? 9 : 10, weight: .semibold))
                 .tracking(0.4)
         }
@@ -144,9 +144,9 @@ extension PracticeMode {
 
     var subtitle: String {
         switch self {
-        case .coach: return "跟着示范学动作，不使用摄像头"
-        case .arMirror: return "在自己脸上看到位置、路线和方向"
-        case .watch: return "只看路线动画，不动手"
+        case .coach: return AppCopy.coachModeSubtitle
+        case .arMirror: return AppCopy.arMirrorModeSubtitle
+        case .watch: return AppCopy.watchModeSubtitle
         }
     }
 

@@ -31,6 +31,12 @@ jobs:
       - name: 架构约束与静态检查
         run: python tools/check_architecture.py
 
+      - name: Swift 引用检查
+        # 枚举 case / init 标签 / 协议一致性 —— 编译器能抓的一小部分，但不用 Mac。
+        run: |
+          python tools/check_swift_refs.py --self-test
+          python tools/check_swift_refs.py
+
       - name: 内容包校验
         run: python tools/validate_content.py
 

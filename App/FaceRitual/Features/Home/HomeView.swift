@@ -14,7 +14,7 @@ struct HomeView: View {
 
     private var greeting: String {
         let hour = Calendar.current.component(.hour, from: Date())
-        return (hour >= 5 && hour < 12) ? "Good morning" : "Good evening"
+        return (hour >= 5 && hour < 12) ? AppCopy.greetingMorning : AppCopy.greetingEvening
     }
 
     /// 按本地时间决定主卡片放 Morning 还是 Evening。
@@ -98,12 +98,12 @@ struct HomeView: View {
             }
 
             if routine.usesARGuidance {
-                Label("AR Mirror Guidance 可用", systemImage: "faceid")
+                Label(AppCopy.arGuidanceAvailable, systemImage: "faceid")
                     .font(.footnote)
                     .foregroundStyle(Theme.accent)
             }
 
-            Button("START") {
+            Button(AppCopy.start) {
                 start(routine)
             }
             .buttonStyle(PrimaryButtonStyle())
@@ -117,7 +117,7 @@ struct HomeView: View {
         let rituals = environment.quickRituals
         if rituals.isEmpty == false {
             VStack(alignment: .leading, spacing: 12) {
-                Text("Quick Rituals")
+                Text(AppCopy.quickRituals)
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(Theme.textPrimary)
 
@@ -160,9 +160,9 @@ struct HomeView: View {
             path.append(AppRoute.history)
         } label: {
             HStack(spacing: 20) {
-                statCell(value: "\(stats.sessionCount)", label: "rituals")
-                statCell(value: "\(Int(stats.totalMinutes.rounded()))", label: "minutes")
-                statCell(value: "\(stats.activeDays)", label: "days")
+                statCell(value: "\(stats.sessionCount)", label: AppCopy.statRituals)
+                statCell(value: "\(Int(stats.totalMinutes.rounded()))", label: AppCopy.statMinutes)
+                statCell(value: "\(stats.activeDays)", label: AppCopy.statDays)
                 Spacer()
                 Image(systemName: "chevron.right")
                     .font(.footnote.weight(.semibold))
@@ -190,7 +190,7 @@ struct HomeView: View {
         if environment.content.containsUnreviewedContent {
             VStack(alignment: .leading, spacing: 6) {
                 MockContentBadge()
-                Text("当前动作与位置全部是占位测试数据，仅用于验证系统。正式内容由 Owner 与专业人员审核后替换。")
+                Text(AppCopy.mockContentNotice)
                     .font(.footnote)
                     .foregroundStyle(Theme.textSecondary)
             }

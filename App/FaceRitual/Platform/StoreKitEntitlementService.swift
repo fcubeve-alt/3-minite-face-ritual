@@ -77,7 +77,8 @@ final class StoreKitEntitlementService: EntitlementService {
         switch result {
         case let .success(verification):
             guard case let .verified(transaction) = verification else {
-                throw EntitlementError.purchaseFailed("交易校验失败")
+                // 诊断信息，不直接展示给用户 —— Paywall 显示的是 AppCopy.purchaseFailed。
+                throw EntitlementError.purchaseFailed("StoreKit transaction failed verification")
             }
             await transaction.finish()
             await updateEntitlement()

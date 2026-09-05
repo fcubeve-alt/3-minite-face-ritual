@@ -121,11 +121,17 @@ private struct ARMirrorContent: View {
     @ViewBuilder
     private var statusStrip: some View {
         VStack(spacing: 8) {
-            if let notice = guidance.fallbackNotice {
-                banner(text: notice, tint: Theme.warning, icon: "arrow.triangle.2.circlepath")
-            }
-            if let error = guidance.lastError {
-                banner(text: error, tint: Theme.warning, icon: "exclamationmark.triangle")
+            // 出错时的中性说明由 fallbackPrompt 一并给出（它同时提供退路），
+            // 这里不再重复一条 banner。
+            // 底层原因（缺模型、provider 回落…）是给我们自己看的，
+            // 用户看了既不理解也做不了什么 —— 只在 Debug 图层里显示。
+            if environment.settings.showDebugOverlay {
+                if let notice = guidance.fallbackNotice {
+                    banner(text: notice, tint: Theme.warning, icon: "arrow.triangle.2.circlepath")
+                }
+                if let error = guidance.lastError {
+                    banner(text: error, tint: Theme.warning, icon: "ladybug")
+                }
             }
             if let message = guidance.guidanceFrame.hint.message, guidance.guidanceFrame.quality != .good {
                 banner(
@@ -134,7 +140,8 @@ private struct ARMirrorContent: View {
                     icon: guidance.trackingState == .locked ? "viewfinder" : "person.crop.circle.dashed"
                 )
             }
-            if guidance.continuousLostSeconds >= fallbackPromptThreshold {
+            // 硬错误立刻给退路；只是暂时锁不上才等满阈值。
+            if guidance.lastError != nil || guidance.continuousLostSeconds >= fallbackPromptThreshold {
                 fallbackPrompt
             }
             if environment.settings.showDebugOverlay {
@@ -151,14 +158,21 @@ private struct ARMirrorContent: View {
     /// 所以这是**建议**而不是拦截 —— 不弹模态、不暂停计时。
     /// 用户可以一直无视它把 routine 做完。
     private var fallbackPrompt: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("这里的光线或角度可能不太适合 AR。")
+        // 两种触发原因的文案与上报要分开：
+        // provider 挂了 ≠ 光线不好，混为一谈会让 POC 数据失真。
+        let isHardError = guidance.lastError != nil
+        let reason = isHardError
+            ? "provider_error"
+            : "lost_for_\(Int(fallbackPromptThreshold))s"
+
+        return VStack(alignment: .leading, spacing: 10) {
+            Text(isHardError ? AppCopy.arUnavailable : AppCopy.arFallbackPrompt)
                 .font(.footnote)
                 .foregroundStyle(Theme.textPrimary)
             Button {
-                viewModel.fallBackToCoach(reason: "user_prompted_after_\(Int(fallbackPromptThreshold))s_lost")
+                viewModel.fallBackToCoach(reason: reason)
             } label: {
-                Text("切到 Coach 继续，不中断计时")
+                Text(AppCopy.arFallbackAction)
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(Theme.background)
                     .padding(.horizontal, 14)
@@ -176,7 +190,7 @@ private struct ARMirrorContent: View {
         HStack(spacing: 8) {
             Image(systemName: "play.rectangle.fill")
                 .font(.footnote)
-            Text("已切到 Coach 模式，这次练习继续计入记录。")
+            Text(AppCopy.arFellBackNotice)
                 .font(.footnote)
             Spacer(minLength: 0)
         }
@@ -233,10 +247,10 @@ private struct ARMirrorContent: View {
     /// 刻意保留免责说明 —— 规格明确要求不得宣称「看了等于做了」。
     private var watchModeFooter: some View {
         VStack(spacing: 14) {
-            Text("Just watch and breathe.")
+            Text(AppCopy.watchModeTitle)
                 .font(.system(size: 17, weight: .medium))
                 .foregroundStyle(Theme.textPrimary)
-            Text("这是动作预习与视觉放松，不等同于实际按摩。")
+            Text(AppCopy.watchModeDisclaimer)
                 .font(.caption)
                 .foregroundStyle(Theme.textSecondary)
 

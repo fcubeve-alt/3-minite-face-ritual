@@ -45,7 +45,7 @@ struct RootView: View {
                     if let routine = environment.content.routine(id: id) {
                         RoutineDetailView(routine: routine)
                     } else {
-                        ContentUnavailableStateView(message: "找不到 routine: \(id)")
+                        ContentUnavailableStateView(message: "Routine not found: \(id)")
                     }
                 case .history:
                     HistoryView()
@@ -72,12 +72,17 @@ struct ContentUnavailableStateView: View {
                 Image(systemName: "doc.badge.exclamationmark")
                     .font(.system(size: 40))
                     .foregroundStyle(Theme.warning)
-                Text("内容包无法加载")
+                Text(AppCopy.contentUnavailableTitle)
                     .font(.title2.weight(.semibold))
                     .foregroundStyle(Theme.textPrimary)
-                Text("检查 Resources 下的 routines.json / anchors.json / content_meta.json。\n也可以在任意机器上运行 `python tools/validate_content.py` 定位问题。")
+                Text(AppCopy.contentUnavailableBody)
                     .font(.callout)
                     .foregroundStyle(Theme.textSecondary)
+                // 技术细节保留英文且不本地化：这个界面正常情况下用户看不到，
+                // 出现时是构建/配置问题，读它的人是我们自己。
+                Text("Run `python tools/validate_content.py` on any machine to locate the problem.")
+                    .font(.footnote)
+                    .foregroundStyle(Theme.textTertiary)
                 Text(message)
                     .font(.system(size: 12, design: .monospaced))
                     .foregroundStyle(Theme.textTertiary)

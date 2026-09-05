@@ -96,7 +96,9 @@ final class MockFaceAlignmentProvider: NSObject, FaceAlignmentProvider {
     }
 
     func makePreviewView() -> UIView {
-        MockPreviewView()
+        // 显式给 frame：这个类实现了 init(frame:) 与 init?(coder:)，
+        // 无参 init 能不能继承取决于 Swift 的初始化器继承规则，写清楚省得纠结。
+        MockPreviewView(frame: .zero)
     }
 
     @objc private func emitFrame() {
@@ -163,7 +165,7 @@ private final class MockPreviewView: UIView {
         backgroundColor = UIColor(white: 0.12, alpha: 1)
 
         let label = UILabel()
-        label.text = "MOCK FACE — 未使用摄像头"
+        label.text = "MOCK FACE — camera not in use"
         label.textColor = UIColor(white: 1, alpha: 0.45)
         label.font = .systemFont(ofSize: 13, weight: .medium)
         label.translatesAutoresizingMaskIntoConstraints = false

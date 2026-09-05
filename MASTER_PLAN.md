@@ -126,6 +126,9 @@ Evening Core、全部 Quick Rituals、StoreKit 真实接入、提醒文案、Onb
 - [x] T11.5 ARKit 顶点标定工具（真机导出 `arkit_vertex_map.json`）
 - [x] T11.6 CI：Linux 离线检查 + macOS `swift test` 与 App 构建
 - [x] T11.7 `docs/CONTENT_AUTHORING.md`：Owner 替换正式内容的指南
+- [x] T11.8 `tools/check_swift_refs.py`：枚举 case / init 标签 / 协议一致性检查
+- [x] T11.9 用户面文案改英文并集中到 `AppCopy.swift`（规格 §3/§14）
+- [O] T11.10 `AppCopy.swift` 中标 ⚠️ 的文案需 Owner 与法务确认
 
 ---
 
