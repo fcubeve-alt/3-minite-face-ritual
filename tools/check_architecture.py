@@ -321,8 +321,27 @@ def check_user_facing_copy_is_english() -> None:
         relative = rel(path)
         if any(relative.startswith(prefix) for prefix in DEV_ONLY_SURFACES):
             continue
+
+        # `#if DEBUG` 里的字符串不会进发布包，是给我们自己看的构建期提醒。
+        # 不识别它的话，一条 DEBUG 警告就会被当成漏改的用户文案。
+        debug_depth = 0
+
         for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
             stripped = line.strip()
+
+            if re.match(r"#if\s+DEBUG\b", stripped):
+                debug_depth += 1
+                continue
+            if debug_depth > 0:
+                # #else 之后的分支是会发布的，重新开始检查
+                if stripped.startswith("#else"):
+                    debug_depth -= 1
+                    continue
+                if stripped.startswith("#endif"):
+                    debug_depth -= 1
+                    continue
+                continue
+
             if stripped.startswith("//") or stripped.startswith("*"):
                 continue
             for match in CHINESE_LITERAL.finditer(line):
@@ -392,6 +411,43 @@ def check_icon_buttons_have_accessibility_labels() -> None:
 
 
 # ---------------------------------------------------------------------------
+# 10. 隐私承诺必须是代码事实
+# ---------------------------------------------------------------------------
+# 摄像头权限文案对用户说「画面留在设备上，什么都不会被上传」。
+# 那句话一旦写出去就是承诺 —— 这里把它锁成可验证的前提。
+NETWORK_APIS = re.compile(
+    r"\b(URLSession|URLRequest|NSURLConnection|NWConnection|NWBrowser|"
+    r"CFReadStream|WKWebView|dataTask|downloadTask|uploadTask)\b"
+    r"|^\s*import\s+(Network|CFNetwork)\b"
+)
+
+# StoreKit 走 Apple 自己的通道处理支付，不经手摄像头或用户内容，因此不在此列。
+NETWORK_ALLOWLIST = ("App/FaceRitual/Platform/StoreKitEntitlementService.swift",)
+
+
+def check_privacy_claim_holds() -> None:
+    """规格 §4「端侧优先」+ 摄像头权限文案里的隐私承诺。
+
+    如果哪天有人加了网络请求，这条会失败并指回那句文案 ——
+    要么改代码，要么改承诺，但不能让两者不一致。
+    """
+    for base in (CORE, APP):
+        for path in swift_files(base):
+            relative = rel(path)
+            if relative.startswith(NETWORK_ALLOWLIST) or "Tests" in relative:
+                continue
+            body = strip_comments_and_strings(path.read_text(encoding="utf-8"))
+            for lineno, line in enumerate(body.splitlines(), 1):
+                if NETWORK_APIS.search(line):
+                    error(
+                        f"{relative}:{lineno}",
+                        "出现了联网 API，但摄像头权限文案对用户承诺「画面留在设备上，"
+                        "什么都不会被上传」。要么去掉网络调用，要么先改 "
+                        "AppCopy.cameraNeededMessage 与 project.yml 的 NSCameraUsageDescription。",
+                    )
+
+
+# ---------------------------------------------------------------------------
 def main() -> int:
     print("架构与静态检查\n")
 
@@ -405,6 +461,7 @@ def main() -> int:
         ("动作内容零硬编码", check_no_hardcoded_content),
         ("用户面文案为英文", check_user_facing_copy_is_english),
         ("纯图标按钮有无障碍标签", check_icon_buttons_have_accessibility_labels),
+        ("隐私承诺与代码一致", check_privacy_claim_holds),
     ]
 
     for name, check in checks:

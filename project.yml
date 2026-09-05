@@ -52,11 +52,16 @@ targets:
         UIRequiredDeviceCapabilities:
           - armv7
         # 规格 §4：摄像头可选，且必须由用户主动开启。
-        # 这段文案会出现在系统权限弹窗里，需 Owner 与法务确认最终措辞（规格 §19）。
+        #
+        # ⚠️ 待 Owner 与法务确认（规格 §19）。改动时必须同步 AppCopy.cameraNeededMessage ——
+        # 系统弹窗与 App 内说法不一致，审核会当成误导。
+        #
+        # 「不离开设备」是经代码验证的事实：全工程无任何联网 API，
+        # check_architecture.py 有一条规则锁住这个前提。
         NSCameraUsageDescription: >-
-          AR Mirror uses the front camera to show massage start points, end points
-          and movement paths on your own face. The camera is only used while you
-          have AR Mirror open, video never leaves your device, and nothing is recorded.
+          AR Mirror uses the front camera to draw massage start points, end points and
+          movement paths onto your own face. The camera runs only while AR Mirror is open.
+          The video stays on your device — nothing is recorded, saved, or sent anywhere.
         ITSAppUsesNonExemptEncryption: false
     settings:
       base:

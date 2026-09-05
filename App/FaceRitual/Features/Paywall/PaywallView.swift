@@ -118,12 +118,43 @@ struct PaywallView: View {
     }
 
     private var disclaimer: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 10) {
+            // 当前构建：价格是占位值。
             Text(AppCopy.pricePlaceholderNotice)
+
+            // 上线必备：App Store 审核指南 3.1.2 要求的订阅披露。
+            // 价格与周期取 StoreKit 返回值，不写死。
+            if let product = defaultProduct {
+                Text(AppCopy.subscriptionDisclosure(price: product.placeholderPrice, period: product.period))
+            }
+
+            // 同样是 3.1.2 的硬性要求：Paywall 上必须有可点击的两个链接。
+            // URL 是 Owner 待提供项（规格 §19），缺失时不显示假链接。
+            HStack(spacing: 16) {
+                if let terms = LegalLinks.termsOfUse {
+                    Link(AppCopy.termsOfUse, destination: terms)
+                }
+                if let privacy = LegalLinks.privacyPolicy {
+                    Link(AppCopy.privacyPolicy, destination: privacy)
+                }
+            }
+            #if DEBUG
+            if LegalLinks.isComplete == false {
+                Text("⚠️ 上架前必须补上 Terms / Privacy 链接，否则会被拒（Guideline 3.1.2）")
+                    .foregroundStyle(Theme.warning)
+            }
+            #endif
+
             Text(AppCopy.medicalDisclaimer)
         }
         .font(.caption)
         .foregroundStyle(Theme.textTertiary)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private var defaultProduct: SubscriptionProduct? {
+        let products = environment.entitlement.availableProducts
+        return products.first { $0.isDefault } ?? products.first
     }
 
     private func purchase(_ product: SubscriptionProduct) {

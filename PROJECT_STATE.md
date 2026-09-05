@@ -98,6 +98,14 @@ Subscription 架构（Mock Unlock + StoreKit2 骨架）· Analytics（含 §15 �
 - **切后台的行为**：暂停 + 关摄像头 + 释放常亮；回到前台**保持暂停**由用户自己按播放 ——
   他刚切回来手还没抬起来，自动继续只会让他白白错过一个动作。
   跨后台的丢锁次数与首次锁定耗时改为累计/只记一次，否则 POC 指标会被后台切换污染。
+- **四条 ⚠️ 文案拟稿 + `docs/COPY_REVIEW.md` 评审清单**。
+  医学免责做了短版（页脚）与长版（新增 About & Safety 页）——
+  缩成一行小字的免责声明既没人读也保护不了人。
+  订阅那条改了做法：真正卡上架的不是「价格占位提示」，而是审核指南 3.1.2 要求的
+  自动续订披露 + 两个法务链接，已按要求补齐结构（URL 待 Owner 提供）。
+- **把隐私承诺锁成代码事实**：摄像头文案对用户说「画面留在设备上」。
+  查证全工程零联网 API（唯一出网 import 是 StoreKit，只走支付），
+  并加了检查规则 —— 谁加网络请求，检查就失败并指回那句文案。
 - **`tools/check_swift_refs.py`** —— 无编译器版的 Swift 引用检查：枚举 case、init 参数标签、
   协议一致性。在真实代码库上做过正反验证。已知盲区（字符串插值内、尾随闭包）写在脚本里。
 - **用户面文案全部改为英文并集中到 `AppCopy.swift`**。目标用户是欧美用户（规格 §3/§14），
@@ -111,13 +119,13 @@ Subscription 架构（Mock Unlock + StoreKit2 骨架）· Analytics（含 §15 �
   「播放时这一段脸上会不会是空白」这个问题。
 
 ### 已在本机**实际运行验证**的项目
-- `python tools/check_architecture.py` → 56 个 Swift 文件，**9 条规则 0 errors**（已自测确认非空转）
+- `python tools/check_architecture.py` → 57 个 Swift 文件，**10 条规则 0 errors**（已自测确认非空转）
 - `python tools/check_swift_refs.py` → **0 errors**；`--self-test` 三条规则全部命中
 - `python tools/validate_content.py` → **0 errors**，1 个预期内 mock 警告
 - `python tools/golden/generate_golden.py` → 9 个 anchor 在 6 种尺度/位置/roll 变换下**最大漂移 2.0e-15 瞳距**
 - `golden --check` 的正反例：篡改 anchors.json 后退出码 1，还原后 0
 - `python tools/simulate_routine.py` → Morning Core 9 个播放段全部可渲染，左右完全对称
-- 四个检查器共 13 条规则，每条都做过**故意写错代码的反向验证**，确认不是空转。
+- 四个检查器共 14 条规则，每条都做过**故意写错代码的反向验证**，确认不是空转。
   无障碍那条第一版用固定窗口判断，牙齿测试直接不过（窗口串到了相邻控件的 Text 上），
   改成按大括号配对确定按钮范围后才通过 —— 这也是为什么每条规则都要反向验证
 
@@ -169,8 +177,13 @@ Subscription 架构（Mock Unlock + StoreKit2 骨架）· Analytics（含 §15 �
    Vision 基线已可跑通全流程；HRFFA 是否值得多背一个模型，建议**先看 POC 里 Vision 的实测表现再决定**。
 3. **摄像头权限文案的最终措辞**（`project.yml` 里的 `NSCameraUsageDescription`）—— 涉及合规。
    注意它要和 `AppCopy.cameraNeededMessage` 语义一致。
-4. **`AppCopy.swift` 里标 ⚠️ 的文案**：医学免责声明、Watch & Breathe 的措辞、
-   价格占位说明、摄像头说明。这几条涉及合规与产品承诺，工程侧只给了中性草稿。
+4. **四条 ⚠️ 文案已拟好草稿，待你与法务确认** —— 见 `docs/COPY_REVIEW.md`。
+   每条都写了措辞依据和需要你判断的点。改的话只动 `AppCopy.swift`，不必碰视图。
+   其中两项是**硬性上架前置条件，缺了会被拒**：
+   - **Terms of Use (EULA) 的 URL**
+   - **Privacy Policy 的 URL**
+   （App Store 审核指南 3.1.2 要求 Paywall 上必须有这两个可点击链接。
+   填在 `SafetyView.swift` 的 `LegalLinks` 里；未填时 Debug 页与 Paywall 会红字提醒。）
 
 ### 影响 M2
 4. **Morning / Evening / Quick Ritual 的正式动作清单**（顺序、时长、示范素材）—— 规格 §14 明确不得由 Claude 发明。

@@ -22,10 +22,42 @@ enum AppCopy {
     static let close = "Close"
     static let openSettings = "Open Settings"
 
-    /// ⚠️ 医学免责声明 —— 规格 §4「不做医学承诺」。上线前需法务确认。
+    // MARK: - ⚠️ 免责与安全（草稿，待 Owner + 法务确认）
+    //
+    // 措辞原则，改动时请守住：
+    // 1. 只说「不是什么」，不说「有什么用」—— 规格 §4/§13 禁止任何功效、抗衰、
+    //    穴位疗效或「年轻 X 岁」类表述。
+    // 2. 不写具体禁忌（哪种皮肤病不能做、按多大力）—— 那是 Owner + 专业人员的事（规格 §20），
+    //    这里只做「有疑问就去问专业人士」的转介。
+    // 3. 提到眼周与颈部是因为规格 §14 自己点了这两处需要安全限制，
+    //    这是指出敏感区域，不是规定手法。
+
+    /// 短版：设置页与 Paywall 页脚。
     static let medicalDisclaimer =
-        "This app offers everyday self-care guidance. "
-        + "It is not a medical diagnosis, treatment advice, or a promise of results."
+        "Face Ritual is a self-care routine guide, not a medical service. "
+        + "It doesn't diagnose or treat anything, and makes no promises about how your face will look."
+
+    /// 长版：Settings → About & Safety 里完整展示。
+    ///
+    /// 短版塞不下的部分放这里 —— 免责声明缩成一行小字既没人看，也保护不了任何人。
+    static let safetyAndDisclaimerBody = """
+        Face Ritual guides you through short facial care routines. \
+        It is not a medical device and does not provide medical advice.
+
+        The app does not diagnose, treat, cure, or prevent any condition, \
+        and makes no claim about changes to your appearance.
+
+        Use a light touch, and stop if anything hurts. \
+        The skin around the eyes and the front of the neck are sensitive areas.
+
+        If you have a skin or health condition, have recently had an injury or \
+        procedure on your face, or are unsure whether these movements are right for you, \
+        check with a qualified professional before you start.
+
+        Face Ritual is not a substitute for professional care.
+        """
+
+    static let safetyScreenTitle = "About & Safety"
 
     // MARK: - Home（规格 §5.1）
 
@@ -62,10 +94,18 @@ enum AppCopy {
     // MARK: - 摄像头（规格 §4：用户主动开启，可随时关闭）
 
     static let cameraNeededTitle = "Camera access needed"
-    /// ⚠️ 与 Info.plist 的 NSCameraUsageDescription 语义要一致。上线前需 Owner 确认。
+
+    /// ⚠️ 必须与 `project.yml` 里的 `NSCameraUsageDescription` 语义一致 ——
+    /// 两处说法不一样，审核会当成误导。
+    ///
+    /// 「画面留在设备上」这句是**经代码验证的事实**，不是营销话术：
+    /// 整个工程没有任何联网 API（唯一的出网 import 是 StoreKit，只走支付），
+    /// 唯一的写盘是本地练习记录。`check_architecture.py` 有一条规则锁住这个前提 ——
+    /// 谁哪天加了网络请求，检查会直接失败并指回这句文案。
     static let cameraNeededMessage =
-        "AR Mirror uses the front camera to show movement paths on your own face. "
-        + "You can also continue with Coach mode, which never uses the camera."
+        "AR Mirror needs the front camera to draw the movement path on your own face. "
+        + "The video stays on your device — nothing is recorded or sent anywhere. "
+        + "You can also keep going with Coach mode, which never uses the camera."
     static let useCoachInstead = "Use Coach instead"
 
     // MARK: - 播放器
@@ -80,10 +120,16 @@ enum AppCopy {
     // MARK: - AR Mirror
 
     static let watchModeTitle = "Just watch and breathe."
-    /// ⚠️ 规格 §6.3 明确不得宣称「看了等于做了」。这句话的措辞不能随意放宽。
+
+    /// ⚠️ 规格 §6.3：定位是 ritual preview / guided awareness / visual relaxation，
+    /// **明确不得宣称「看了等于做了」**，也不得宣称获得实际按摩的机械刺激效果。
+    ///
+    /// 第一句必须是无歧义的否定，且要放在最前面 —— 用户可能只读第一行。
+    /// 后半句给出这个模式真正的价值（学路线 + 放松片刻），
+    /// 这样既不夸大也不显得是在劝退。措辞不要往「等同」的方向松动。
     static let watchModeDisclaimer =
-        "This is movement preview and visual relaxation. "
-        + "It is not the same as actually doing the massage."
+        "Watching isn't the same as doing. "
+        + "Following the path with your eyes is a way to learn it — and to take a slow minute for yourself."
 
     /// 规格 §4：识别失败不得阻塞 routine —— 所以这是建议，不是拦截。
     static let arFallbackPrompt = "The lighting or angle here may not suit AR."
@@ -174,10 +220,34 @@ enum AppCopy {
     static let benefitARTitle = "AR Mirror in every ritual"
     static let benefitARSubtitle = "Free users can already try it in Morning Core"
 
-    /// ⚠️ 规格 §11 的价格是「待测试」的工作价格。上线前必须由 Owner 敲定。
+    /// ⚠️ 当前构建用的占位提示。规格 §11 的 $4.99/月是「待测试」的工作价格。
+    ///
+    /// 上线前这条要被下面的 `subscriptionDisclosure` 替换掉 ——
+    /// 它只是在提醒「现在看到的数字不作数」，不是合规披露。
     static let pricePlaceholderNotice =
-        "Prices shown are placeholders for testing. Final pricing, the annual plan "
-        + "and subscription terms are confirmed before launch."
+        "Pricing here is a placeholder for testing. Final pricing, the annual plan "
+        + "and subscription terms are set before launch."
+
+    /// ⚠️ 上线必备：App Store 审核指南 3.1.2 要求 Paywall 上必须写清这几项，
+    /// 少一项就会被拒。这是**模板**，价格与周期由 StoreKit 返回值填入。
+    ///
+    /// 除了这段文字，Paywall 上还必须有两个**可点击**的链接：
+    /// Terms of Use (EULA) 与 Privacy Policy —— 两个 URL 都是 Owner 待提供项（规格 §19）。
+    /// 缺链接同样会被拒，所以 `PaywallView` 里留了位置但暂时指向占位。
+    static func subscriptionDisclosure(price: String, period: String) -> String {
+        """
+        \(price) per \(period), billed to your Apple ID at confirmation of purchase.
+
+        The subscription renews automatically unless you turn off auto-renew at least \
+        24 hours before the end of the current period. Your account is charged for renewal \
+        within 24 hours before the period ends.
+
+        You can manage or cancel your subscription in your Apple ID account settings.
+        """
+    }
+
+    static let termsOfUse = "Terms of Use"
+    static let privacyPolicy = "Privacy Policy"
 
     // MARK: - 无障碍
     //

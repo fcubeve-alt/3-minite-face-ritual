@@ -185,6 +185,9 @@ struct SettingsView: View {
                     .font(.system(.body, design: .monospaced))
                     .foregroundStyle(Theme.textSecondary)
             }
+            NavigationLink(AppCopy.safetyScreenTitle) {
+                SafetyView()
+            }
             Button(AppCopy.clearHistory, role: .destructive) { showResetConfirm = true }
         } header: {
             Text(AppCopy.sectionAbout)

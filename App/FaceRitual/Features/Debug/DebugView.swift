@@ -29,6 +29,12 @@ struct DebugView: View {
             NavigationLink("ARKit 顶点标定") {
                 ARKitCalibrationView()
             }
+            HStack {
+                Text("Terms / Privacy 链接")
+                Spacer()
+                Text(LegalLinks.isComplete ? "已配置" : "缺失（上架会被拒）")
+                    .foregroundStyle(LegalLinks.isComplete ? Theme.accent : Theme.warning)
+            }
         } header: {
             Text("Tools")
         } footer: {

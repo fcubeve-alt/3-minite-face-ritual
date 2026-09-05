@@ -31,6 +31,7 @@ M1 阶段的动作、路径、面部位置**全部是占位测试数据**，
 | [docs/HRFFA_INTEGRATION.md](docs/HRFFA_INTEGRATION.md) | HRFFA CoreML 接入步骤 |
 | [docs/ARKIT_VERTEX_CALIBRATION.md](docs/ARKIT_VERTEX_CALIBRATION.md) | ARKit 顶点索引标定 |
 | [docs/CONTENT_AUTHORING.md](docs/CONTENT_AUTHORING.md) | **替换正式动作内容的指南**（Owner 与专业审核人员看这份） |
+| [docs/COPY_REVIEW.md](docs/COPY_REVIEW.md) | **文案评审清单**（Owner 与法务看这份）：免责、Watch & Breathe、订阅披露、摄像头说明 |
 
 ---
 
