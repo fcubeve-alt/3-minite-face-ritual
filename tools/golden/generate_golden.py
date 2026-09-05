@@ -362,7 +362,18 @@ def make_path(movement, start_local, end_local, frame):
 # ---------------------------------------------------------------------------
 # 主流程
 # ---------------------------------------------------------------------------
-def round_point(p, digits=6):
+# 输出精度。
+#
+# 这个数字有实际后果：Swift 测试是从这个文件里的坐标**重建**几何的，
+# 所以文件的量化误差会直接变成 Swift 侧的漂移。
+# 瞳距最小的用例只有 42px，视图坐标上 1e-6 的舍入除以 42 就是 ~2.4e-8 归一化单位 ——
+# 而 Python 侧用全精度算，只有 2e-15。两边对不上，不是几何错，是精度错。
+# 实测：6 位 → 2.3e-8；9 位 → 1.9e-11；12 位 → 2.1e-14。
+# 取 9 位：量化噪声降到 1e-11 量级，文件也不会臃肿。
+OUTPUT_DIGITS = 9
+
+
+def round_point(p, digits=OUTPUT_DIGITS):
     return [round(p[0], digits), round(p[1], digits)]
 
 
@@ -386,7 +397,7 @@ def main() -> int:
             resolved[anchor_id] = {
                 "view": round_point(view),
                 "local": round_point(local),
-                "toleranceRadiusPoints": round(anchors[anchor_id].get("toleranceRadius", 0.12) * frame.scale, 6),
+                "toleranceRadiusPoints": round(anchors[anchor_id].get("toleranceRadius", 0.12) * frame.scale, OUTPUT_DIGITS),
             }
             invariance.setdefault(anchor_id, []).append((name, local))
 
@@ -425,7 +436,7 @@ def main() -> int:
                 "origin": round_point(frame.origin),
                 "xAxis": round_point(frame.x_axis),
                 "yAxis": round_point(frame.y_axis),
-                "scale": round(frame.scale, 6),
+                "scale": round(frame.scale, OUTPUT_DIGITS),
             },
             "anchors": resolved,
             "paths": paths,

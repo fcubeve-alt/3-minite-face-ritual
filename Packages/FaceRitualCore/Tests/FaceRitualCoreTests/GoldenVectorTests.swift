@@ -12,6 +12,24 @@ final class GoldenVectorTests: XCTestCase {
     /// 归一化坐标容差（瞳距）。
     private let localTolerance = 1e-6
 
+    /// 不变性容差（瞳距）。
+    ///
+    /// 定这个数字要在两个方向之间取平衡，两边都有实际后果：
+    ///
+    /// - **下界（不能太小）**：Swift 是从 golden 文件里的坐标重建几何的，
+    ///   而文件按 9 位小数存储。瞳距最小的用例只有 42px，
+    ///   视图坐标上的舍入除以 42 后会放大 —— 实测量化噪声约 2e-11。
+    ///   容差低于这个数，测试就会因为文件精度而假失败。
+    ///   （第一版设成 1e-9、文件只存 6 位，CI 上就是这么挂的：
+    ///   预测漂移 2.326e-08，实测 2.33e-08，分毫不差。）
+    ///
+    /// - **上界（不能太大）**：1 个瞳距在屏幕上约 60px，
+    ///   所以 1e-6 瞳距 ≈ 0.00006 像素 —— 肉眼绝无可能看见。
+    ///
+    /// 取 1e-6：比量化噪声高约 5 万倍（不会假失败），
+    /// 又比任何真实缺陷小得多（嘴角镜像那个 bug 造成的偏差是 28%）。
+    static let invarianceTolerance = 1e-6
+
     private var fixture: GoldenFixture!
     private var bundle: ContentBundle!
 
@@ -112,7 +130,7 @@ final class GoldenVectorTests: XCTestCase {
                 XCTAssertEqual(
                     local.distance(to: reference),
                     0,
-                    accuracy: 1e-9,
+                    accuracy: GoldenVectorTests.invarianceTolerance,
                     "\(anchorID) 在不同尺度/位置/倾斜下漂移了"
                 )
             }
