@@ -13,16 +13,24 @@ public enum BundledContent {
         public static let anchors = "anchors"
     }
 
-    public static func makeSource(bundle: Bundle = .module) throws -> JSONContentRepository.Source {
-        JSONContentRepository.Source(
-            metaData: try data(named: ResourceName.meta, bundle: bundle),
-            routinesData: try data(named: ResourceName.routines, bundle: bundle),
-            anchorsData: try data(named: ResourceName.anchors, bundle: bundle)
+    /// 注意 `bundle` 是 optional 而不是默认 `.module`。
+    ///
+    /// SPM 生成的 `Bundle.module` 是 **internal** 的，不能出现在 public 函数的
+    /// 默认参数值里（默认参数在调用方展开，那里看不到 internal 符号）。
+    /// 写成 `.module` 会编译失败：
+    /// "static property 'module' is internal and cannot be referenced from a default argument value"。
+    /// 所以默认值给 nil，进函数体之后再取 —— 函数体在模块内部，访问 internal 没问题。
+    public static func makeSource(bundle: Bundle? = nil) throws -> JSONContentRepository.Source {
+        let resolved = bundle ?? .module
+        return JSONContentRepository.Source(
+            metaData: try data(named: ResourceName.meta, bundle: resolved),
+            routinesData: try data(named: ResourceName.routines, bundle: resolved),
+            anchorsData: try data(named: ResourceName.anchors, bundle: resolved)
         )
     }
 
     public static func makeRepository(
-        bundle: Bundle = .module,
+        bundle: Bundle? = nil,
         failOnValidationError: Bool = true
     ) throws -> JSONContentRepository {
         JSONContentRepository(

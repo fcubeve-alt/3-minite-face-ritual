@@ -1,11 +1,12 @@
 name: CI
 
 # 两层：
-#  1. checks —— 不需要 Xcode，任何机器都能跑。开发机是 Windows，日常靠它兜底。
-#  2. build  —— macOS runner 上做真实编译与测试。这是 Windows 上做不到的那部分。
+#  1. checks —— Ubuntu，不需要 Xcode。开发机是 Windows，日常靠它兜底。
+#  2. macos  —— 真实编译 + 单元测试 + 模拟器上的 M1 闭环。
 #
-# build 失败是常态而非意外：M1 阶段大量 Swift 代码从未编译过，
-# 这个 job 的价值就是把「哪里编译不过」变成一份可读的清单。
+# 刻意只用**一个** macOS 任务：私有仓库的 macOS 机器按 10 倍分钟计费，
+# 拆成「构建 / 单测 / UI 测试」三个任务会白白多花两倍额度，
+# 而它们本来就共用同一份编译产物。
 
 on:
   push:
@@ -32,7 +33,7 @@ jobs:
         run: python tools/check_architecture.py
 
       - name: Swift 引用检查
-        # 枚举 case / init 标签 / 协议一致性 —— 编译器能抓的一小部分，但不用 Mac。
+        # 先跑自测：一个从不报错的检查器比没有更糟。
         run: |
           python tools/check_swift_refs.py --self-test
           python tools/check_swift_refs.py
@@ -46,27 +47,25 @@ jobs:
 
       - name: 无头跑一遍全部 routine
         # 验证每个播放段都能真的在脸上画出东西，以及左右两段互为镜像。
-        # 这里抓到过一个真实 bug：嘴角 landmark 镜像不翻转，右脸路径长度偏差 28%。
         run: python tools/simulate_routine.py
 
-  core-tests:
-    name: FaceRitualCore 单元测试
-    runs-on: macos-14
+  macos:
+    name: 编译 · 单元测试 · M1 闭环
+    # macos-15 带 Xcode 16。XcodeGen 2.46 生成的是 objectVersion 77（Xcode 16 格式），
+    # macos-14 上的 Xcode 15.4 会直接报 "future Xcode project file format (77)"。
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
 
-      - name: 显示工具链版本
-        run: swift --version
+      - name: 工具链版本
+        run: |
+          xcodebuild -version
+          swift --version
 
-      - name: swift test
+      - name: FaceRitualCore 单元测试
+        # Core 是纯 Swift 包，不需要 Xcode 工程，最快的反馈回路。
         working-directory: Packages/FaceRitualCore
-        run: swift test --enable-code-coverage
-
-  build:
-    name: iOS App 构建
-    runs-on: macos-14
-    steps:
-      - uses: actions/checkout@v4
+        run: swift test
 
       - name: 安装 XcodeGen
         run: brew install xcodegen
@@ -74,19 +73,42 @@ jobs:
       - name: 生成 Xcode 工程
         run: xcodegen generate
 
-      - name: 构建（模拟器，不签名）
+      - name: 选一台可用的 iOS 模拟器
+        # 不写死机型名：不同 Xcode 版本预装的模拟器不一样，
+        # 写死 "iPhone 15" 换个镜像就找不到设备了。
+        id: sim
         run: |
-          xcodebuild build \
+          set -o pipefail
+          UDID=$(xcrun simctl list devices available --json \
+            | jq -r '[.devices[][] | select(.name | test("^iPhone"))] | last | .udid')
+          if [ -z "$UDID" ] || [ "$UDID" = "null" ]; then
+            echo "找不到可用的 iPhone 模拟器"
+            xcrun simctl list devices available
+            exit 1
+          fi
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+          echo "选中的模拟器 UDID: $UDID"
+
+      # 模拟器没有摄像头 → provider 如实报告不可用 → 自动回落 Mock（合成动画脸）。
+      # 于是「打开 App → START → 选模式 → 走完 routine → Done → 记录落盘」
+      # 这条 M1 闭环每次推代码都被验证一遍，不需要任何人手里有 Mac。
+      # 测不到的只有真人脸上的贴合精度 / FPS / 遮挡表现 —— 那些必须上真机。
+      - name: 构建并跑全部测试（含 M1 闭环 UI 测试）
+        run: |
+          # pipefail 不能省：xcodebuild 的失败会被 tee 吞掉，
+          # 上一版就因此在构建报错的情况下显示了绿色。
+          set -o pipefail
+          xcodebuild test \
             -project FaceRitual.xcodeproj \
             -scheme FaceRitual \
-            -destination 'generic/platform=iOS Simulator' \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
             CODE_SIGNING_ALLOWED=NO \
-            | tee build.log
+            2>&1 | tee xcodebuild.log
 
       - name: 上传构建日志
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-log
-          path: build.log
+          name: xcodebuild-log
+          path: xcodebuild.log
           if-no-files-found: ignore
