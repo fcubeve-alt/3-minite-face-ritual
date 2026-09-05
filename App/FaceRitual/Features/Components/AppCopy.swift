@@ -67,6 +67,9 @@ enum AppCopy {
     static let homeTagline = "Follow the coach. Mirror on your face. Done."
     static let start = "START"
     static let quickRituals = "Quick Rituals"
+    /// 次级列表现在同时装 Evening Ritual 与 Quick Rituals，
+    /// 所以标题不能再叫 "Quick Rituals"。
+    static let moreRituals = "More rituals"
     static let arGuidanceAvailable = "AR Mirror guidance available"
 
     static let statRituals = "rituals"

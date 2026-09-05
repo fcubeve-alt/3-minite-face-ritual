@@ -59,8 +59,7 @@ final class ClosedLoopUITests: XCTestCase {
         chooseMode(A11yID.modeWatch)
 
         // Watch 模式没有上一步/下一步按钮，只有暂停 —— 用暂停确认播放器起来了。
-        let pause = app.buttons[A11yID.playerPauseToggle]
-        XCTAssertTrue(pause.waitForExistence(timeout: 20), "Watch 模式的播放器没有出现")
+        _ = waitFor(A11yID.playerPauseToggle, message: "Watch 模式的播放器没有出现")
     }
 
     /// 中途退出也要留下记录（规格 §12：不惩罚中断）。
@@ -68,8 +67,7 @@ final class ClosedLoopUITests: XCTestCase {
         startMorningRitual()
         chooseMode(A11yID.modeCoach)
 
-        let close = app.buttons[A11yID.playerClose]
-        XCTAssertTrue(close.waitForExistence(timeout: 20), "播放器没有出现")
+        let close = waitFor(A11yID.playerClose, message: "播放器没有出现")
         // 等一会儿，让已完成秒数不为 0
         Thread.sleep(forTimeInterval: 5)
         close.tap()
@@ -86,16 +84,50 @@ final class ClosedLoopUITests: XCTestCase {
 
     // MARK: - 步骤
 
+    /// 按 identifier 找元素，**不限定类型**。
+    ///
+    /// 不用 `app.buttons[id]`：SwiftUI 把 `Button` 渲染成什么类型的可访问元素，
+    /// 取决于 buttonStyle 和 label 的结构 —— 带自定义内容的 `.plain` 按钮
+    /// 有时会落到 `otherElements` 而不是 `buttons`。
+    /// 限定类型查询会因此找不到，而报错只说「没出现」，看不出真正原因。
+    private func element(_ identifier: String) -> XCUIElement {
+        app.descendants(matching: .any).matching(identifier: identifier).firstMatch
+    }
+
+    /// 找不到元素时，把当前界面的可访问层级作为附件传出去。
+    ///
+    /// 没有这个的话，CI 上只会得到一句「没出现」，然后就得再跑一轮去猜 ——
+    /// 而 macOS runner 的每一轮都要花掉可观的额度。
+    private func waitFor(
+        _ identifier: String,
+        timeout: TimeInterval = 20,
+        message: String,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) -> XCUIElement {
+        let target = element(identifier)
+        if target.waitForExistence(timeout: timeout) == false {
+            let dump = XCTAttachment(string: app.debugDescription)
+            dump.name = "界面层级-\(identifier)"
+            dump.lifetime = .keepAlways
+            add(dump)
+
+            XCTFail(
+                "\(message)（identifier: \(identifier)）。当前界面层级已作为附件附上，"
+                + "前 2000 字符：\n\(String(app.debugDescription.prefix(2000)))",
+                file: file,
+                line: line
+            )
+        }
+        return target
+    }
+
     private func startMorningRitual() {
-        let start = app.buttons[A11yID.homeStart]
-        XCTAssertTrue(start.waitForExistence(timeout: 20), "首页的 START 没有出现")
-        start.tap()
+        waitFor(A11yID.homeStart, message: "首页的 START 没有出现").tap()
     }
 
     private func chooseMode(_ identifier: String) {
-        let mode = app.buttons[identifier]
-        XCTAssertTrue(mode.waitForExistence(timeout: 10), "模式 \(identifier) 没有出现")
-        mode.tap()
+        waitFor(identifier, message: "模式选择行没有出现").tap()
     }
 
     /// 用「下一动作」把 9 个播放段走完，而不是干等 3 分钟。
@@ -103,8 +135,7 @@ final class ClosedLoopUITests: XCTestCase {
     /// 这样验证的仍然是真实的 routine 与分段逻辑（Morning Core 的 5 个 step
     /// 里有 4 个是左右两段，展开后共 9 段），只是不消耗真实时长。
     private func walkThroughAllSegments() {
-        let skip = app.buttons[A11yID.playerSkipForward]
-        XCTAssertTrue(skip.waitForExistence(timeout: 20), "播放器没有出现")
+        let skip = waitFor(A11yID.playerSkipForward, message: "播放器没有出现")
 
         // 多点几次无妨：走完最后一段就会进入 Done，按钮随之消失。
         for _ in 0..<12 where skip.exists {
@@ -113,22 +144,17 @@ final class ClosedLoopUITests: XCTestCase {
     }
 
     private func assertDoneScreenAppeared() {
-        let title = app.staticTexts[A11yID.doneTitle]
-        XCTAssertTrue(title.waitForExistence(timeout: 20), "Done 页没有出现")
+        _ = waitFor(A11yID.doneTitle, message: "Done 页没有出现")
     }
 
     private func returnHome() {
-        let back = app.buttons[A11yID.doneBackToHome]
-        XCTAssertTrue(back.waitForExistence(timeout: 10), "Done 页没有返回按钮")
-        back.tap()
+        waitFor(A11yID.doneBackToHome, message: "Done 页没有返回按钮").tap()
     }
 
     /// 月度汇总卡的无障碍标签形如 "This month: 1 rituals, 3 minutes, 1 active days"。
     /// 用它来验证记录真的落盘了 —— 这是闭环的最后一环。
     private func assertMonthlySummaryCountsOneSession() {
-        let summary = app.buttons[A11yID.homeMonthlySummary]
-        XCTAssertTrue(summary.waitForExistence(timeout: 20), "首页的月度汇总没有出现")
-
+        let summary = waitFor(A11yID.homeMonthlySummary, message: "首页的月度汇总没有出现")
         let label = summary.label
         XCTAssertTrue(
             label.contains("1 rituals"),

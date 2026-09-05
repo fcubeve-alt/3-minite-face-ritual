@@ -17,12 +17,34 @@ struct HomeView: View {
         return (hour >= 5 && hour < 12) ? AppCopy.greetingMorning : AppCopy.greetingEvening
     }
 
-    /// 按本地时间决定主卡片放 Morning 还是 Evening。
-    /// Evening Core 是 Premium，但主卡片仍然展示 —— 让用户看得到，而不是藏起来。
+    /// 主卡片**恒为 Morning Core**（规格 §5.1 就是这么写的）。
+    ///
+    /// 之前按时间切换成 Evening 是个真 bug：Evening 是付费的，而 Morning Core
+    /// 又不在下面的次级列表里 —— 于是下午 5 点之后，免费用户看到的是一张锁着的
+    /// 主卡片加一列锁着的 Quick Ritual，**根本进不去那个永久免费的核心 routine**。
+    /// 是 CI 的闭环测试在 UTC 18:09 跑时撞出来的。
+    ///
+    /// 现在 Evening 挪到次级列表，晚上排在最前 —— 看得到、进得去，也不挡住免费入口。
     private var featuredRoutine: Routine? {
+        environment.morningCore ?? environment.eveningCore
+    }
+
+    /// 次级入口：Evening + 全部 Quick Rituals。
+    /// 傍晚把 Evening 排到最前，保留「按时间给出合适建议」的意图，
+    /// 但不再以牺牲免费入口为代价。
+    private var secondaryRituals: [Routine] {
+        var list: [Routine] = []
+        if let evening = environment.eveningCore, evening.id != featuredRoutine?.id {
+            list.append(evening)
+        }
+        list.append(contentsOf: environment.quickRituals)
+
         let hour = Calendar.current.component(.hour, from: Date())
-        if hour >= 17, let evening = environment.eveningCore { return evening }
-        return environment.morningCore ?? environment.eveningCore
+        if hour < 17 {
+            // 白天把 Evening 放到最后，Quick Ritual 更相关。
+            list = list.filter { $0.type != .evening } + list.filter { $0.type == .evening }
+        }
+        return list
     }
 
     var body: some View {
@@ -73,7 +95,7 @@ struct HomeView: View {
             Text(greeting)
                 .font(.system(size: 30, weight: .semibold))
                 .foregroundStyle(Theme.textPrimary)
-            Text("Follow the coach. Mirror on your face. Done.")
+            Text(AppCopy.homeTagline)
                 .font(.callout)
                 .foregroundStyle(Theme.textSecondary)
         }
@@ -116,10 +138,10 @@ struct HomeView: View {
 
     @ViewBuilder
     private var quickRituals: some View {
-        let rituals = environment.quickRituals
+        let rituals = secondaryRituals
         if rituals.isEmpty == false {
             VStack(alignment: .leading, spacing: 12) {
-                Text(AppCopy.quickRituals)
+                Text(AppCopy.moreRituals)
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(Theme.textPrimary)
 
