@@ -67,7 +67,7 @@ final class ClosedLoopUITests: XCTestCase {
         startMorningRitual()
         chooseMode(A11yID.modeCoach)
 
-        let close = waitFor(A11yID.playerClose, message: "播放器没有出现")
+        let close = waitForHittable(A11yID.playerClose, message: "播放器没有出现")
         // 等一会儿，让已完成秒数不为 0
         Thread.sleep(forTimeInterval: 5)
         close.tap()
@@ -122,12 +122,50 @@ final class ClosedLoopUITests: XCTestCase {
         return target
     }
 
+    /// 等元素**可点**，而不只是「存在」。
+    ///
+    /// SwiftUI 在视图还在做转场动画时就把元素放进了可访问层级 ——
+    /// 那时 `exists` 已经是 true，但点下去是空的（或者更糟：点在了动画中间态上，
+    /// 于是嵌套的 fullScreenCover 因为「上一个转场还没结束」被丢弃）。
+    ///
+    /// 本机上动画只有 0.3 秒左右，几乎撞不到；CI 的模拟器动画慢得多，
+    /// 窗口能有一两秒 —— 所以这类竞态**只会在 CI 上偶发**，最难查。
+    /// 2026-09-06 的 run 34035131613 就是这么挂的：三个测试过、一个卡在首页。
+    @discardableResult
+    private func waitForHittable(
+        _ identifier: String,
+        timeout: TimeInterval = 20,
+        message: String,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) -> XCUIElement {
+        let target = waitFor(identifier, timeout: timeout, message: message, file: file, line: line)
+        guard target.exists else { return target }
+
+        let hittable = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "isHittable == true"),
+            object: target
+        )
+        if XCTWaiter().wait(for: [hittable], timeout: timeout) != .completed {
+            XCTFail(
+                "\(message)：元素出现了但一直不可点（identifier: \(identifier)）。"
+                + "多半是转场动画没结束，或者被别的视图盖住了。",
+                file: file,
+                line: line
+            )
+        }
+        return target
+    }
+
     private func startMorningRitual() {
-        waitFor(A11yID.homeStart, message: "首页的 START 没有出现").tap()
+        waitForHittable(A11yID.homeStart, message: "首页的 START 没有出现").tap()
     }
 
     private func chooseMode(_ identifier: String) {
-        waitFor(identifier, message: "模式选择行没有出现").tap()
+        // 必须等可点：这一行在外层 fullScreenCover 的入场动画期间就已经「存在」了，
+        // 那时候点它，内层 fullScreenCover（播放器）会因为
+        // 「上一个转场还在进行」而被 UIKit 丢掉 —— 表现就是停在原地什么也没发生。
+        waitForHittable(identifier, message: "模式选择行没有出现").tap()
     }
 
     /// 用「下一动作」把 9 个播放段走完，而不是干等 3 分钟。
@@ -135,7 +173,7 @@ final class ClosedLoopUITests: XCTestCase {
     /// 这样验证的仍然是真实的 routine 与分段逻辑（Morning Core 的 5 个 step
     /// 里有 4 个是左右两段，展开后共 9 段），只是不消耗真实时长。
     private func walkThroughAllSegments() {
-        let skip = waitFor(A11yID.playerSkipForward, message: "播放器没有出现")
+        let skip = waitForHittable(A11yID.playerSkipForward, message: "播放器没有出现")
         let doneTitle = element(A11yID.doneTitle)
 
         // 不能用 `skip.exists` 当循环条件：
@@ -155,7 +193,23 @@ final class ClosedLoopUITests: XCTestCase {
     }
 
     private func returnHome() {
-        waitFor(A11yID.doneBackToHome, message: "Done 页没有返回按钮").tap()
+        waitForHittable(A11yID.doneBackToHome, message: "Done 页没有返回按钮").tap()
+
+        // 断言**真的**回到了首页，而不是「首页的控件恰好还在无障碍树里」。
+        //
+        // 详情页以前是盖在首页上的 fullScreenCover，首页控件一直留在树里，
+        // 于是下面那条月度汇总断言在根本没回到首页时也能通过 ——
+        // 而真实用户会被留在详情页，还得再按一次关闭。
+        // 改成导航推入之后，用「详情页的控件必须消失」把这条断言变成真的。
+        let modeRow = element(A11yID.modeCoach)
+        let gone = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "exists == false"),
+            object: modeRow
+        )
+        XCTAssertEqual(
+            XCTWaiter().wait(for: [gone], timeout: 10), .completed,
+            "返回后仍然停在 routine 详情页 —— 没有真的回到首页"
+        )
     }
 
     /// 月度汇总卡的无障碍标签形如 "This month: 1 rituals, 3 minutes, 1 active days"。

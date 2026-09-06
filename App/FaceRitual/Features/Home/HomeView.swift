@@ -9,7 +9,6 @@ struct HomeView: View {
     @EnvironmentObject private var environment: AppEnvironment
     @Binding var path: NavigationPath
 
-    @State private var activeRoutine: Routine?
     @State private var paywallRoutine: Routine?
 
     private var greeting: String {
@@ -75,13 +74,6 @@ struct HomeView: View {
                 }
                 .accessibilityLabel(AppCopy.a11ySettings)
             }
-        }
-        .fullScreenCover(item: $activeRoutine) { routine in
-            // 模态里需要自己的 NavigationStack，否则详情页的标题栏与关闭按钮无处安放。
-            NavigationStack {
-                RoutineDetailView(routine: routine, presentedModally: true)
-            }
-            .tint(Theme.accent)
         }
         .sheet(item: $paywallRoutine) { routine in
             PaywallView(source: "home_\(routine.id.rawValue)")
@@ -240,11 +232,23 @@ struct HomeView: View {
 
     // MARK: - 动作
 
+    /// 进入 routine 详情。
+    ///
+    /// 用**导航推入**而不是 fullScreenCover。
+    ///
+    /// 之前是模态：首页 fullScreenCover → 详情，详情里再 fullScreenCover → 播放器。
+    /// 两层嵌套的 cover 在外层入场动画还没结束时触发内层，UIKit 会以
+    /// 「上一个转场还在进行」为由把内层丢掉 —— 用户点了「Coach」但什么也没发生。
+    /// 手快的用户、开了辅助功能「减弱动态效果」的用户，以及 CI 上动画很慢的
+    /// 模拟器都会撞到（2026-09-06 的 run 34035131613 就是这么挂的）。
+    ///
+    /// 改成推入之后全 App 只剩播放器这一层 cover，这类问题从根上没有了。
+    /// `AppRoute.routineDetail` 本来就已经接好线，只是一直没人用。
     private func start(_ routine: Routine) {
         if environment.access(to: routine, mode: .coach) == .requiresPremium {
             paywallRoutine = routine
         } else {
-            activeRoutine = routine
+            path.append(AppRoute.routineDetail(routine.id))
         }
     }
 }

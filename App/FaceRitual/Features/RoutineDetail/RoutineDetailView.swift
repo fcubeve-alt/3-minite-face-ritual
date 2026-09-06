@@ -10,13 +10,20 @@ struct RoutineDetailView: View {
     @Environment(\.dismiss) private var dismiss
 
     let routine: Routine
-    var presentedModally: Bool = false
 
     @State private var activeMode: PracticeMode?
     @State private var showPaywall = false
     @State private var cameraDeniedAlert = false
     @State private var isRequestingCamera = false
 
+    /// 播放器关掉之后**退回首页**，而不是停在这一页。
+    ///
+    /// 播放器只在会话真正结束时才会关闭（走完 → Done → 返回，或者中途退出 →
+    /// 确认结束 → Done → 返回）。这些路径下用户都不想再看一遍详情页。
+    ///
+    /// 以前这里是个 bug，只是被测试掩盖了：详情页当时是盖在首页上的 fullScreenCover，
+    /// 首页的控件还留在无障碍树里，于是「返回首页」的断言在**没真的回到首页**时
+    /// 也能通过 —— 而真实用户会被留在详情页，还得再按一次关闭。
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
@@ -33,14 +40,7 @@ struct RoutineDetailView: View {
         .background(Theme.background)
         .navigationTitle(routine.title)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            if presentedModally {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button(AppCopy.close) { dismiss() }
-                }
-            }
-        }
-        .fullScreenCover(item: $activeMode) { mode in
+        .fullScreenCover(item: $activeMode, onDismiss: { dismiss() }) { mode in
             sessionView(for: mode)
         }
         .sheet(isPresented: $showPaywall) {
