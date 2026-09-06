@@ -670,6 +670,45 @@ def check_site_copy_has_no_efficacy_claims() -> None:
             )
 
 
+def check_release_uses_real_purchases() -> None:
+    """Release 构建不得使用 Mock 订阅。
+
+    Mock 的行为是「点一下直接解锁」。如果它进了 Release 包，
+    用户点订阅会拿到 Premium 而**不产生任何收入**，而且
+    这种错误不会崩、不会报警、测试也照样过 —— 只有收入报表上看得出来。
+
+    检查方式：`MockEntitlementService` 在 App 装配处只能出现在 `#if DEBUG` 里。
+    """
+    target = APP / "FaceRitual" / "App" / "AppEnvironment.swift"
+    if not target.exists():
+        error("App/FaceRitual/App/AppEnvironment.swift", "找不到 App 装配文件，无法确认订阅实现")
+        return
+
+    debug_depth = 0
+    for lineno, line in enumerate(target.read_text(encoding="utf-8").splitlines(), 1):
+        stripped = line.strip()
+        if re.match(r"#if\s+DEBUG\b", stripped):
+            debug_depth += 1
+            continue
+        if stripped.startswith("#endif"):
+            debug_depth = max(0, debug_depth - 1)
+            continue
+        # `#if !DEBUG` 的分支里出现 Mock 才是真问题，这里一并按非 DEBUG 处理。
+        if re.match(r"#if\s+!\s*DEBUG\b", stripped):
+            debug_depth = 0
+            continue
+        if stripped.startswith("//"):
+            continue
+        if "MockEntitlementService" in stripped and debug_depth == 0:
+            error(
+                f"{rel(target)}:{lineno}",
+                "Release 路径上用到了 MockEntitlementService。"
+                "它的行为是「点一下直接解锁」—— 进了发布包就是"
+                "用户点订阅拿到 Premium 但不产生任何收入，而且不会崩也不会报警。"
+                "请把它放进 #if DEBUG。",
+            )
+
+
 def main() -> int:
     print("架构与静态检查\n")
 
@@ -686,6 +725,7 @@ def main() -> int:
         ("纯图标按钮有无障碍标签", check_icon_buttons_have_accessibility_labels),
         ("隐私承诺与代码一致", check_privacy_claim_holds),
         ("网站文案无功效表述", check_site_copy_has_no_efficacy_claims),
+        ("Release 使用真实订阅", check_release_uses_real_purchases),
     ]
 
     for name, check in checks:

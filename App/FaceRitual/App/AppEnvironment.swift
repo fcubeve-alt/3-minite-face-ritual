@@ -89,13 +89,39 @@ final class AppEnvironment: ObservableObject {
 
         self.practiceStore = practiceStore ?? ((try? FilePracticeStore.makeDefault()) ?? InMemoryPracticeStore())
 
-        // M1 默认 Mock Unlock（Owner 指令）。切到 StoreKit 只需换这一行。
-        let entitlementService = entitlement ?? MockEntitlementService(storage: UserDefaultsEntitlementFlagStorage())
+        // 订阅实现按构建类型分开。
+        //
+        // Release **必须**走真实的 StoreKit —— 之前默认 Mock，意味着打包出去
+        // 点订阅会直接解锁而不收钱。那不是「还没接」，是「接错了」。
+        //
+        // DEBUG 保留 Mock：模拟器上没有 App Store 沙盒商品，
+        // `Product.products(for:)` 会返回空，Paywall 只能显示「暂时无法加载」，
+        // 开发和 UI 测试就都走不通了。
+        //
+        // 真机沙盒测试请用 Release 构建，或在 Settings → Developer 里临时切换。
+        // 有一条测试盯着这里：Release 不得使用 Mock（testReleaseUsesRealStoreKit）。
+        let entitlementService: EntitlementService
+        if let entitlement {
+            entitlementService = entitlement
+        } else {
+            #if DEBUG
+            entitlementService = MockEntitlementService(storage: UserDefaultsEntitlementFlagStorage())
+            #else
+            entitlementService = StoreKitEntitlementService()
+            #endif
+        }
         self.entitlement = entitlementService
         self.entitlementLevel = entitlementService.level
 
         voice.isEnabled = settings.voiceEnabled
         haptics.isEnabled = settings.hapticsEnabled
+
+        #if !DEBUG
+        // StoreKit 的商品与订阅状态要异步拉一次，否则 Paywall 打开时是空的。
+        if let storeKit = entitlementService as? StoreKitEntitlementService {
+            Task { await storeKit.refresh() }
+        }
+        #endif
 
         entitlementService.onChange = { [weak self] level in
             // 订阅状态可能从 StoreKit 的后台队列变化，统一切回主线程再动 @Published。
