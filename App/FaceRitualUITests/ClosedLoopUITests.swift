@@ -120,13 +120,31 @@ final class ClosedLoopUITests: XCTestCase {
             add(dump)
 
             XCTFail(
-                "\(message)（identifier: \(identifier)）。当前界面层级已作为附件附上，"
+                "\(message)（identifier: \(identifier)）。\(systemAlertHint())"
+                + "当前界面层级已作为附件附上，"
                 + "前 2000 字符：\n\(String(app.debugDescription.prefix(2000)))",
                 file: file,
                 line: line
             )
         }
         return target
+    }
+
+    /// 有没有系统弹窗挡在前面。
+    ///
+    /// 加这个是因为踩过一次：镜像在播放器一打开就请求摄像头权限，
+    /// 系统权限框盖住了整个界面，而测试只报「退出确认没有出现」——
+    /// 完全看不出真实原因，白白花掉一轮 CI（run 34045131757）。
+    ///
+    /// 系统弹窗属于 springboard 进程，不在 app 的层级里，所以 debugDescription
+    /// 里看不到它 —— 必须单独查。
+    private func systemAlertHint() -> String {
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        let alerts = springboard.alerts
+        guard alerts.count > 0 else { return "" }
+        let titles = (0..<alerts.count).map { alerts.element(boundBy: $0).label }
+        return "⚠️ 有系统弹窗挡在前面：\(titles.joined(separator: " / "))。"
+            + "多半是某处在不该弹权限的时候请求了权限。"
     }
 
     /// 等元素**可点**，而不只是「存在」。

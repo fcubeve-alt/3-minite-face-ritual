@@ -19,6 +19,7 @@ enum A11yID {
     static let playerClose = "player.close"
 
     static let playerMirrorToggle = "player.mirrorToggle"
+    static let playerMirrorEnable = "player.mirrorEnable"
 
     static let doneTitle = "done.title"
     static let doneBackToHome = "done.backToHome"

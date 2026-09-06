@@ -147,6 +147,15 @@ private extension CoachPlayerView {
             case .running:
                 MirrorPreviewRepresentable(controller: mirror)
                     .accessibilityLabel(AppCopy.a11yMirrorPreview)
+            case .needsPermission:
+                // 只有点了这个按钮才会弹系统权限框。
+                VStack(spacing: 10) {
+                    mirrorNotice(AppCopy.mirrorOptionalNote)
+                    Button(AppCopy.mirrorEnable) { mirror.requestAccess() }
+                        .buttonStyle(SecondaryButtonStyle())
+                        .padding(.horizontal, 40)
+                        .accessibilityIdentifier(A11yID.playerMirrorEnable)
+                }
             case .denied:
                 mirrorNotice(AppCopy.mirrorDeniedNote)
             case .unavailable:

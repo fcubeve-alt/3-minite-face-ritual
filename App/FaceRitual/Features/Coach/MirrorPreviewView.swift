@@ -18,6 +18,8 @@ final class MirrorPreviewController: NSObject, ObservableObject {
 
     enum State: Equatable {
         case idle
+        /// 还没问过权限。**这时候绝不能自动弹系统框**（见 start 的注释）。
+        case needsPermission
         /// 正常出画。
         case running
         /// 这台设备没有可用的前置摄像头（模拟器就是这种）。
@@ -42,20 +44,39 @@ final class MirrorPreviewController: NSObject, ObservableObject {
         super.init()
     }
 
+    /// 只在**已经授权**时开摄像头。没问过权限就停在 `.needsPermission`，
+    /// 由用户点一下再去问。
+    ///
+    /// 第一版写错了：这里直接调 requestAccess，于是播放器一打开就弹系统权限框，
+    /// 盖在界面上。既违反规格 §4「摄像头由用户主动开启」——
+    /// 用户还没看到镜像是干什么的就被要权限，多半直接拒绝，而拒绝是不可逆的（
+    /// 之后只能去系统设置里改）—— 也把 CI 的 UI 测试挡住了
+    /// （run 34045131757：系统弹窗盖住关闭按钮）。
+    ///
+    /// 镜像本来就是可选的，为一个可选功能牺牲第一印象不划算。
     func start() {
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .authorized:
             configureAndRun()
         case .notDetermined:
-            AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
-                DispatchQueue.main.async {
-                    if granted { self?.configureAndRun() } else { self?.state = .denied }
-                }
-            }
+            state = .needsPermission
         case .denied, .restricted:
             state = .denied
         @unknown default:
             state = .unavailable
+        }
+    }
+
+    /// 用户明确点了「打开镜像」才走到这里。
+    func requestAccess() {
+        guard AVCaptureDevice.authorizationStatus(for: .video) == .notDetermined else {
+            start()
+            return
+        }
+        AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
+            DispatchQueue.main.async {
+                if granted { self?.configureAndRun() } else { self?.state = .denied }
+            }
         }
     }
 
