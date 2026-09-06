@@ -101,9 +101,13 @@ final class RoutinePlayerEngineTests: XCTestCase {
         XCTAssertEqual(engine.status, .completed)
         XCTAssertEqual(completionSeconds, plan.totalDurationSeconds)
         XCTAssertEqual(plan.totalDurationSeconds, 180, "Morning Core 应为 180 秒")
-        // 5 个 step，其中 4 个 leftThenRight → 4*2 + 1 = 9 段
-        XCTAssertEqual(plan.segments.count, 9)
-        XCTAssertEqual(completedSegments.count, 9)
+
+        // 段数不写死：内容换一批动作就会变，写死等于每次改内容都要改测试。
+        // 真正要断言的是「展开规则正确」与「每一段都走完了」。
+        let expectedSegmentCount = morning.steps.reduce(0) { $0 + ($1.side == .leftThenRight ? 2 : 1) }
+        XCTAssertEqual(plan.segments.count, expectedSegmentCount, "leftThenRight 应展开成两段，其余一段")
+        XCTAssertEqual(completedSegments.count, plan.segments.count, "每一段都必须走完")
+        XCTAssertEqual(completedSegments, Array(0..<plan.segments.count), "段必须按顺序完成，且一段都不能丢")
     }
 
     func testSegmentBoundariesLandAtExpectedTimes() {

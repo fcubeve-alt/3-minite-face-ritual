@@ -505,7 +505,11 @@ function loop() {
   // 这类只标出「注意这一带」，不画 ● → ◎（画了会被误读成「手放这里、沿线走」）。
   const pathType = mv.pathType || "line";
   if (pathType === "expression" || pathType === "tap") {
-    const focus = (mv.focusAnchors || []).map(a => resolveAnchorId(a, seg.side));
+    // 与 ARGuidanceController 一致：side==both 时把对侧区域也并进来再去重。
+    // GM-15 本来就左右都写了，去重后不会叠成两层；只写单侧的动作会自动补上对侧。
+    let focus = (mv.focusAnchors || []).map(a => resolveAnchorId(a, seg.side));
+    if (seg.side === "both") focus = focus.concat(focus.map(mirrorId));
+    focus = [...new Set(focus)];
     const ids = focus.length ? focus : (mv.startAnchor ? [resolveAnchorId(mv.startAnchor, seg.side)] : []);
     const color = ACCENT[seg.side] || ACCENT.none;
     const phase = (elapsed % cyclePreview) / cyclePreview;

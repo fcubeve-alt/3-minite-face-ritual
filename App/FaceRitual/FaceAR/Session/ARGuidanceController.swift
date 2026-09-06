@@ -246,10 +246,42 @@ final class ARGuidanceController: ObservableObject {
 
         if let frame, let movement = currentMovement, assessment.shouldFreezeOverlay == false {
             var built: [MotionOverlay] = []
-            built += makeOverlays(movement: movement, geometry: geometry, frame: frame, side: currentSide, idSuffix: "primary")
-            // side == .both 时同时画两侧。
-            if let mirroredMovement {
-                built += makeOverlays(movement: mirroredMovement, geometry: geometry, frame: frame, side: .both, idSuffix: "mirrored")
+            switch movement.pathType {
+            case .expression, .tap:
+                // 只标区域的动作：先把两侧要高亮的区域**合并成一份列表**再画。
+                //
+                // 不能像有轨迹的动作那样跑两遍。GM-15 全脸轻拍本来就把左右区域
+                // 都写进了 focusAnchors，镜像之后得到的是同一批区域 ——
+                // 分两遍画就是在同一个位置叠两层，看上去比别处亮一倍。
+                // 合并后 dedupe 顺便解决了另一种情况：只写了单侧的动作会自动补上对侧。
+                var ids = movement.focusAnchorIDs
+                if let mirroredMovement { ids += mirroredMovement.focusAnchorIDs }
+                built = makeFocusOverlays(
+                    anchorIDs: ids, movement: movement, geometry: geometry, frame: frame, side: currentSide
+                )
+                // tap 允许退化成单点（没写 focusAnchors 但有 startAnchor）。
+                // expression 没有区域就是没有可画的东西 —— 这一段只剩提示与计时，
+                // 不是错误。
+                if built.isEmpty, movement.pathType == .tap,
+                   let overlay = makePathOverlay(
+                       movement: movement, geometry: geometry, frame: frame, side: currentSide, idSuffix: "primary"
+                   ) {
+                    built = [overlay]
+                }
+
+            case .line, .curve, .arc, .circle, .press, .hold:
+                if let overlay = makePathOverlay(
+                    movement: movement, geometry: geometry, frame: frame, side: currentSide, idSuffix: "primary"
+                ) {
+                    built.append(overlay)
+                }
+                // side == .both 时同时画两侧。
+                if let mirroredMovement,
+                   let overlay = makePathOverlay(
+                       movement: mirroredMovement, geometry: geometry, frame: frame, side: .both, idSuffix: "mirrored"
+                   ) {
+                    built.append(overlay)
+                }
             }
             if built.isEmpty == false {
                 lastGoodOverlays = built
@@ -271,45 +303,18 @@ final class ARGuidanceController: ObservableObject {
         return nil
     }
 
-    /// 一个 MovementSpec 可能产生多个 overlay：
-    /// 有轨迹的动作产生一条，只标区域的动作（expression / tap）每个区域一个。
-    private func makeOverlays(
-        movement: MovementSpec,
-        geometry: FaceGeometry,
-        frame: FaceFrame,
-        side: BodySide,
-        idSuffix: String
-    ) -> [MotionOverlay] {
-        switch movement.pathType {
-        case .expression, .tap:
-            let regions = makeFocusOverlays(
-                movement: movement, geometry: geometry, frame: frame, side: side, idSuffix: idSuffix
-            )
-            // tap 允许退化成单点（focusAnchors 为空但有 startAnchor）；
-            // expression 没有区域就是没有可画的东西 —— 这一段只剩提示与计时，
-            // 不是错误。
-            if regions.isEmpty == false { return regions }
-            if movement.pathType == .expression { return [] }
-        case .line, .curve, .arc, .circle, .press, .hold:
-            break
-        }
-        guard let overlay = makePathOverlay(
-            movement: movement, geometry: geometry, frame: frame, side: side, idSuffix: idSuffix
-        ) else { return [] }
-        return [overlay]
-    }
-
     /// 只标区域的动作：每个 focusAnchor 一个呼吸圈。
+    ///
+    /// `anchorIDs` 是合并后的列表，允许有重复 —— 这里去重且保持顺序。
     private func makeFocusOverlays(
+        anchorIDs: [FaceAnchorID],
         movement: MovementSpec,
         geometry: FaceGeometry,
         frame: FaceFrame,
-        side: BodySide,
-        idSuffix: String
+        side: BodySide
     ) -> [MotionOverlay] {
-        // 去重但保持顺序：内容里可能左右都列了同一个中线区域。
         var seen: Set<FaceAnchorID> = []
-        let ids = movement.focusAnchorIDs.filter { seen.insert($0).inserted }
+        let ids = anchorIDs.filter { seen.insert($0).inserted }
 
         var resolved: [(FaceAnchorID, ResolvedAnchor)] = []
         for anchorID in ids {
@@ -323,7 +328,7 @@ final class ARGuidanceController: ObservableObject {
         return resolved.enumerated().map { index, entry in
             let (anchorID, point) = entry
             return MotionOverlay(
-                id: "\(anchorID.rawValue)-focus-\(idSuffix)",
+                id: "\(anchorID.rawValue)-focus",
                 start: point.viewPoint,
                 end: nil,
                 path: MotionPath(kind: movement.pathType, points: [point.viewPoint]),
