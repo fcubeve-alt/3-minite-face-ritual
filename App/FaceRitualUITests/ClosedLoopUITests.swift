@@ -44,22 +44,29 @@ final class ClosedLoopUITests: XCTestCase {
         assertMonthlySummaryCountsOneSession()
     }
 
-    /// AR Mirror 路径。模拟器上会自动回落到 Mock provider。
-    func testARMirrorCompletesOnSyntheticFace() throws {
+    /// 摄像头是**可选**的：模拟器上根本没有前置摄像头，
+    /// 而整套 routine 必须照样能走完 —— 这正是砍掉 AR 之后最重要的一条性质。
+    ///
+    /// （原来这里有 testARMirrorCompletesOnSyntheticFace 与 testWatchModeReachesTheEnd，
+    /// 随 AR Mirror / Watch & Breathe 于 2026-09-07 一并移除。）
+    func testRoutineCompletesWithoutCamera() throws {
         startMorningRitual()
-        chooseMode(A11yID.modeARMirror)
+        chooseMode(A11yID.modeCoach)
         walkThroughAllSegments()
         assertDoneScreenAppeared()
     }
 
-    /// 规格 §4：识别失败不得阻塞 routine。
-    /// Watch & Breathe 走的是同一套播放器，也必须能走完。
-    func testWatchModeReachesTheEnd() throws {
+    /// 镜像可以关掉，关掉之后播放器仍然正常工作。
+    func testMirrorCanBeTurnedOff() throws {
         startMorningRitual()
-        chooseMode(A11yID.modeWatch)
+        chooseMode(A11yID.modeCoach)
 
-        // Watch 模式没有上一步/下一步按钮，只有暂停 —— 用暂停确认播放器起来了。
-        _ = waitFor(A11yID.playerPauseToggle, message: "Watch 模式的播放器没有出现")
+        let toggle = waitForHittable(A11yID.playerMirrorToggle, message: "镜像开关没有出现")
+        toggle.tap()
+
+        // 关掉镜像之后播放器照常 —— 用跳过按钮确认它还在工作。
+        let skip = waitForHittable(A11yID.playerSkipForward, message: "关掉镜像后播放器不见了")
+        XCTAssertTrue(skip.isHittable, "关掉镜像不应影响播放控制")
     }
 
     /// 中途退出也要留下记录（规格 §12：不惩罚中断）。

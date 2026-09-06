@@ -13,12 +13,12 @@ enum A11yID {
     static let homeMonthlySummary = "home.monthlySummary"
 
     static let modeCoach = "mode.coach"
-    static let modeARMirror = "mode.arMirror"
-    static let modeWatch = "mode.watch"
 
     static let playerPauseToggle = "player.pauseToggle"
     static let playerSkipForward = "player.skipForward"
     static let playerClose = "player.close"
+
+    static let playerMirrorToggle = "player.mirrorToggle"
 
     static let doneTitle = "done.title"
     static let doneBackToHome = "done.backToHome"

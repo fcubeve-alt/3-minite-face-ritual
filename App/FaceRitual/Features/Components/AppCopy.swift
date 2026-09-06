@@ -70,7 +70,24 @@ enum AppCopy {
     /// 次级列表现在同时装 Evening Ritual 与 Quick Rituals，
     /// 所以标题不能再叫 "Quick Rituals"。
     static let moreRituals = "More rituals"
-    static let arGuidanceAvailable = "AR Mirror guidance available"
+    /// 跟练形态的一句话说明。取代了原来的「AR Mirror guidance available」——
+    /// AR 于 2026-09-07 砍掉。
+    static let followAlongAvailable = "Follow along with the video, mirror optional"
+
+    // MARK: - Follow-along player（2026-09-07 起的主形态）
+
+    /// 示范视频还没到位时显示。刻意说「素材还没上」而不是报错 ——
+    /// 这一段本来就能照常做完，只是暂时看的是示意图形。
+    static let coachVideoPending = "Demo video coming soon"
+    static let mirrorTitle = "You"
+    static let coachTitle = "Follow along"
+    /// 摄像头是可选的：不开也能做完整套。
+    static let mirrorOptionalNote = "The mirror is optional. You can follow along without it."
+    static let mirrorDeniedNote = "Camera access is off. You can still follow along — turn it on in Settings if you want to see yourself."
+    static let mirrorUnavailableNote = "No front camera on this device."
+    static let mirrorToggleOn = "Show me"
+    static let mirrorToggleOff = "Hide me"
+    static let a11yMirrorPreview = "Your camera, shown as a mirror"
 
     static let statRituals = "rituals"
     static let statMinutes = "minutes"

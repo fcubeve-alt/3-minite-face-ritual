@@ -88,14 +88,13 @@ struct RoutineDetailView: View {
         }
     }
 
-    private var availableModes: [PracticeMode] {
-        var modes: [PracticeMode] = [.coach]
-        if routine.usesARGuidance {
-            modes.append(.arMirror)
-            modes.append(.watch)
-        }
-        return modes
-    }
+    /// 只剩一种练法。
+    ///
+    /// 2026-09-07 砍掉了 AR Mirror 与 Watch & Breathe：
+    /// 把路线贴在脸上实测贴不稳，而「贴不准的指引没有意义」。
+    /// 枚举里保留那两个 case 是因为**历史练习记录里有它们** ——
+    /// 删掉会让老记录解码失败。用户看不到它们，但过去的数据仍然读得出来。
+    private var availableModes: [PracticeMode] { [.coach] }
 
     private func modeRow(_ mode: PracticeMode) -> some View {
         let locked = environment.access(to: routine, mode: mode) == .requiresPremium

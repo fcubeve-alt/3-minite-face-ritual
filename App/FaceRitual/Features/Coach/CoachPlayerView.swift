@@ -1,11 +1,19 @@
 import SwiftUI
 import FaceRitualCore
 
-/// Coach 模式（规格 §6.1）。不使用摄像头。
+/// 跟练播放器 —— **上面老师做，下面你跟着做**。
 ///
-/// M1 用**占位素材**：正式 Virtual Coach 视频还没有，
-/// 但这不该阻塞系统联调 —— 所以这里画一个由同一份 MovementSpec 驱动的
-/// 示意动画，等真实视频到位后换掉 `CoachStageView` 的实现即可。
+/// 2026-09-07 产品方向调整之后，这是唯一的练习形态。
+/// 之前还有 AR Mirror（把路线贴在脸上）和 Watch & Breathe，
+/// 实测下来路线贴不稳，而"贴不准的指引没有意义"，所以砍掉了。
+///
+/// 现在的分工干净得多：
+///   上半屏 = 示范视频（素材没到位时回落到示意动画，流程不断）
+///   下半屏 = 纯镜像，**不做任何人脸识别**
+///
+/// 下半屏只要回答"我做的像不像"，那只需要一面镜子。
+/// 没有跟踪就没有漂移、没有丢锁、没有降级策略 —— 一整类问题从需求上消失了。
+/// 摄像头因此是**可选**的：不开也能跟着视频做完整套。
 struct CoachPlayerView: View {
     @EnvironmentObject private var environment: AppEnvironment
     @Environment(\.dismiss) private var dismiss
@@ -14,6 +22,11 @@ struct CoachPlayerView: View {
 
     @State private var showExitConfirm = false
     @State private var showDone = false
+
+    @StateObject private var mirror = MirrorPreviewController()
+    /// 镜像默认开着 —— 跟练时看不到自己就少了一半意义。
+    /// 但它必须能关：有人不想在早上看见自己的脸，那也完全能把 routine 做完。
+    @AppStorage("player.showMirror") private var showMirror = true
 
     /// autoclosure：`@StateObject` 只在首次构建时求值，重绘不会重复建 view model。
     init(viewModel: @autoclosure @escaping () -> RoutineSessionViewModel) {
@@ -28,11 +41,7 @@ struct CoachPlayerView: View {
                 PlayerHeader(viewModel: viewModel) { showExitConfirm = true }
                     .padding(.top, 8)
 
-                CoachStageView(
-                    segment: viewModel.currentSegment,
-                    cyclePhase: viewModel.segmentProgress
-                )
-                .frame(maxHeight: .infinity)
+                followAlongStage
 
                 PlayerControls(viewModel: viewModel)
             }
@@ -51,8 +60,17 @@ struct CoachPlayerView: View {
         .onChange(of: viewModel.didFinish) { _, finished in
             if finished { showDone = true }
         }
-        .onAppear { viewModel.start() }
-        .onDisappear { viewModel.abandon() }
+        .onAppear {
+            viewModel.start()
+            if showMirror { mirror.start() }
+        }
+        .onDisappear {
+            mirror.stop()
+            viewModel.abandon()
+        }
+        .onChange(of: showMirror) { _, wanted in
+            wanted ? mirror.start() : mirror.stop()
+        }
         .onChange(of: scenePhase) { _, phase in
             switch phase {
             case .active:
@@ -64,6 +82,87 @@ struct CoachPlayerView: View {
             }
         }
         .statusBarHidden()
+    }
+}
+
+private extension CoachPlayerView {
+
+    /// 上下分屏。上半屏给老师，下半屏给你。
+    ///
+    /// 6:4 而不是对半：示范画面需要看清手指位置，比自己的镜像更需要面积。
+    /// 关掉镜像时上半屏自然占满，不留空洞。
+    var followAlongStage: some View {
+        GeometryReader { proxy in
+            VStack(spacing: 10) {
+                labelled(AppCopy.coachTitle) {
+                    CoachVideoStage(
+                        segment: viewModel.currentSegment,
+                        cyclePhase: viewModel.segmentProgress
+                    )
+                }
+                .frame(height: showMirror ? proxy.size.height * 0.58 : proxy.size.height)
+
+                if showMirror {
+                    labelled(AppCopy.mirrorTitle) { mirrorStage }
+                        .frame(maxHeight: .infinity)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+        }
+    }
+
+    func labelled<Content: View>(
+        _ title: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            HStack {
+                Text(title)
+                    .font(.system(size: 11, weight: .semibold))
+                    .tracking(0.8)
+                    .foregroundStyle(Theme.textTertiary)
+                Spacer()
+                if title == AppCopy.mirrorTitle {
+                    Button(showMirror ? AppCopy.mirrorToggleOff : AppCopy.mirrorToggleOn) {
+                        showMirror.toggle()
+                    }
+                    .font(.system(size: 11))
+                    .foregroundStyle(Theme.textTertiary)
+                    .accessibilityIdentifier(A11yID.playerMirrorToggle)
+                }
+            }
+            content()
+                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        }
+    }
+
+    /// 镜像区。摄像头拿不到时给一句人话，而不是黑屏或报错 ——
+    /// 这一段本来就是可选的。
+    @ViewBuilder
+    var mirrorStage: some View {
+        ZStack {
+            Color.black
+            switch mirror.state {
+            case .running:
+                MirrorPreviewRepresentable(controller: mirror)
+                    .accessibilityLabel(AppCopy.a11yMirrorPreview)
+            case .denied:
+                mirrorNotice(AppCopy.mirrorDeniedNote)
+            case .unavailable:
+                mirrorNotice(AppCopy.mirrorUnavailableNote)
+            case .idle:
+                mirrorNotice(AppCopy.mirrorOptionalNote)
+            }
+        }
+    }
+
+    func mirrorNotice(_ text: String) -> some View {
+        Text(text)
+            .font(.footnote)
+            .multilineTextAlignment(.center)
+            .foregroundStyle(Theme.textTertiary)
+            .padding(.horizontal, 24)
     }
 }
 
@@ -84,7 +183,6 @@ struct CoachStageView: View {
 
                 if let segment {
                     VStack(spacing: 20) {
-                        placeholderNotice(assetName: segment.step.mediaAsset)
                         CoachSchematic(
                             movement: segment.resolvedMovement,
                             side: segment.side,
@@ -108,25 +206,13 @@ struct CoachStageView: View {
         }
     }
 
-    private func placeholderNotice(assetName: String?) -> some View {
-        VStack(spacing: 4) {
-            Text("COACH PLACEHOLDER")
-                .font(.system(size: 10, weight: .semibold))
-                .tracking(1.2)
-                .foregroundStyle(Theme.textTertiary)
-            if let assetName {
-                Text(assetName)
-                    .font(.system(size: 10, design: .monospaced))
-                    .foregroundStyle(Theme.textTertiary.opacity(0.7))
-            }
-        }
-    }
 }
 
-/// 抽象脸部示意图 —— 用与 AR 相同的 MovementSpec 画出起点、终点和方向。
+/// 抽象脸部示意图 —— 由 MovementSpec 画出起点、终点和方向。
 ///
-/// 这里用的是一张**标准比例的示意脸**，不是用户自己的脸；
-/// 它的作用是「第一次学动作」（规格 §6.1），精确定位交给 AR Mirror。
+/// 用的是一张**标准比例的示意脸**，不是用户自己的脸。
+/// 它现在的角色是**示范视频未到位时的回落**：动作的几何本来就在数据里，
+/// 素材还没补齐之前先用它把流程撑住，视频放进 bundle 就自动换成视频。
 private struct CoachSchematic: View {
     let movement: MovementSpec
     let side: BodySide

@@ -115,11 +115,9 @@ struct HomeView: View {
                 }
             }
 
-            if routine.usesARGuidance {
-                Label(AppCopy.arGuidanceAvailable, systemImage: "faceid")
-                    .font(.footnote)
-                    .foregroundStyle(Theme.accent)
-            }
+            Text(AppCopy.followAlongAvailable)
+                .font(.footnote)
+                .foregroundStyle(Theme.textSecondary)
 
             Button(AppCopy.start) {
                 start(routine)
