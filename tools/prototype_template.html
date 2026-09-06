@@ -1,0 +1,548 @@
+<!doctype html>
+<!--
+  AR 概念验证原型（浏览器版）。
+
+  ⚠️ 这不是产品，是**风险验证工具**。
+
+  为什么做它：
+    整个 V2 最大的未知数是「能不能把动作路线稳定画在真人脸上」。
+    验证这件事本来要 Mac + iPhone，而在等设备的这段时间里，
+    这个问题的答案是完全空白的 —— 而它决定了要不要投入做正式动作内容。
+
+    浏览器里跑 MediaPipe 就能回答同一个问题，Windows 上打开就能用。
+
+  它和 iOS 版共用的东西（所以结论可以直接迁移）：
+    - 同一份 anchors.json 与 routines.json（构建时注入，不会漂移）
+    - 同一套几何：FaceFrame（瞳距归一）→ anchor 规则 → 路径采样
+    - 同一套左右镜像规则
+
+  不一样的地方：
+    - landmark 来自 MediaPipe 而非 Vision/HRFFA，精度与抖动特性不同
+    - 浏览器帧率与手机不同
+    所以它能回答「位置对不对、路线合不合理、遮挡时什么感觉」，
+    但**不能替代真机 POC 里的 FPS 与延迟数据**。
+
+  本文件由 tools/build_prototype.py 生成，请勿直接编辑。
+-->
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AR 概念验证 — 3-Minute Face Ritual</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: #0f1014; color: #e8e8ea;
+    font: 14px/1.5 -apple-system, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif;
+    display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+  }
+  header { padding: 14px 16px 6px; text-align: center; }
+  h1 { font-size: 1.05rem; margin: 0 0 4px; font-weight: 600; }
+  .sub { color: #8b8b93; font-size: .8rem; }
+  #stage { position: relative; width: min(96vw, 520px); aspect-ratio: 3/4; margin-top: 10px;
+           background: #000; border-radius: 14px; overflow: hidden; }
+  video, canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  video { object-fit: cover; transform: scaleX(-1); }
+  #hud { position: absolute; left: 0; right: 0; top: 0; padding: 10px 12px;
+         display: flex; gap: 8px; align-items: flex-start; pointer-events: none; }
+  .chip { background: rgba(0,0,0,.55); border-radius: 8px; padding: 5px 8px;
+          font-size: .72rem; font-variant-numeric: tabular-nums; }
+  .warn { color: #ffb84d; }
+  #move { position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 14px 14px;
+          background: linear-gradient(transparent, rgba(0,0,0,.75)); pointer-events: none; }
+  #moveTitle { font-size: 1rem; font-weight: 600; }
+  #moveCue { color: #b9b9c2; font-size: .8rem; }
+  #controls { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+              padding: 12px; width: min(96vw, 520px); }
+  button, select {
+    background: #1e1f26; color: #e8e8ea; border: 1px solid #32333c;
+    border-radius: 9px; padding: 8px 12px; font-size: .82rem; cursor: pointer;
+  }
+  button.primary { background: #8ccdf5; color: #0f1014; border-color: #8ccdf5; font-weight: 600; }
+  button:disabled { opacity: .45; cursor: default; }
+  #notes { width: min(96vw, 520px); padding: 0 14px 40px; color: #8b8b93; font-size: .78rem; }
+  #notes b { color: #c9c9d1; }
+  #status { padding: 8px 14px; color: #ffb84d; font-size: .8rem; text-align: center; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>AR 概念验证</h1>
+  <div class="sub">用于回答「路线能不能稳定画在真人脸上」。不是产品。</div>
+</header>
+
+<div id="status">正在加载人脸模型…（首次约需十几秒）</div>
+
+<div id="stage">
+  <video id="video" playsinline muted></video>
+  <canvas id="overlay"></canvas>
+  <div id="hud">
+    <div class="chip" id="fps">fps —</div>
+    <div class="chip" id="lock">未检测到人脸</div>
+  </div>
+  <div id="move">
+    <div id="moveTitle">—</div>
+    <div id="moveCue"></div>
+  </div>
+</div>
+
+<div id="controls">
+  <button id="start" class="primary" disabled>开始摄像头</button>
+  <select id="routineSel"></select>
+  <button id="play" disabled>开始 routine</button>
+  <button id="next" disabled>下一动作</button>
+  <button id="toggleMesh">显示/隐藏 landmark</button>
+</div>
+
+<div id="notes">
+  <p><b>怎么看：</b>● 是起点，◎ 是终点，白点沿着路线走，箭头指方向。
+     左脸用蓝色、右脸用橙色。</p>
+  <p><b>请重点观察：</b>①位置在你脸上合不合适 ②转头时会不会漂 ③手挡住脸时的感觉
+     ④离远离近时还准不准。</p>
+  <p><b>已知：</b>这里的动作与位置<b>全是占位测试数据</b>，不代表任何护理方法。
+     landmark 来自 MediaPipe，与 iOS 版用的不是同一个模型，所以帧率和抖动特性会有差异。</p>
+</div>
+
+<script type="module">
+// ---------------------------------------------------------------------------
+// 内容：构建时从 iOS 用的同一份 JSON 注入，避免两边漂移
+// ---------------------------------------------------------------------------
+const ANCHORS_DOC = /*__ANCHORS__*/;
+const ROUTINES_DOC = /*__ROUTINES__*/;
+
+// ---------------------------------------------------------------------------
+// 几何：与 Swift 的 FaceFrame / FaceAnchorResolver / PathSampler 一一对应
+// ---------------------------------------------------------------------------
+const mirrorLandmark = (n) =>
+  n.startsWith("left") ? "right" + n.slice(4)
+  : n.startsWith("right") ? "left" + n.slice(5)
+  : n;
+
+const mirrorId = (id) =>
+  id.endsWith("_left") ? id.slice(0, -5) + "_right"
+  : id.endsWith("_right") ? id.slice(0, -6) + "_left"
+  : id;
+
+function mirrorRule(r) {
+  switch (r.type) {
+    case "landmark": return { type: "landmark", id: mirrorLandmark(r.id) };
+    case "midpoint": return { type: "midpoint", a: mirrorRule(r.a), b: mirrorRule(r.b) };
+    case "lerp": return { type: "lerp", from: mirrorRule(r.from), to: mirrorRule(r.to), t: r.t };
+    case "weighted": return { type: "weighted",
+      items: r.items.map(i => ({ landmark: mirrorLandmark(i.landmark), weight: i.weight })) };
+    case "offset": return { type: "offset", base: mirrorRule(r.base),
+      dx: -(r.dx || 0), dy: r.dy || 0 };
+  }
+  throw new Error("unknown rule " + r.type);
+}
+
+// 内容只写一侧，另一侧自动镜像 —— 与 Swift 的 mirroredToOppositeSide() 一致
+const ANCHORS = (() => {
+  const table = {};
+  for (const a of ANCHORS_DOC.anchors) {
+    table[a.id] = a;
+    if (a.side === "left" || a.side === "right") {
+      const mid = mirrorId(a.id);
+      if (mid !== a.id && !table[mid]) {
+        table[mid] = { ...a, id: mid, side: a.side === "left" ? "right" : "left",
+                       rule: mirrorRule(a.rule) };
+      }
+    }
+  }
+  return table;
+})();
+
+/** 脸部局部坐标系：原点=双眼中点，x轴=左眼→右眼，单位=瞳距 */
+function makeFaceFrame(lm) {
+  const l = lm.leftEyeCenter, r = lm.rightEyeCenter;
+  if (!l || !r) return null;
+  const dx = r.x - l.x, dy = r.y - l.y;
+  const scale = Math.hypot(dx, dy);
+  if (scale < 12) return null;
+  const ax = { x: dx / scale, y: dy / scale };
+  const ay = { x: -ax.y, y: ax.x };            // 屏幕坐标顺时针 90°
+  return {
+    origin: { x: (l.x + r.x) / 2, y: (l.y + r.y) / 2 }, ax, ay, scale,
+    toView(p) {
+      return { x: this.origin.x + this.ax.x * p.x * this.scale + this.ay.x * p.y * this.scale,
+               y: this.origin.y + this.ax.y * p.x * this.scale + this.ay.y * p.y * this.scale };
+    },
+    toLocal(p) {
+      const vx = p.x - this.origin.x, vy = p.y - this.origin.y;
+      return { x: (vx * this.ax.x + vy * this.ax.y) / this.scale,
+               y: (vx * this.ay.x + vy * this.ay.y) / this.scale };
+    }
+  };
+}
+
+function evalRule(rule, lm, frame) {
+  switch (rule.type) {
+    case "landmark": return lm[rule.id];
+    case "midpoint": {
+      const a = evalRule(rule.a, lm, frame), b = evalRule(rule.b, lm, frame);
+      return a && b ? { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } : null;
+    }
+    case "lerp": {
+      const a = evalRule(rule.from, lm, frame), b = evalRule(rule.to, lm, frame);
+      if (!a || !b) return null;
+      const t = Math.min(1, Math.max(0, rule.t));
+      return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+    }
+    case "weighted": {
+      let total = 0, x = 0, y = 0;
+      for (const i of rule.items) {
+        const p = lm[i.landmark];
+        if (!p) return null;
+        total += i.weight; x += p.x * i.weight; y += p.y * i.weight;
+      }
+      return total ? { x: x / total, y: y / total } : null;
+    }
+    case "offset": {
+      const base = evalRule(rule.base, lm, frame);
+      if (!base) return null;
+      const dx = rule.dx || 0, dy = rule.dy || 0;
+      return { x: base.x + (frame.ax.x * dx + frame.ay.x * dy) * frame.scale,
+               y: base.y + (frame.ax.y * dx + frame.ay.y * dy) * frame.scale };
+    }
+  }
+  return null;
+}
+
+// --- 路径采样（与 PathSampler.swift 对应）---
+const SAMPLES = 72;
+const lerpP = (a, b, t) => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
+
+function sampleLine(a, b) {
+  return Array.from({ length: SAMPLES }, (_, i) => lerpP(a, b, i / (SAMPLES - 1)));
+}
+function quad(p0, p1, p2, t) {
+  const m = 1 - t;
+  return { x: m*m*p0.x + 2*m*t*p1.x + t*t*p2.x, y: m*m*p0.y + 2*m*t*p1.y + t*t*p2.y };
+}
+function sampleCurve(a, b, controls) {
+  const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy);
+  if (len < 1e-9 || !controls || !controls.length) return sampleLine(a, b);
+  const ux = dx / len, uy = dy / len, nx = -uy, ny = ux;
+  const c = controls[0];
+  const cp = { x: a.x + ux * c.along * len + nx * c.perpendicular,
+               y: a.y + uy * c.along * len + ny * c.perpendicular };
+  return Array.from({ length: SAMPLES }, (_, i) => quad(a, cp, b, i / (SAMPLES - 1)));
+}
+function circumcenter(a, b, c) {
+  const d = 2 * (a.x*(b.y-c.y) + b.x*(c.y-a.y) + c.x*(a.y-b.y));
+  if (Math.abs(d) < 1e-9) return null;
+  const sa = a.x*a.x + a.y*a.y, sb = b.x*b.x + b.y*b.y, sc = c.x*c.x + c.y*c.y;
+  return { x: (sa*(b.y-c.y) + sb*(c.y-a.y) + sc*(a.y-b.y)) / d,
+           y: (sa*(c.x-b.x) + sb*(a.x-c.x) + sc*(b.x-a.x)) / d };
+}
+const norm2pi = (a) => { const r = a % (2*Math.PI); return r < 0 ? r + 2*Math.PI : r; };
+function sampleArc(a, b, sagitta) {
+  const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy);
+  if (len < 1e-9 || Math.abs(sagitta) < 1e-6) return sampleLine(a, b);
+  const nx = -dy / len, ny = dx / len;
+  const mid = { x: (a.x+b.x)/2 + nx*sagitta, y: (a.y+b.y)/2 + ny*sagitta };
+  const c = circumcenter(a, mid, b);
+  if (!c) return sampleLine(a, b);
+  const rad = Math.hypot(a.x-c.x, a.y-c.y);
+  const a0 = Math.atan2(a.y-c.y, a.x-c.x);
+  const am = Math.atan2(mid.y-c.y, mid.x-c.x);
+  const a1 = Math.atan2(b.y-c.y, b.x-c.x);
+  let sweep = norm2pi(a1 - a0);
+  if (norm2pi(am - a0) > sweep) sweep -= 2*Math.PI;
+  return Array.from({ length: SAMPLES }, (_, i) => {
+    const ang = a0 + sweep * (i / (SAMPLES - 1));
+    return { x: c.x + Math.cos(ang)*rad, y: c.y + Math.sin(ang)*rad };
+  });
+}
+function sampleCircle(center, radius, sweepDeg, clockwise) {
+  const sweep = sweepDeg * Math.PI / 180 * (clockwise ? 1 : -1);
+  const start = -Math.PI / 2;
+  return Array.from({ length: SAMPLES }, (_, i) => {
+    const ang = start + sweep * (i / (SAMPLES - 1));
+    return { x: center.x + Math.cos(ang)*radius, y: center.y + Math.sin(ang)*radius };
+  });
+}
+
+function buildPath(movement, startLocal, endLocal, frame) {
+  const g = movement.pathGeometry || {};
+  const type = movement.pathType || "line";
+  let pts;
+  if (type === "press" || type === "hold") pts = [startLocal];
+  else if (type === "circle")
+    pts = sampleCircle(startLocal, g.radius ?? 0.35, g.sweepDegrees ?? 360, g.clockwise !== false);
+  else if (!endLocal) pts = [startLocal];
+  else if (type === "curve") pts = sampleCurve(startLocal, endLocal, g.controlOffsets);
+  else if (type === "arc") pts = sampleArc(startLocal, endLocal,
+      (g.controlOffsets && g.controlOffsets[0]?.perpendicular) ?? 0.15);
+  else pts = sampleLine(startLocal, endLocal);
+  return pts.map(p => frame.toView(p));
+}
+
+function pointAt(points, t) {
+  if (points.length < 2) return points[0];
+  let total = 0; const cum = [0];
+  for (let i = 1; i < points.length; i++) {
+    total += Math.hypot(points[i].x-points[i-1].x, points[i].y-points[i-1].y);
+    cum.push(total);
+  }
+  if (total < 1e-9) return points[0];
+  const target = Math.min(1, Math.max(0, t)) * total;
+  let lo = 0, hi = cum.length - 1;
+  while (lo < hi - 1) { const m = (lo+hi) >> 1; if (cum[m] <= target) lo = m; else hi = m; }
+  const seg = cum[hi] - cum[lo];
+  return seg < 1e-9 ? points[lo] : lerpP(points[lo], points[hi], (target - cum[lo]) / seg);
+}
+
+// ---------------------------------------------------------------------------
+// 播放计划：leftThenRight 展开成两段（与 PlaybackPlan.swift 对应）
+// ---------------------------------------------------------------------------
+function buildSegments(routine) {
+  const out = [];
+  for (const step of routine.steps) {
+    const sides = step.side === "leftThenRight" ? ["left", "right"] : [step.side || "none"];
+    for (const side of sides) {
+      out.push({ step, side, duration: step.durationSeconds / sides.length });
+    }
+  }
+  return out;
+}
+const resolveAnchorId = (id, side) => {
+  if (!id || !(id.endsWith("_left") || id.endsWith("_right"))) return id;
+  if (side === "left") return id.endsWith("_left") ? id : mirrorId(id);
+  if (side === "right") return id.endsWith("_right") ? id : mirrorId(id);
+  return id;
+};
+
+// ---------------------------------------------------------------------------
+// MediaPipe：只取我们需要的点，且**左右靠几何判定**，不依赖索引命名
+// ---------------------------------------------------------------------------
+// MediaPipe 文档里 left/right 的口径历来含糊（图像侧还是解剖学侧），
+// 而这正是 iOS 版踩过坑的地方。所以这里成对给出索引，
+// 再按屏幕 x 判定谁是解剖学左侧 —— 镜像预览下，用户的左半边脸在画面左侧。
+const IRIS_LEFT = [468, 469, 470, 471, 472];
+const IRIS_RIGHT = [473, 474, 475, 476, 477];
+const PAIRS = {
+  EyeOuter: [33, 263],
+  BrowInner: [55, 285],
+  MouthCorner: [61, 291],
+  JawAngle: [172, 397],
+};
+const CENTERS = { noseTip: 1, chinCenter: 152 };
+
+function centroid(raw, idxs, W, H) {
+  let x = 0, y = 0, n = 0;
+  for (const i of idxs) {
+    const p = raw[i];
+    if (!p) continue;
+    x += (1 - p.x) * W; y += p.y * H; n++;      // 1-x：镜像显示
+  }
+  return n ? { x: x / n, y: y / n } : null;
+}
+
+function toSemantic(raw, W, H) {
+  const lm = {};
+  const a = centroid(raw, IRIS_LEFT, W, H);
+  const b = centroid(raw, IRIS_RIGHT, W, H);
+  if (!a || !b) return null;
+  // 镜像预览下，解剖学左侧出现在画面 x 更小的一侧
+  const [eyeL, eyeR] = a.x < b.x ? [a, b] : [b, a];
+  lm.leftEyeCenter = eyeL; lm.rightEyeCenter = eyeR;
+
+  for (const [name, idx] of Object.entries(CENTERS)) {
+    const p = raw[idx];
+    if (p) lm[name] = { x: (1 - p.x) * W, y: p.y * H };
+  }
+  for (const [suffix, [i1, i2]] of Object.entries(PAIRS)) {
+    const p1 = raw[i1], p2 = raw[i2];
+    if (!p1 || !p2) continue;
+    const q1 = { x: (1 - p1.x) * W, y: p1.y * H };
+    const q2 = { x: (1 - p2.x) * W, y: p2.y * H };
+    const [L, R] = q1.x < q2.x ? [q1, q2] : [q2, q1];
+    lm["left" + suffix] = L; lm["right" + suffix] = R;
+  }
+  return lm;
+}
+
+// ---------------------------------------------------------------------------
+// 主流程
+// ---------------------------------------------------------------------------
+const video = document.getElementById("video");
+const canvas = document.getElementById("overlay");
+const ctx = canvas.getContext("2d");
+const statusEl = document.getElementById("status");
+const fpsEl = document.getElementById("fps");
+const lockEl = document.getElementById("lock");
+const moveTitle = document.getElementById("moveTitle");
+const moveCue = document.getElementById("moveCue");
+const routineSel = document.getElementById("routineSel");
+
+let landmarker = null, running = false, showMesh = false;
+let segments = [], segIndex = -1, segStart = 0, playing = false;
+let frameTimes = [];
+
+for (const r of ROUTINES_DOC.routines) {
+  const o = document.createElement("option");
+  o.value = r.id; o.textContent = `${r.title} (${r.steps.length} moves)`;
+  routineSel.appendChild(o);
+}
+
+try {
+  const { FaceLandmarker, FilesetResolver } =
+    await import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14");
+  const fileset = await FilesetResolver.forVisionTasks(
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
+  landmarker = await FaceLandmarker.createFromOptions(fileset, {
+    baseOptions: {
+      modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
+      delegate: "GPU"
+    },
+    runningMode: "VIDEO", numFaces: 1
+  });
+  statusEl.textContent = "模型已就绪。点「开始摄像头」。";
+  document.getElementById("start").disabled = false;
+} catch (e) {
+  statusEl.innerHTML = "模型加载失败（需要联网）：<br>" + e;
+}
+
+document.getElementById("start").onclick = async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "user", width: { ideal: 960 }, height: { ideal: 1280 } }
+    });
+    video.srcObject = stream;
+    await video.play();
+    const box = canvas.getBoundingClientRect();
+    canvas.width = box.width; canvas.height = box.height;
+    running = true;
+    statusEl.textContent = "摄像头已开。选一个 routine 然后点「开始 routine」。";
+    document.getElementById("play").disabled = false;
+    document.getElementById("next").disabled = false;
+    requestAnimationFrame(loop);
+  } catch (e) {
+    statusEl.textContent = "打不开摄像头：" + e;
+  }
+};
+document.getElementById("play").onclick = () => {
+  const routine = ROUTINES_DOC.routines.find(r => r.id === routineSel.value);
+  segments = buildSegments(routine); segIndex = 0; segStart = performance.now(); playing = true;
+};
+document.getElementById("next").onclick = () => {
+  if (!playing) return;
+  segIndex = (segIndex + 1) % segments.length; segStart = performance.now();
+};
+document.getElementById("toggleMesh").onclick = () => { showMesh = !showMesh; };
+
+const ACCENT = { left: "#74d4fb", right: "#ffb86b", none: "#b8d8ff", both: "#b8d8ff" };
+
+function loop() {
+  if (!running) return;
+  requestAnimationFrame(loop);
+
+  const now = performance.now();
+  frameTimes.push(now);
+  while (frameTimes.length && now - frameTimes[0] > 2000) frameTimes.shift();
+  fpsEl.textContent = "fps " + (frameTimes.length > 1
+    ? (1000 * (frameTimes.length - 1) / (now - frameTimes[0])).toFixed(0) : "—");
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  let result;
+  try { result = landmarker.detectForVideo(video, now); } catch { return; }
+  const raw = result?.faceLandmarks?.[0];
+  if (!raw) { lockEl.textContent = "未检测到人脸"; lockEl.className = "chip warn"; return; }
+
+  const lm = toSemantic(raw, canvas.width, canvas.height);
+  const frame = lm && makeFaceFrame(lm);
+  if (!frame) { lockEl.textContent = "定位不足"; lockEl.className = "chip warn"; return; }
+  lockEl.textContent = "已锁定 · 瞳距 " + frame.scale.toFixed(0) + "px";
+  lockEl.className = "chip";
+
+  if (showMesh) {
+    ctx.fillStyle = "rgba(120,255,140,.5)";
+    for (const p of raw) ctx.fillRect((1 - p.x) * canvas.width - 1, p.y * canvas.height - 1, 2, 2);
+  }
+
+  if (!playing || segIndex < 0) return;
+  const seg = segments[segIndex];
+  const elapsed = (now - segStart) / 1000;
+  if (elapsed > seg.duration) {
+    segIndex = (segIndex + 1) % segments.length; segStart = now; return;
+  }
+
+  const mv = seg.step.movement || {};
+  const sideLabel = seg.side === "left" ? "左" : seg.side === "right" ? "右" : "";
+  moveTitle.textContent = seg.step.title + (sideLabel ? ` · ${sideLabel}侧` : "");
+  moveCue.textContent = `${seg.step.shortCue || ""}   ${Math.ceil(seg.duration - elapsed)}s`;
+
+  const startId = resolveAnchorId(mv.startAnchor, seg.side);
+  const endId = resolveAnchorId(mv.endAnchor, seg.side);
+  const sa = ANCHORS[startId], ea = endId ? ANCHORS[endId] : null;
+  if (!sa) return;
+  const sp = evalRule(sa.rule, lm, frame);
+  const ep = ea ? evalRule(ea.rule, lm, frame) : null;
+  if (!sp) return;
+
+  const pts = buildPath(mv, frame.toLocal(sp), ep ? frame.toLocal(ep) : null, frame);
+  const color = ACCENT[seg.side] || ACCENT.none;
+  const cycle = mv.tempo ? 60 / mv.tempo : Math.max(0.5, seg.duration / (mv.repetitions || 1));
+  const phase = (elapsed % cycle) / cycle;
+
+  // 容差圈
+  ctx.strokeStyle = color + "55"; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(sp.x, sp.y, (sa.toleranceRadius ?? 0.12) * frame.scale, 0, 2*Math.PI);
+  ctx.stroke();
+
+  if (pts.length > 1) {
+    ctx.strokeStyle = color + "66"; ctx.lineWidth = 3; ctx.setLineDash([6, 7]);
+    ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+    for (const p of pts.slice(1)) ctx.lineTo(p.x, p.y);
+    ctx.stroke(); ctx.setLineDash([]);
+
+    // 拖尾
+    ctx.strokeStyle = color; ctx.lineWidth = 5; ctx.lineCap = "round";
+    ctx.beginPath();
+    const tail = Math.max(0, phase - 0.35);
+    let first = true;
+    for (let i = 0; i <= 40; i++) {
+      const p = pointAt(pts, tail + (phase - tail) * i / 40);
+      first ? (ctx.moveTo(p.x, p.y), first = false) : ctx.lineTo(p.x, p.y);
+    }
+    ctx.stroke();
+
+    // 方向箭头
+    ctx.fillStyle = color + "cc";
+    for (let k = 0; k < 3; k++) {
+      const t = ((k + 0.5) / 3 + phase * 0.5) % 1;
+      const p = pointAt(pts, t), q = pointAt(pts, Math.min(1, t + 0.02));
+      const ang = Math.atan2(q.y - p.y, q.x - p.x);
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(ang);
+      ctx.beginPath(); ctx.moveTo(9, 0); ctx.lineTo(-3, 5); ctx.lineTo(-3, -5);
+      ctx.closePath(); ctx.fill(); ctx.restore();
+    }
+
+    // 移动光点
+    const dot = pointAt(pts, phase);
+    ctx.fillStyle = "#fff";
+    ctx.beginPath(); ctx.arc(dot.x, dot.y, 5, 0, 2*Math.PI); ctx.fill();
+  }
+
+  // ◎ 终点
+  if (ep) {
+    ctx.strokeStyle = color; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(ep.x, ep.y, 12, 0, 2*Math.PI); ctx.stroke();
+    ctx.strokeStyle = "#ffffffe6";
+    ctx.beginPath(); ctx.arc(ep.x, ep.y, 6, 0, 2*Math.PI); ctx.stroke();
+  }
+
+  // ● 起点
+  ctx.fillStyle = color;
+  ctx.beginPath(); ctx.arc(sp.x, sp.y, 9, 0, 2*Math.PI); ctx.fill();
+  ctx.strokeStyle = "#ffffffe6"; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(sp.x, sp.y, 9, 0, 2*Math.PI); ctx.stroke();
+}
+</script>
+</body>
+</html>

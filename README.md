@@ -53,6 +53,7 @@ make check
 - `make refs` —— Swift 引用检查（枚举 case / init 参数标签 / 协议一致性）
 - `make golden` —— 重新生成几何 golden vectors
 - `make simulate` —— 无头跑一遍全部 routine，验证每个播放段都能在脸上画出东西、且左右互为镜像
+- `make prototype` —— 生成浏览器版 AR 概念验证，**在自己脸上看效果，不需要 Mac / iPhone**
 
 ### macOS
 
