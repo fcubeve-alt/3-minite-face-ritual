@@ -359,8 +359,22 @@ GM-15 全脸轻拍跨额头、双颊、下颌外侧，没有单一轨迹。
 ## 替换流程建议
 
 1. **Expert Gate 先审动作库**（`moves.json` 的 20 条）。
-   App 里 Settings → Developer → Debug → Gold Motion Library 一屏列出
-   全部动作、中文原文、力度、工具要求、证据等级与停止信号。
+
+   给专家的材料一条命令就能生成：
+
+   ```bash
+   python tools/export_review_sheet.py     # 或 make review
+   ```
+
+   得到 `build/expert_review_sheet.html` —— 单文件、无外部依赖，
+   直接发邮件或用浏览器打印成 PDF。每条动作是**中文原文在上、英文译文在下**，
+   右上角有「通过 / 需修改 / 不通过」，下面留了批注格。
+
+   专业人员既不会读 JSON，也没装我们的 TestFlight ——
+   这一步不解决，Expert Gate 就一直卡着。
+
+   （开发自己看的话，App 里 Settings → Developer → Debug → Gold Motion Library
+   也有同一份数据。）
 2. 顺带审这些动作用到的 `anchors.json` 位置定义（当前全是几何草案）。
 3. 真机上跑一遍，确认位置与路线在几个不同的人脸上都合适。
 4. 三套 Morning 原型交叉体验后选定（Sprint 3 §7）。

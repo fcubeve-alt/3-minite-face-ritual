@@ -38,6 +38,10 @@ refs: ## Swift 跨文件引用检查（枚举 case / init 标签 / 协议一致�
 simulate: ## 无头跑一遍全部 routine，验证每一段都能在脸上画出东西
 	python tools/simulate_routine.py
 
+.PHONY: review
+review: ## 导出给专家的动作审阅表（单文件 HTML，可打印）
+	python tools/export_review_sheet.py
+
 .PHONY: protomath
 protomath: ## 交叉验证浏览器原型的统计实现与 Swift/Python 是否一致
 	python tools/check_prototype_math.py
