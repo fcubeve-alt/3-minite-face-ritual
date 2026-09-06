@@ -39,6 +39,103 @@ final class GoldenVectorTests: XCTestCase {
         bundle = try BundledContent.makeRepository(failOnValidationError: false).load()
     }
 
+    // MARK: - 合成示意脸
+
+    /// 运行时画示意图用的那张合成脸，必须与 golden 数据里的 `reference` 用例一致。
+    ///
+    /// 为什么重要：golden vector 验证的是「几何算得对不对」，
+    /// 而 App 在没有示范视频时**真正画在屏幕上**的，是用 `SyntheticFace` 算出来的位置。
+    /// 两者一旦漂开，golden 就在验证一张没人用的脸 —— 测试还是绿的，屏幕上却是错的。
+    ///
+    /// `reference` 用例的参数：双眼中点 (200, 300)、瞳距 100、roll 0。
+    func testSyntheticFaceMatchesGoldenFixture() throws {
+        let reference = try XCTUnwrap(
+            fixture.cases.first { $0.name == "reference" },
+            "golden 数据里应有名为 reference 的用例"
+        )
+        XCTAssertEqual(reference.interocularDistance, 100, accuracy: 1e-9)
+        XCTAssertEqual(reference.rollDegrees, 0, accuracy: 1e-9)
+
+        // frame.origin 按定义就是双眼中点 —— fixture 的 Case 里没有单独的 eyeMidpoint 字段。
+        let geometry = SyntheticFace.makeGeometry(
+            center: Point2D(x: reference.frame.origin[0], y: reference.frame.origin[1]),
+            interocular: reference.interocularDistance
+        )
+
+        XCTAssertEqual(
+            geometry.landmarks.count, reference.landmarks.count,
+            "合成脸的 landmark 数量与 golden 数据不一致"
+        )
+
+        for (name, expected) in reference.landmarks {
+            let mark = try XCTUnwrap(
+                SemanticLandmark(rawValue: name),
+                "golden 数据里的 \(name) 不是已知 landmark"
+            )
+            let sample = try XCTUnwrap(
+                geometry.landmarks[mark],
+                "合成脸缺少 \(name) —— 屏幕上会少画一些位置"
+            )
+            XCTAssertEqual(sample.point.x, expected[0], accuracy: viewTolerance, "\(name).x")
+            XCTAssertEqual(sample.point.y, expected[1], accuracy: viewTolerance, "\(name).y")
+        }
+    }
+
+    /// 内容里定义的**每一个**位置都要能在合成脸上解析出来。
+    ///
+    /// 这条才是真正要守的东西：之前示意图查的是一张手写的 9 个位置表，
+    /// 而内容有 27 个位置 —— 15 个有轨迹的动作只画得出 4 个，
+    /// 其余 11 个屏幕上什么都没有。而视频到位之前，示意图就是全部画面。
+    func testEveryContentAnchorResolvesOnTheSyntheticFace() throws {
+        let geometry = SyntheticFace.makeGeometry(center: Point2D(x: 200, y: 300), interocular: 100)
+        let frame = try XCTUnwrap(FaceFrame(geometry: geometry))
+        let resolver = FaceAnchorResolver()
+
+        for (id, anchor) in bundle.anchors.sorted(by: { $0.key.rawValue < $1.key.rawValue }) {
+            guard case .success = resolver.resolve(anchor, geometry: geometry, frame: frame) else {
+                XCTFail("位置 \(id) 在示意脸上解析不出来 —— 用到它的动作会画不出路径")
+                continue
+            }
+        }
+    }
+
+    /// 每个有轨迹的动作都要能画出路径。
+    ///
+    /// 直接断言用户会看到什么，而不是断言中间数据结构 ——
+    /// 「屏幕上有没有东西」才是这条回落路径的意义。
+    func testEveryPathMovementCanBeDrawnOnTheSyntheticFace() throws {
+        let geometry = SyntheticFace.makeGeometry(center: Point2D(x: 200, y: 300), interocular: 100)
+        let frame = try XCTUnwrap(FaceFrame(geometry: geometry))
+        let resolver = FaceAnchorResolver()
+        let sampler = PathSampler()
+
+        for move in bundle.sortedMoves where move.movement.pathType.drawsPath {
+            let movement = move.movement
+            guard let startID = movement.startAnchorID,
+                  let startAnchor = bundle.anchors[startID],
+                  case let .success(start) = resolver.resolve(startAnchor, geometry: geometry, frame: frame)
+            else {
+                XCTFail("\(move.id) 的起点画不出来")
+                continue
+            }
+            var end: Point2D?
+            if let endID = movement.endAnchorID {
+                guard let endAnchor = bundle.anchors[endID],
+                      case let .success(resolved) = resolver.resolve(endAnchor, geometry: geometry, frame: frame)
+                else {
+                    XCTFail("\(move.id) 的终点画不出来")
+                    continue
+                }
+                end = resolved.viewPoint
+            }
+
+            let path = sampler.makePath(
+                movement: movement, start: start.viewPoint, end: end, frame: frame
+            )
+            XCTAssertFalse(path.points.isEmpty, "\(move.id) 采样出来是空路径")
+        }
+    }
+
     // MARK: - FaceFrame
 
     func testFaceFrameMatchesReference() throws {

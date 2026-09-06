@@ -17,6 +17,8 @@ import FaceRitualCore
 struct CoachVideoStage: View {
     let segment: PlaybackSegment?
     let cyclePhase: Double
+    /// 透传给回落用的示意图 —— 它要靠这些规则算出位置。
+    let anchors: [FaceAnchorID: FaceAnchor]
 
     @StateObject private var player = LoopingVideoPlayer()
 
@@ -30,7 +32,7 @@ struct CoachVideoStage: View {
                     .id(url)
             } else {
                 // 没有视频时的回落：同一份 MovementSpec 驱动的示意动画。
-                CoachStageView(segment: segment, cyclePhase: cyclePhase)
+                CoachStageView(segment: segment, cyclePhase: cyclePhase, anchors: anchors)
                     .padding(.vertical, 12)
             }
 

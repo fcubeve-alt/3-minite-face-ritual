@@ -97,7 +97,8 @@ private extension CoachPlayerView {
                 labelled(AppCopy.coachTitle) {
                     CoachVideoStage(
                         segment: viewModel.currentSegment,
-                        cyclePhase: viewModel.segmentProgress
+                        cyclePhase: viewModel.segmentProgress,
+                        anchors: environment.content.anchors
                     )
                 }
                 .frame(height: showMirror ? proxy.size.height * 0.58 : proxy.size.height)
@@ -183,6 +184,7 @@ private extension CoachPlayerView {
 struct CoachStageView: View {
     let segment: PlaybackSegment?
     let cyclePhase: Double
+    let anchors: [FaceAnchorID: FaceAnchor]
 
     var body: some View {
         GeometryReader { proxy in
@@ -195,7 +197,8 @@ struct CoachStageView: View {
                         CoachSchematic(
                             movement: segment.resolvedMovement,
                             side: segment.side,
-                            phase: cyclePhase
+                            phase: cyclePhase,
+                            anchors: anchors
                         )
                         .frame(width: min(proxy.size.width * 0.62, 260))
                         .frame(height: min(proxy.size.width * 0.62, 260) * 1.25)
@@ -226,6 +229,8 @@ private struct CoachSchematic: View {
     let movement: MovementSpec
     let side: BodySide
     let phase: Double
+    /// 内容里定义的位置表。用它解析，示意图就能画出**任何**内容定义过的位置。
+    let anchors: [FaceAnchorID: FaceAnchor]
 
     var body: some View {
         Canvas { context, size in
@@ -253,17 +258,28 @@ private struct CoachSchematic: View {
                 )
             }
 
-            // 用示意脸构造一个 FaceFrame，然后走与 AR 完全相同的 PathSampler。
+            // 用合成脸解析内容里的真实位置规则，再走同一套 PathSampler。
+            //
+            // 之前这里查的是一张**手写的 9 个位置表**，而内容有 27 个位置 ——
+            // 15 个有轨迹的动作只画得出 4 个，其余 11 个屏幕上空空如也。
+            // 而视频到位之前，这张示意图就是全部画面。
             let interocular = faceRect.width * 0.38
-            let frame = FaceFrame(
-                origin: Point2D(x: Double(faceRect.midX), y: Double(eyeY)),
-                xAxis: Vector2D(dx: 1, dy: 0),
-                yAxis: Vector2D(dx: 0, dy: 1),
-                scale: Double(interocular)
+            let geometry = SyntheticFace.makeGeometry(
+                center: Point2D(x: Double(faceRect.midX), y: Double(eyeY)),
+                interocular: Double(interocular)
             )
+            guard let frame = FaceFrame(geometry: geometry) else { return }
 
-            guard let start = CoachSchematic.schematicPoint(for: movement.startAnchorID, frame: frame) else { return }
-            let end = CoachSchematic.schematicPoint(for: movement.endAnchorID, frame: frame)
+            let resolver = FaceAnchorResolver()
+            func point(_ id: FaceAnchorID?) -> Point2D? {
+                guard let id, let anchor = anchors[id] else { return nil }
+                guard case let .success(resolved) = resolver.resolve(anchor, geometry: geometry, frame: frame)
+                else { return nil }
+                return resolved.viewPoint
+            }
+
+            guard let start = point(movement.startAnchorID) else { return }
+            let end = point(movement.endAnchorID)
 
             let path = PathSampler().makePath(movement: movement, start: start, end: end, frame: frame)
             guard path.points.count > 1 else {
@@ -299,24 +315,4 @@ private struct CoachSchematic: View {
         }
     }
 
-    /// 示意脸上的 anchor 近似位置（脸部局部坐标，单位=瞳距）。
-    ///
-    /// 这只是 Coach 示意用的粗略布局，**不是** anchors.json 的定义 ——
-    /// 真实定位一律由 AR Mirror 按用户自己的 Face Geometry 计算。
-    private static let schematicAnchors: [String: Point2D] = [
-        "glabella_center": Point2D(x: 0.00, y: -0.28),
-        "brow_inner_left": Point2D(x: -0.22, y: -0.32),
-        "brow_inner_right": Point2D(x: 0.22, y: -0.32),
-        "temple_left": Point2D(x: -1.08, y: -0.08),
-        "temple_right": Point2D(x: 1.08, y: -0.08),
-        "cheek_mid_left": Point2D(x: -0.72, y: 0.55),
-        "cheek_mid_right": Point2D(x: 0.72, y: 0.55),
-        "jaw_angle_left": Point2D(x: -0.64, y: 1.39),
-        "jaw_angle_right": Point2D(x: 0.64, y: 1.39)
-    ]
-
-    static func schematicPoint(for id: FaceAnchorID?, frame: FaceFrame) -> Point2D? {
-        guard let id, let local = schematicAnchors[id.rawValue] else { return nil }
-        return frame.toView(local: local)
-    }
 }
