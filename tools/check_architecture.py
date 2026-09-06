@@ -517,6 +517,63 @@ def check_privacy_claim_holds() -> None:
 
 
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# 11. 网站文案不得出现功效表述
+# ---------------------------------------------------------------------------
+# 规格 §20 与 Sprint 3 §1：工程侧不得创造医学 / 美容 / 护理功效。
+#
+# 这条规则针对的是 site/ 下的对外文案。营销文案天然会往「承诺」上滑 ——
+# 尤其是以后要在这个站上写文章引流的时候。靠自觉拦不住，所以做成检查。
+#
+# 例外：明确标了 data-claims-disclaimer 的区块可以出现这些词，
+# 因为「我们不声称能提升紧致」这句话本身必须能写出来。
+CLAIM_WORDS = [
+    # 外观改变
+    "anti-aging", "antiaging", "anti-ageing", "younger", "youthful", "rejuvenat",
+    "wrinkle", "fine lines", "sagging", "firmer", "firming", "tighten", "tightening",
+    "lifted", "lifting", "slimmer", "slimming", "snatched", "contour", "sculpted",
+    "plump", "smoother skin", "glow up",
+    # 生理声称
+    "de-puff", "depuff", "puffiness", "detox", "drain", "circulation",
+    "collagen", "boost", "rejuvenate", "metabolis",
+    # 结果承诺
+    "results in", "visible results", "proven to", "clinically", "scientifically proven",
+    "guaranteed", "transform your face", "reverse",
+]
+
+
+def check_site_copy_has_no_efficacy_claims() -> None:
+    site = ROOT / "site"
+    if not site.exists():
+        return
+
+    for path in sorted(site.glob("*.html")):
+        text = path.read_text(encoding="utf-8")
+
+        # 去掉 HTML 注释（里面写的是给我们自己看的约束说明，本来就会提到这些词）
+        text = re.sub(r"<!--.*?-->", " ", text, flags=re.S)
+        # 去掉 <style>/<script>
+        text = re.sub(r"<(style|script)\b.*?</\1>", " ", text, flags=re.S | re.I)
+        # 去掉标了 data-claims-disclaimer 的区块 —— 免责声明必须能提到这些词
+        text = re.sub(
+            r"<(\w+)[^>]*\bdata-claims-disclaimer\b.*?</\1>", " ", text, flags=re.S | re.I
+        )
+
+        lowered = text.lower()
+        for word in CLAIM_WORDS:
+            index = lowered.find(word)
+            if index < 0:
+                continue
+            snippet = " ".join(text[max(0, index - 60): index + 60].split())
+            error(
+                rel(path),
+                f"对外文案出现功效词 {word!r}：…{snippet}…\n"
+                f"           规格 §20 不允许自行创造功效表述。"
+                f"确实需要写「我们**不**声称 X」时，把那段包进 "
+                f"<div data-claims-disclaimer> 里。",
+            )
+
+
 def main() -> int:
     print("架构与静态检查\n")
 
@@ -531,6 +588,7 @@ def main() -> int:
         ("用户面文案为英文", check_user_facing_copy_is_english),
         ("纯图标按钮有无障碍标签", check_icon_buttons_have_accessibility_labels),
         ("隐私承诺与代码一致", check_privacy_claim_holds),
+        ("网站文案无功效表述", check_site_copy_has_no_efficacy_claims),
     ]
 
     for name, check in checks:

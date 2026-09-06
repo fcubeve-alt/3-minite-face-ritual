@@ -1,0 +1,156 @@
+<!doctype html>
+<!--
+  落地页 / 营销主页。
+
+  这一页同时承担三个作用：
+    1. App Store 提交时的 Marketing URL（选填但强烈建议有 —— 审核员会点）
+    2. 隐私政策与支持页的入口（这两个是**必填**的）
+    3. 以后发给媒体、创作者、朋友时的那个链接
+
+  ⚠️ 内容上的硬约束（规格 §20、Sprint 3 §1）：
+     **不得出现任何医学、美容或护理功效表述。**
+     不能写「紧致」「提升」「减少细纹」「排水肿」「瘦脸」这类词，
+     也不能暗示做了会变好看。这不只是合规问题 ——
+     Sprint 3 §1 明确「不把研究中出现过的动作等同于已被单独证明有效」。
+
+     这条约束反过来是这一页的卖点：这个品类里几乎所有网站都在过度承诺，
+     老老实实说「我们不声称这个能让你变年轻」本身就是差异点。
+
+  待 Owner 填的位置都用 [[ ]] 标出，全文搜 "[[" 即可找全。
+  App 还没上架，所以下载按钮现在是「尚未发布」状态 ——
+  在拿到 App Store 链接之前放一个假的下载按钮属于误导，不要那么做。
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>[[APP NAME]] — three minutes for your face</title>
+<meta name="description" content="A three-minute guided face routine for your morning. Your camera stays on your device.">
+<meta property="og:title" content="[[APP NAME]]">
+<meta property="og:description" content="A three-minute guided face routine for your morning. Your camera stays on your device.">
+<meta property="og:type" content="website">
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0 auto; padding: 3.5rem 1.25rem 5rem; max-width: 46rem;
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #1c1c1e; background: #fff;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { color: #e8e8ea; background: #121214; }
+    .card { background: #1e1e22 !important; border-color: #2e2e34 !important; }
+    .badge { background: #2a2a30 !important; color: #b9b9c0 !important; }
+    a { color: #6cb6ff; }
+    hr { border-color: #2e2e34 !important; }
+  }
+  h1 { font-size: 2.4rem; line-height: 1.15; margin: 0 0 .75rem; letter-spacing: -.03em; }
+  h2 { font-size: 1.2rem; margin: 3rem 0 .7rem; letter-spacing: -.01em; }
+  .lede { font-size: 1.2rem; line-height: 1.55; color: #3a3a3f; margin: 0 0 2rem; }
+  @media (prefers-color-scheme: dark) { .lede { color: #b9b9c0; } }
+  .card {
+    background: #f5f5f7; border: 1px solid #e3e3e6; border-radius: 12px;
+    padding: 1.15rem 1.3rem; margin: 1.6rem 0;
+  }
+  .card p:first-child { margin-top: 0; }
+  .card p:last-child { margin-bottom: 0; }
+  .badge {
+    display: inline-block; background: #f0f0f2; color: #6b6b70;
+    font-size: .8rem; font-weight: 500; padding: .3rem .7rem;
+    border-radius: 999px; margin-bottom: 1.25rem;
+  }
+  ul { padding-left: 1.2rem; }
+  li { margin: .5rem 0; }
+  hr { border: 0; border-top: 1px solid #e3e3e6; margin: 3.5rem 0 2rem; }
+  footer { font-size: .9rem; color: #6b6b70; }
+  footer a { margin-right: 1.1rem; }
+  .steps { list-style: none; padding: 0; }
+  .steps li { display: flex; gap: .85rem; align-items: baseline; margin: .8rem 0; }
+  .steps .n {
+    flex: none; width: 1.6rem; height: 1.6rem; border-radius: 50%;
+    background: #1c1c1e; color: #fff; font-size: .8rem; font-weight: 600;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  @media (prefers-color-scheme: dark) { .steps .n { background: #e8e8ea; color: #121214; } }
+  /* 窄屏让标题自然折行 —— 手机上强制断行会多出一次换行 */
+  @media (max-width: 30rem) { h1 br { display: none; } h1 { font-size: 2rem; } }
+</style>
+</head>
+<body>
+
+<span class="badge">Not released yet · in development</span>
+
+<h1>Three minutes for your face, <br>first thing in the morning.</h1>
+
+<p class="lede">
+  A short guided routine you do in front of your phone. It shows you where to put
+  your hands and when to move on, so you can stop thinking and just do it.
+</p>
+
+<div class="card">
+  <p><strong>Your camera stays on your device.</strong> Nothing is recorded, uploaded,
+     or sent anywhere. The app has no accounts, no tracking, and no third-party analytics.
+     <a href="privacy.html">Read the privacy policy</a> — it is short, and it describes
+     what the code actually does.</p>
+</div>
+
+<h2>How it works</h2>
+
+<ul class="steps">
+  <li><span class="n">1</span><span>Open the app and press start. There is nothing to set up.</span></li>
+  <li><span class="n">2</span><span>Follow along either with an on-screen coach, or in mirror mode,
+      where the app draws the path for each movement onto your own face.</span></li>
+  <li><span class="n">3</span><span>It handles the timing and tells you when to switch sides.
+      Three minutes later you are done.</span></li>
+</ul>
+
+<p>
+  Mirror mode uses the front camera to find the shape of your face, so the guide lands in
+  the right place whether you are close or far, tilted or straight on. If it loses track —
+  because your hand is covering your face, which happens constantly — the routine keeps
+  going. It never stops to tell you that you are doing it wrong.
+</p>
+
+<h2>What this app does not do</h2>
+
+<div class="card" data-claims-disclaimer>
+  <p>It does not claim to change how you look. It does not promise to lift, tighten,
+     slim, de-puff, or reduce anything.</p>
+  <p>It does not score you, grade your technique, or tell you that a movement was
+     performed correctly or incorrectly. That judgement is not something a phone camera
+     can honestly make, so the app does not pretend otherwise.</p>
+  <p>It is not a medical device and it is not a substitute for professional advice.
+     If something hurts, stop.</p>
+</div>
+
+<p data-claims-disclaimer>
+  The movements are drawn from published protocols and established hands-on practice, and
+  they are reviewed by qualified practitioners before they ship. Appearing in a study is not
+  the same as being individually proven to work, and we do not present it as such.
+</p>
+
+<h2>Who it is for</h2>
+
+<p>
+  People who want a small, consistent thing to do in the morning. Three minutes is short
+  enough that you will actually do it, and long enough to feel like something.
+</p>
+
+<p data-claims-disclaimer>
+  If you are looking for a product that promises visible results on a schedule, this is
+  not that product, and we would rather tell you now.
+</p>
+
+<hr>
+
+<footer>
+  <p>
+    <a href="privacy.html">Privacy</a>
+    <a href="support.html">Support</a>
+    <a href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/">Terms of Use</a>
+  </p>
+  <p>© [[YEAR]] [[COMPANY OR INDIVIDUAL NAME]]. Questions: <a href="mailto:[[SUPPORT EMAIL]]">[[SUPPORT EMAIL]]</a></p>
+</footer>
+
+</body>
+</html>

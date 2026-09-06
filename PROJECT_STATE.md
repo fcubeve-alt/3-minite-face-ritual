@@ -282,6 +282,7 @@ CI 抓到的**真产品 bug**（不是测试问题）：
    - ~~Terms of Use (EULA)~~ ✅ 已解决 —— 改用 Apple 标准 EULA，不必自己写
    - **Privacy Policy 的 URL** —— ❌ 仍缺。草稿已按代码实际行为写好（`site/privacy.html`），
      发布方法见 `site/README.md`（GitHub Pages 免费，约十分钟）。
+     落地页也已写好（`site/index.html`），域名建议见 `docs/DOMAIN_AND_GROWTH.md`。
      拿到网址填进 `SafetyView.swift` 的 `LegalLinks` 即可。
      未填时 Debug 页与 Paywall 会红字提醒，不显示假链接。
    完整上架要求见 `docs/APP_STORE_CHECKLIST.md`。
