@@ -89,19 +89,32 @@ AROverlayRenderer                ← App 层，SwiftUI Canvas
 因此同一份 `anchors.json` 在不同脸型、不同距离、不同头部倾斜下都成立。
 这正是里程碑要验证的东西（"不同用户的脸上，目标位置能否稳定跟随 Face Geometry"）。
 
-### Provider 矩阵
+## 2. 动作怎么画出来（2026-09-07 起）
 
-| Provider | 状态 | landmark 来源 | 备注 |
-| --- | --- | --- | --- |
-| `VisionFaceAlignmentProvider` | **默认 / 基线** | `VNFaceLandmarks2D` 的**具名区域**（leftEye / nose / medianLine…） | 无魔数索引，全机型可用，最稳的对照组 |
-| `HRFFAFaceAlignmentProvider` | 已接线，待模型 | CoreML 输出 68/98 点，按 300W-68 / WFLW-98 标准布局映射 | 放入 `HRFFA.mlpackage` 即启用；无模型时自动降级并上报 |
-| `ARKitFaceAlignmentProvider` | 已接线，待标定 | `ARFaceAnchor.geometry.vertices`（1220 点） | 顶点索引表从 `arkit_vertex_map.json` 读取，**不写死猜测值**；内置标定工具 |
-| `MockFaceAlignmentProvider` | 完成 | 合成动画人脸 | 模拟器 / 单元测试 / UI 预览 |
+原本这里是 Face Alignment Provider 矩阵（Vision / HRFFA / ARKit / Mock）与
+AR overlay 链路。AR Mirror 已移除，那一整节连同代码一起删了 ——
+原因见 [`docs/DECISION_AR_REMOVED.md`](docs/DECISION_AR_REMOVED.md)。
 
-> Owner 指令是"优先测试 HRFFA，但必须通过 Provider Abstraction 接入"。
-> 结构已满足。HRFFA 的 CoreML 模型文件本机无法生成（无 macOS/coremltools），
-> 转换脚本与索引映射已写好，见 `docs/HRFFA_INTEGRATION.md`。
-> 在拿到模型之前，Vision provider 就是可跑的真实基线——**AR POC 不会被模型卡住**。
+现在的链路短得多：
+
+```
+RoutineStep.mediaAsset
+    ├── 有视频 → AVPlayerLooper 循环播放（静音，语音由 App 念）
+    └── 无视频 → SyntheticFace（合成示意脸）
+                 → FaceAnchorResolver 解析 anchors.json 的真实规则
+                 → PathSampler 采样路径
+                 → Canvas 画 ● 起点 / 路径 / 方向 / ◎ 终点
+```
+
+**同一套几何**，只是喂进去的不再是摄像头识别的脸，而是一张标准比例的合成脸。
+这意味着：
+
+- 内容里定义过的**任何**位置都画得出来，加位置不用改代码
+- golden vector 交叉验证的仍然是运行时真正用的那套数学
+  （有测试盯着合成脸与 golden 数据一致 —— 否则 golden 验证的是一张没人用的脸）
+
+下半屏的镜像**不做任何人脸识别**，就是一面镜子：
+没有跟踪就没有漂移、没有丢锁、没有降级策略。摄像头因此是可选的。
 
 ---
 

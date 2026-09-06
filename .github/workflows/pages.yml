@@ -2,10 +2,9 @@ name: Pages
 
 # 把两样东西发布到 GitHub Pages：
 #   /            官网（落地页 + 隐私政策 + 支持页）—— 上架必需的两个网址就来自这里
-#   /prototype/  AR 概念验证原型 —— 有了 HTTPS 网址就能在**手机浏览器**里打开，
-#                比笔记本摄像头更接近真机场景
 #
-# 原型必须走 HTTPS 才能拿到摄像头权限，GitHub Pages 天然是 HTTPS。
+# 原来这里还发布过一个 AR 概念验证原型。AR Mirror 于 2026-09-07 砍掉之后，
+# 那个页面演示的是**已经不存在的功能** —— 继续挂着是误导，所以撤了。
 #
 # 首次使用需要在仓库 Settings → Pages → Source 里选 "GitHub Actions"（只需一次）。
 
@@ -14,10 +13,6 @@ on:
     branches: [main]
     paths:
       - "site/**"
-      - "prototype/**"
-      - "tools/build_prototype.py"
-      - "tools/prototype_template.html"
-      - "Packages/FaceRitualCore/Sources/FaceRitualCore/Resources/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -42,25 +37,14 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: 重新生成原型
-        # 不直接用仓库里那份：内容 JSON 改了但忘了重新生成的话，
-        # 线上原型就会用旧动作，而那正是我们要拿去测的东西。
-        run: python tools/build_prototype.py
-
-      - name: 原型的统计实现是否与 Swift 一致
-        # 浏览器上测出来的漂移要能和 iPhone 上的放在一起比，
-        # 两边算的必须是同一套统计量。
-        run: python tools/check_prototype_math.py
-
       - name: 网站文案不得出现功效表述
         run: python tools/check_architecture.py
 
       - name: 组装站点
         run: |
           set -o pipefail
-          mkdir -p _site/prototype
+          mkdir -p _site
           cp site/*.html _site/
-          cp prototype/index.html _site/prototype/
           echo "已发布："
           find _site -type f -name '*.html' | sort
 

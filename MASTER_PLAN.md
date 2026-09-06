@@ -25,7 +25,13 @@ Open App → Home → Morning Ritual → START → 选择 Coach / AR Mirror
 
 **M1 不包含**：正式动作库、真实穴位定义、实时纠错、压力判断、Skin Scan、社区、商城。
 
-M1 结束物 = 可运行 App + `AR_POC_REPORT.md`（真机实测数据）。
+M1 结束物 = 可运行 App + 真机实测。
+
+> **2026-09-07 产品方向调整**：AR Mirror 与 Watch & Breathe 已移除，
+> 形态改为「上面示范视频，下面自己的镜像」。
+> 下面 T5 / T6 里与 provider、AR overlay 相关的条目**已作废** ——
+> 保留是为了记录做过什么，不代表当前代码里还有。
+> 原因与取舍见 [`docs/DECISION_AR_REMOVED.md`](docs/DECISION_AR_REMOVED.md)。
 
 ### M2 — Content Gate（M1 通过后）
 Owner + 专业人员审核动作与位置 → 替换 Mock JSON → Coach 素材 → Evidence/Expert Gate。
@@ -72,20 +78,20 @@ Evening Core、全部 Quick Rituals、StoreKit 真实接入、提醒文案、Onb
 - [x] T4.6 `OneEuroFilter` 抖动抑制
 - [x] T4.7 Golden-vector 测试（Python 参考实现交叉验证，本机可跑）
 
-### T5 Face Alignment Providers（规格 §7 §15）
+### T5 Face Alignment Providers（规格 §7 §15）—— ⛔ 已作废（AR 移除）
 - [x] T5.1 `FaceAlignmentProvider` 协议 + `FaceAlignmentProviderFactory`
 - [x] T5.2 `MockFaceAlignmentProvider`（合成脸，模拟器/测试）
 - [x] T5.3 `VisionFaceAlignmentProvider`（具名区域 → 语义 landmark，**默认基线**）
 - [x] T5.4 `HRFFAFaceAlignmentProvider`（CoreML 接线 + 300W-68 / WFLW-98 索引映射）
 - [x] T5.5 `ARKitFaceAlignmentProvider`（顶点索引表外置 JSON + 标定工具）
-- [O] T5.6 HRFFA CoreML 模型转换（需 macOS + coremltools，见 `docs/HRFFA_INTEGRATION.md`）
-- [M] T5.7 三 provider 真机横评 → 写入 `AR_POC_REPORT.md`
+- [⛔] T5.6 HRFFA CoreML 模型转换 —— 随 AR 移除，不再需要
+- [⛔] T5.7 三 provider 真机横评 —— 随 AR 移除，不再需要
 
 ### T6 Facial Anchor Map（规格 §8）
 - [x] T6.1 anchor 几何规则定义（`anchors.json`）——
       M1 起步是 5 个测试点；按 Sprint 3 的 20 个动作扩到 15 个声明 → 27 个（自动镜像）
 - [x] T6.2 `toleranceRadius` / `poseConstraints` / `confidenceThreshold` 字段
-- [x] T6.3 Debug 页：实时显示全部 anchor + 语义 landmark + FaceFrame 轴
+- [⛔] T6.3 Debug 页实时 landmark 显示 —— 随 AR 移除
 - [O] T6.4 正式穴位/区域定义（Owner + 专业资料，**当前不由 Claude 决定**）
 
 ### T7 AR Overlay Renderer（规格 §6.2）
@@ -120,7 +126,7 @@ Evening Core、全部 Quick Rituals、StoreKit 真实接入、提醒文案、Onb
 ### T10 测试与报告
 - [x] T10.1 Core 单元测试（player / anchor / path / content / stats）
 - [x] T10.2 Golden vector 交叉验证（Python ↔ Swift）+ `--check` 防漂移
-- [x] T10.3 `AR_POC_REPORT.md` 模板 + 内置测量工具（FPS/latency/lockLoss）
+- [⛔] T10.3 真机 POC 测量台 —— 随 AR 移除；决策记录见 `docs/DECISION_AR_REMOVED.md`
 - [M] T10.4 真机执行 POC → 填报告 → Go/No-Go（规格 §18）
 
 ### T11 工程护栏（第二轮补充）

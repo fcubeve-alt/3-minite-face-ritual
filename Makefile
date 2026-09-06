@@ -46,21 +46,8 @@ videos: ## 检查示范视频素材到位情况与命名
 review: ## 导出给专家的动作审阅表（单文件 HTML，可打印）
 	python tools/export_review_sheet.py
 
-.PHONY: protomath
-protomath: ## 交叉验证浏览器原型的统计实现与 Swift/Python 是否一致
-	python tools/check_prototype_math.py
-
-.PHONY: prototype
-prototype: ## 生成并打开浏览器版 AR 概念验证（不需要 Mac / iPhone）
-	python tools/build_prototype.py
-	@echo ""
-	@echo "接下来在这个目录起个本地服务，然后用 Chrome 打开 http://127.0.0.1:8000 ："
-	@echo "    cd prototype && python -m http.server 8000"
-	@echo ""
-	@echo "必须走 http 而不是双击文件：file:// 下浏览器会拦掉 CDN 模块与摄像头权限。"
-
 .PHONY: check
-check: arch refs content teeth golden simulate protomath videos ## 跑所有不依赖 Xcode 的校验
+check: arch refs content teeth golden simulate videos ## 跑所有不依赖 Xcode 的校验
 
 # ---------------------------------------------------------------------------
 # 需要 macOS + Xcode

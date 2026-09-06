@@ -1,26 +1,33 @@
-# 3-Minute Face Ritual — V2
+# face3
 
-一个每天用 3–5 分钟陪用户完成固定面部护理动作的极简 Face Ritual App。
-第一次看老师学，之后可以把位置、路线和方向直接显示在自己的脸上。
+一个每天用 3 分钟陪用户完成固定面部按摩动作的极简 App。
+
+**上半屏是示范视频，下半屏是你自己的镜像**，跟着做就行。
+摄像头是**可选**的 —— 不开也能完整走完一整套。
 
 **Source of Truth：`3-Minute_Face_Ritual_Product_v2_CN.docx`。**
 代码与文档都不得覆盖它的产品定义。
 
+> 产品形态于 2026-09-07 调整过一次：原本还有 AR Mirror（把动作路线实时贴在脸上）
+> 与 Watch & Breathe，实测贴不稳后移除。
+> 原因与取舍见 [docs/DECISION_AR_REMOVED.md](docs/DECISION_AR_REMOVED.md) ——
+> 仓库里有一整套人脸几何代码却没有人脸识别功能，那份文档解释了为什么。
+
 ---
 
-## ⚠️ 当前内容尚未通过专家审核
+## ⚠️ 内容尚未通过专家审核
 
 内容来自两份专业文档，工程侧只做**如实转写与结构化**，不增删动作、不改措辞：
 
-- `Face_Ritual_Research_Sprint3_Movement_Specs_Prototypes_v0.3` —— 20 个动作规格（GM-01…GM-20）+ 3 套 Morning 3 分钟原型
-- `Face_Ritual_AI_Video_Factory_v0.2_AR_Guidance` —— Gold Motion Library / 虚拟教练 / AR 指引架构
+- `Face_Ritual_Research_Sprint3_Movement_Specs_Prototypes_v0.3` —— 20 个动作（GM-01…GM-20）+ 3 套 Morning 3 分钟原型
+- `Face_Ritual_AI_Video_Factory_v0.2_AR_Guidance` —— Gold Motion Library 架构
 
 **全部 20 个动作与 27 个位置定义仍标 `draft`。**
-Sprint 3 开篇即声明动作需人工专家（PT / 皮肤科 / 淋巴引流方向）审核；
-Video Factory §22 要求所有位置定义经过 Evidence Gate。
+Sprint 3 开篇即声明动作需人工专家（PT / 皮肤科 / 淋巴引流方向）审核。
 在此之前它们不代表任何按摩方法、穴位定义或护理功效。
 
 UI 上有 MOCK 角标，单元测试断言不得有任何一条被标成 `expert_reviewed`。
+给专家的审阅表一条命令就能生成：`make review`。
 
 用户看到的是英文；每个动作的 `source` 字段里**逐字保留中文原文**
 （起始姿势、操作、力度、停止信号）—— 专家审的是原文，翻译会在安全措辞上引入偏差。
@@ -30,70 +37,56 @@ Evening 5-minute 与 Quick Ritual **尚未设计**（Sprint 3 §11 标为「随�
 
 ---
 
+## 示范视频还没有
+
+`make videos` → 0/20。
+
+**这不挡上架**：缺素材时播放器回落到一张合成示意脸，
+用内容里的真实位置规则把动作的起点、终点和方向画出来，功能是完整的。
+视频放进 `App/FaceRitual/Resources/CoachVideos/` 就自动生效，代码不用改。
+
+交付要求见 [docs/COACH_VIDEO_SPEC.md](docs/COACH_VIDEO_SPEC.md)。
+
+---
+
 ## 文档
 
 | 文件 | 内容 |
 | --- | --- |
-| [MASTER_PLAN.md](MASTER_PLAN.md) | 规格 → 工程任务的转化与里程碑分解 |
-| [PROJECT_STATE.md](PROJECT_STATE.md) | Completed / In Progress / Blocked / Owner Decision Required |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | 模块分层、AR 链路、关键设计决策 |
-| [AR_POC_REPORT.md](AR_POC_REPORT.md) | 真机 POC 协议与 Go/No-Go 报告（待填） |
-| [docs/HRFFA_INTEGRATION.md](docs/HRFFA_INTEGRATION.md) | HRFFA CoreML 接入步骤 |
-| [docs/ARKIT_VERTEX_CALIBRATION.md](docs/ARKIT_VERTEX_CALIBRATION.md) | ARKit 顶点索引标定 |
-| [docs/CONTENT_AUTHORING.md](docs/CONTENT_AUTHORING.md) | **替换正式动作内容的指南**（Owner 与专业审核人员看这份） |
-| [docs/COPY_REVIEW.md](docs/COPY_REVIEW.md) | **文案评审清单**（Owner 与法务看这份）：免责、Watch & Breathe、订阅披露、摄像头说明 |
+| [PROJECT_STATE.md](PROJECT_STATE.md) | **当前状态**：做完了什么、卡在哪、等谁 |
+| [MASTER_PLAN.md](MASTER_PLAN.md) | 规格 → 工程任务的转化与里程碑 |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | 模块分层与关键设计决策 |
 | [docs/APP_STORE_CHECKLIST.md](docs/APP_STORE_CHECKLIST.md) | **上架清单**：哪些是硬性要求、哪些已做好、哪些等你 |
-| [site/README.md](site/README.md) | 隐私政策与支持页的发布方法（GitHub Pages 免费） |
+| [docs/COACH_VIDEO_SPEC.md](docs/COACH_VIDEO_SPEC.md) | **示范视频交付规格**（给做视频的人） |
+| [docs/CONTENT_AUTHORING.md](docs/CONTENT_AUTHORING.md) | **替换正式动作内容的指南**（Owner 与专家看这份） |
+| [docs/COPY_REVIEW.md](docs/COPY_REVIEW.md) | **文案评审清单**（Owner 与法务看这份） |
+| [docs/DOMAIN_AND_GROWTH.md](docs/DOMAIN_AND_GROWTH.md) | 域名与获客：现在做什么、先不做什么 |
+| [docs/DECISION_AR_REMOVED.md](docs/DECISION_AR_REMOVED.md) | 为什么砍掉 AR Mirror，保留了什么 |
+| [site/README.md](site/README.md) | 官网发布方法（已上线，GitHub Pages） |
 
 ---
 
-## 快速开始
+## 官网（已上线）
 
-### 任何机器（含 Windows / Linux）
+| 用途 | 网址 |
+| --- | --- |
+| 落地页 | https://fcubeve-alt.github.io/3-minite-face-ritual/ |
+| 隐私政策（上架必填） | https://fcubeve-alt.github.io/3-minite-face-ritual/privacy.html |
+| 支持页（上架必填） | https://fcubeve-alt.github.io/3-minite-face-ritual/support.html |
 
-```bash
-make check
-```
-
-跑三件事，都不需要 Xcode：
-
-- `make arch` —— 架构约束 + 轻量 Swift 静态检查（Core 平台隔离、landmark 编号收敛、
-  无对错判断、`@objc` 需 NSObject、API 可用性 vs 部署目标、括号配对、动作内容零硬编码）
-- `make content` —— 内容包 JSON 校验
-- `make refs` —— Swift 引用检查（枚举 case / init 参数标签 / 协议一致性）
-- `make golden` —— 重新生成几何 golden vectors
-- `make simulate` —— 无头跑一遍全部 routine，验证每个播放段都能在脸上画出东西、且左右互为镜像
-- `make prototype` —— 生成浏览器版 AR 概念验证，**在自己脸上看效果，不需要 Mac / iPhone**
-
-### macOS
-
-```bash
-brew install xcodegen
-make bootstrap    # 生成 FaceRitual.xcodeproj
-make core-test    # 跑核心包单元测试（最快的反馈回路）
-make open         # 在 Xcode 打开，填 Team，跑到设备上
-```
+还有两个占位符要填：发布者名义、客服邮箱。
 
 ---
 
-## 仓库结构
+## 在没有 Mac 的机器上能做什么
 
-```
-Packages/FaceRitualCore/     纯 Swift 核心：领域模型、内容层、播放器、脸部几何
-  Sources/.../Resources/     内容 JSON（唯一的动作真源）
-  Tests/                     单元测试 + golden vector 交叉验证
-
-App/FaceRitual/              iOS App
-  App/                       入口、DI 容器、设置
-  Features/                  SwiftUI 页面
-  FaceAR/                    Provider 实现、Overlay Renderer、AR 会话编排
-  Platform/                  语音、震动、通知、权限、StoreKit
-
-tools/                       跨平台校验脚本（Python，无需 Xcode）
+```bash
+make check       # 全部离线校验（架构 / 引用 / 内容 / 几何 / 素材）
+make review      # 生成给专家的动作审阅表
+make videos      # 示范视频素材到位情况
 ```
 
-**核心约束**：`FaceRitualCore` 不允许 import ARKit / Vision / CoreML。
-这是「业务层不绑定某个 face alignment provider」的编译期保证。
+CI 在 GitHub 的 macOS 机器上真实编译、跑单元测试与端到端 UI 测试。
 
 ---
 
@@ -101,17 +94,8 @@ tools/                       跨平台校验脚本（Python，无需 Xcode）
 
 | | |
 | --- | --- |
-| 内容 | 20 个 Gold Move、3 套 Morning 3 分钟原型（各正好 180s）、27 个面部位置（15 个声明 + 自动镜像） |
-| 已离线验证 | 架构与引用检查 0 errors（10 条规则，每条都反向验证过）；内容包校验 0 errors，15 条校验规则逐条反向验证有效；27 个 anchor 在 6 种尺度/位置/roll 变换下漂移 < 2e-15 瞳距；三套原型 36 个播放段全部可渲染 |
-| CI 已验证 | macOS runner 上零编译错误；71 个单元测试 + 4 个 M1 闭环 UI 测试全绿 |
-| 未验证 | 真人脸上的贴合精度 / FPS / 遮挡表现 —— 只能上真机 |
-| 下一步 | 真机 AR POC（`AR_POC_REPORT.md` §2） |
-
-详见 [PROJECT_STATE.md](PROJECT_STATE.md)。
-
----
-
-## 免责
-
-本 App 提供的是日常护理引导，不构成医学诊断、治疗建议或疗效承诺。
-工程侧不自行创造医学、美容或穴位功效 —— 这些必须由 Owner 与专业人员定义（规格 §20）。
+| 已验证 | macOS 上零编译错误；单元测试 + 4 个端到端 UI 测试全绿 |
+| 内容 | 20 个动作、3 套 Morning 3 分钟原型（各 180s）、27 个位置 |
+| 未验证 | **从未在真 iPhone 上开过机** —— CI 用的是模拟器 |
+| 订阅 | Release 走真实 StoreKit，但**需要你在 App Store Connect 配置商品** |
+| 下一步 | 见 [PROJECT_STATE.md](PROJECT_STATE.md) 的「等谁」一节 |
