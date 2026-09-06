@@ -8,15 +8,25 @@
 
 ---
 
-## ⚠️ 当前内容全部是 Mock
+## ⚠️ 当前内容尚未通过专家审核
 
-M1 阶段的动作、路径、面部位置**全部是占位测试数据**，
-只用于验证 App 系统、Routine Player 与 AR 链路是否跑通。
+内容来自两份专业文档，工程侧只做**如实转写与结构化**，不增删动作、不改措辞：
 
-它们不代表任何按摩方法、穴位定义或护理功效。
-正式内容由 Owner + 专业人员重新筛选和人工审核后替换 `Resources/*.json`，代码无需改动。
+- `Face_Ritual_Research_Sprint3_Movement_Specs_Prototypes_v0.3` —— 20 个动作规格（GM-01…GM-20）+ 3 套 Morning 3 分钟原型
+- `Face_Ritual_AI_Video_Factory_v0.2_AR_Guidance` —— Gold Motion Library / 虚拟教练 / AR 指引架构
 
-内容包与 UI 上都有 `mock_unreviewed` 标记与 MOCK 角标，单元测试会断言它必须存在。
+**全部 20 个动作与 27 个位置定义仍标 `draft`。**
+Sprint 3 开篇即声明动作需人工专家（PT / 皮肤科 / 淋巴引流方向）审核；
+Video Factory §22 要求所有位置定义经过 Evidence Gate。
+在此之前它们不代表任何按摩方法、穴位定义或护理功效。
+
+UI 上有 MOCK 角标，单元测试断言不得有任何一条被标成 `expert_reviewed`。
+
+用户看到的是英文；每个动作的 `source` 字段里**逐字保留中文原文**
+（起始姿势、操作、力度、停止信号）—— 专家审的是原文，翻译会在安全措辞上引入偏差。
+
+Evening 5-minute 与 Quick Ritual **尚未设计**（Sprint 3 §11 标为「随后设计」），
+所以内容包里没有这两类 —— 工程侧不代为编排。
 
 ---
 
@@ -91,7 +101,8 @@ tools/                       跨平台校验脚本（Python，无需 Xcode）
 
 | | |
 | --- | --- |
-| 已离线验证 | 架构与引用检查 0 errors（12 条规则，每条都反向验证过）；内容包校验 0 errors；9 个 anchor 在 6 种尺度/位置/roll 变换下漂移 < 2e-15 瞳距；Morning Core 9 个播放段全部可渲染且左右对称 |
+| 内容 | 20 个 Gold Move、3 套 Morning 3 分钟原型（各正好 180s）、27 个面部位置（15 个声明 + 自动镜像） |
+| 已离线验证 | 架构与引用检查 0 errors（10 条规则，每条都反向验证过）；内容包校验 0 errors，15 条校验规则逐条反向验证有效；27 个 anchor 在 6 种尺度/位置/roll 变换下漂移 < 2e-15 瞳距；三套原型 36 个播放段全部可渲染 |
 | CI 已验证 | macOS runner 上零编译错误；71 个单元测试 + 4 个 M1 闭环 UI 测试全绿 |
 | 未验证 | 真人脸上的贴合精度 / FPS / 遮挡表现 —— 只能上真机 |
 | 下一步 | 真机 AR POC（`AR_POC_REPORT.md` §2） |

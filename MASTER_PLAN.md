@@ -18,7 +18,7 @@
 ```
 Open App → Home → Morning Ritual → START → 选择 Coach / AR Mirror
   → 打开前置摄像头 → Face Lock
-  → 在自己脸上稳定显示 Mock 动作的 ● 起点 / ◎ 终点 / → 动态路线
+  → 在自己脸上稳定显示动作的 ● 起点 / ◎ 终点 / → 动态路线
   → 自动倒计时、自动换动作、左右侧切换
   → 完成 3 分钟 Mock Routine → Done → 保存练习记录
 ```
@@ -53,7 +53,7 @@ Evening Core、全部 Quick Rituals、StoreKit 真实接入、提醒文案、Onb
 - [x] T2.4 `ContentRepository` 协议 + `BundledJSONContentRepository`
 - [x] T2.5 `ContentValidator`：anchor 引用完整性、时长一致性、premium 标记、reviewStatus
 - [x] T2.6 Mock 内容：Morning Core（5 steps / 180s）+ 2 个 Quick Ritual + Evening Core 骨架
-- [x] T2.7 `reviewStatus: mock_unreviewed` 全量标记 + UI MOCK 角标
+- [x] T2.7 `reviewStatus` 全量标记（当前全部 `draft`）+ UI MOCK 角标
 
 ### T3 Routine Player（规格 §5.2）
 - [x] T3.1 `PlaybackPlan`：steps → segments（展开 leftThenRight）
@@ -81,8 +81,9 @@ Evening Core、全部 Quick Rituals、StoreKit 真实接入、提醒文案、Onb
 - [O] T5.6 HRFFA CoreML 模型转换（需 macOS + coremltools，见 `docs/HRFFA_INTEGRATION.md`）
 - [M] T5.7 三 provider 真机横评 → 写入 `AR_POC_REPORT.md`
 
-### T6 Facial Anchor Map v1（规格 §8，只做 3–5 个测试点）
-- [x] T6.1 5 个测试 anchor 的几何规则定义（`anchors.json`）
+### T6 Facial Anchor Map（规格 §8）
+- [x] T6.1 anchor 几何规则定义（`anchors.json`）——
+      M1 起步是 5 个测试点；按 Sprint 3 的 20 个动作扩到 15 个声明 → 27 个（自动镜像）
 - [x] T6.2 `toleranceRadius` / `poseConstraints` / `confidenceThreshold` 字段
 - [x] T6.3 Debug 页：实时显示全部 anchor + 语义 landmark + FaceFrame 轴
 - [O] T6.4 正式穴位/区域定义（Owner + 专业资料，**当前不由 Claude 决定**）
