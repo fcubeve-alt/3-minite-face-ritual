@@ -175,3 +175,17 @@ enum OverlayPalette {
         }
     }
 }
+
+/// `Point2D` 与 CoreGraphics 的桥接。
+///
+/// Core 是纯 Swift、不 import CoreGraphics（架构检查盯着这条），
+/// 所以转换只能放在 App 层。原本定义在 CoordinateTransform.swift 里，
+/// 那个文件随 AR Mirror 一起删了 —— 但跟练播放器的示意动画仍然要画路径，
+/// 所以这段搬过来。
+extension Point2D {
+    var cgPoint: CGPoint { CGPoint(x: x, y: y) }
+
+    init(_ point: CGPoint) {
+        self.init(x: Double(point.x), y: Double(point.y))
+    }
+}
