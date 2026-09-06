@@ -375,6 +375,161 @@ def check_duplicate_members(types: dict[str, TypeInfo]) -> None:
                     )
 
 
+# 系统框架里那些以大写开头、会被当成「项目类型」的名字。
+# 只列**项目里实际用到的** —— 不求全，求这条规则不误报。
+# 新引入一个系统类型时会被报出来，加进这里即可（这正是它该有的摩擦：
+# 提醒你确认那个名字真的存在，而不是打错了）。
+SYSTEM_SYMBOLS = {
+    # Swift 标准库
+    "Array", "Bool", "Calendar", "Character", "CharacterSet", "Codable", "Data", "Date",
+    "DateComponents", "DateFormatter", "Decodable", "Decoder", "Dictionary", "Double",
+    "Encodable", "Encoder", "Equatable", "Error", "FileManager", "Float", "Hashable",
+    "Identifiable", "Int", "Int8", "JSONDecoder", "JSONEncoder", "Locale", "Mirror",
+    "NSObject", "Notification", "NotificationCenter", "Optional", "OSLog", "Result",
+    "Sendable", "Set", "String", "Task", "TimeInterval", "TimeZone", "URL", "UUID",
+    "UserDefaults", "Bundle", "DispatchQueue", "Thread", "Timer", "ProcessInfo",
+    "Measurement", "UnitDuration", "Logger", "Comparable", "CaseIterable", "RawRepresentable",
+    "ObservableObject", "Published", "MainActor", "Void", "Any", "AnyObject", "Never",
+    "NSPredicate", "IndexSet", "Range", "ClosedRange", "Numeric", "AdditiveArithmetic",
+    "CustomStringConvertible", "LocalizedError", "Sequence", "Collection",
+    # SwiftUI
+    "View", "Text", "Image", "Button", "VStack", "HStack", "ZStack", "Spacer", "Color",
+    "Font", "Angle", "Path", "Circle", "Rectangle", "RoundedRectangle", "Capsule",
+    "Ellipse", "GeometryReader", "ScrollView", "List", "Section", "NavigationStack",
+    "NavigationLink", "NavigationPath", "Toggle", "Picker", "Slider", "Stepper",
+    "TextField", "Binding", "State", "StateObject", "ObservedObject", "EnvironmentObject",
+    "Environment", "AppStorage", "ViewBuilder", "ViewModifier", "Canvas", "GraphicsContext",
+    "Gradient", "LinearGradient", "RadialGradient", "StrokeStyle", "ShapeStyle",
+    "Alignment", "Edge", "EdgeInsets", "Animation", "Transaction", "ToolbarItem",
+    "ScenePhase", "App", "Scene", "WindowGroup", "UIApplication", "ShareLink",
+    "PrimitiveButtonStyle", "ButtonStyle", "Configuration", "LabelStyle", "Label",
+    "ProgressView", "Divider", "Group", "AnyView", "EmptyView", "Preview",
+    # UIKit / AVFoundation / StoreKit / 其它
+    "UIView", "UIViewRepresentable", "UIColor", "UIScreen", "UIDevice", "UIImage",
+    "UIPasteboard", "UIImpactFeedbackGenerator", "UINotificationFeedbackGenerator",
+    "UIFeedbackGenerator", "CADisplayLink", "CATransaction", "CALayer", "CGSize",
+    "CGPoint", "CGRect", "CGFloat", "CGAffineTransform",
+    "AVCaptureDevice", "AVCaptureSession", "AVCaptureDeviceInput", "AVCaptureVideoPreviewLayer",
+    "AVPlayer", "AVQueuePlayer", "AVPlayerItem", "AVPlayerLooper", "AVPlayerLayer",
+    "AVAudioSession", "AVSpeechSynthesizer", "AVSpeechUtterance", "AVSpeechSynthesisVoice",
+    "Product", "Transaction", "StoreKit", "VerificationResult", "UNUserNotificationCenter",
+    "UNMutableNotificationContent", "UNCalendarNotificationTrigger", "UNNotificationRequest",
+    "UNAuthorizationOptions", "XCTestCase", "XCUIApplication", "XCUIElement", "XCTAttachment",
+    "XCTNSPredicateExpectation", "XCTWaiter", "XCTest",
+    "DatePicker", "ForEach", "Link", "Self", "T", "XCTFail",
+    "CAFrameRateRange", "AppStore", "SubscriptionPeriod", "AVCaptureConnection",
+    "AVCaptureVideoOrientation", "AVAudioSessionCategoryOptions", "OSAllocatedUnfairLock",
+}
+
+# 名字以这些开头的一律当系统符号。
+# XCTAssert 有几十个变体（XCTAssertEqual / GreaterThan / NoThrow …），逐个列没有意义。
+SYSTEM_PREFIXES = ("XCTAssert", "XCTUnwrap", "XCTSkip", "NS", "CG", "CA", "UI", "AV", "UN")
+
+
+def strip_for_refs(text: str) -> str:
+    """去掉注释与字符串，保留行数。
+
+    不这么做的话，注释里提一句 `ARGuidanceController` 就会被当成引用报错 ——
+    而注释里提到已删除的东西是完全正常的（比如「原本定义在 X 里」）。
+    """
+    out = []
+    index, length = 0, len(text)
+    NL, SP = chr(10), " "
+    QUOTE = chr(34)
+    TRIPLE = QUOTE * 3
+    BACKSLASH = chr(92)
+
+    while index < length:
+        if text.startswith("/*", index):
+            depth = 1
+            index += 2
+            while index < length and depth > 0:
+                if text.startswith("/*", index):
+                    depth += 1
+                    index += 2
+                elif text.startswith("*/", index):
+                    depth -= 1
+                    index += 2
+                else:
+                    out.append(NL if text[index] == NL else SP)
+                    index += 1
+            continue
+
+        if text.startswith("//", index):
+            while index < length and text[index] != NL:
+                out.append(SP)
+                index += 1
+            continue
+
+        if text.startswith(TRIPLE, index):
+            out.append(SP * 3)
+            index += 3
+            while index < length and not text.startswith(TRIPLE, index):
+                out.append(NL if text[index] == NL else SP)
+                index += 1
+            out.append(SP * 3)
+            index += 3
+            continue
+
+        if text[index] == QUOTE:
+            out.append(SP)
+            index += 1
+            while index < length and text[index] != QUOTE:
+                if text[index] == BACKSLASH and index + 1 < length:
+                    out.append(SP * 2)
+                    index += 2
+                    continue
+                out.append(NL if text[index] == NL else SP)
+                index += 1
+            out.append(SP)
+            index += 1
+            continue
+
+        out.append(text[index])
+        index += 1
+
+    return "".join(out)
+
+
+def check_dangling_type_references(types: dict[str, TypeInfo], files: list[pathlib.Path]) -> None:
+    """引用了**项目里根本不存在**的类型。
+
+    加这条是因为它真的发生过两次，都是删代码留下的尾巴：
+      - 删掉 AROverlayRenderer.swift 之后，PlayerChrome 仍在用它定义的 OverlayPalette
+      - 删掉 guidance 链路之后，init 里仍在调 wireGuidanceCallbacks()
+    两处 Mac 上一编译就是 "cannot find X in scope"，
+    而当时的检查器只看枚举 case / init 标签 / 协议一致性 —— 看不到「符号存在吗」。
+
+    做法：项目里声明过的类型 + 一份系统符号名单，其余大写开头的引用都报出来。
+    名单不求全 —— 新引入系统类型时被报一次是**有用的摩擦**：
+    它逼你确认那个名字真的存在，而不是拼错了。
+    """
+    declared = set(types.keys())
+    # 枚举 case、嵌套类型也算声明过
+    for info in types.values():
+        declared |= info.cases
+        declared |= info.members
+
+    pattern = re.compile(r"\b([A-Z][A-Za-z0-9_]*)\s*(?:\.|\()")
+
+    for path in files:
+        text = strip_for_refs(path.read_text(encoding="utf-8"))
+        seen: set[str] = set()
+        for lineno, line in enumerate(text.splitlines(), 1):
+            for match in pattern.finditer(line):
+                name = match.group(1)
+                if (name in declared or name in SYSTEM_SYMBOLS or name in seen
+                        or name.startswith(SYSTEM_PREFIXES)):
+                    continue
+                seen.add(name)
+                error(
+                    f"{rel(path)}:{lineno}",
+                    f"引用了项目里不存在的类型 {name!r}。"
+                    f"要么是删代码留下的尾巴，要么是拼错了；"
+                    f"如果它是系统框架的类型，加进 check_swift_refs.py 的 SYSTEM_SYMBOLS。",
+                )
+
+
 def check_identical_declarations(types: dict[str, TypeInfo]) -> None:
     """同一个类型、同一个文件里出现**一模一样**的声明行 —— 几乎必然是复制粘贴事故。
 
@@ -534,6 +689,7 @@ def run(files: list[pathlib.Path]) -> None:
     check_protocol_conformance(types)
     check_duplicate_members(types)
     check_identical_declarations(types)
+    check_dangling_type_references(types, files)
 
 
 SELF_TEST_SOURCE = '''

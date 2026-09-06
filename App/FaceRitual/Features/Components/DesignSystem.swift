@@ -158,3 +158,20 @@ extension PracticeMode {
         }
     }
 }
+
+/// 左右侧的配色。
+///
+/// 让「现在做哪一侧」不用读文字就能看出来 —— 播放器顶部的进度条与
+/// 示意动画都用它。
+///
+/// 原本定义在 AROverlayRenderer 里，那个文件随 AR Mirror 一起删了；
+/// 但这套配色和 AR 无关，是跟练播放器仍在用的东西，所以搬到设计系统里。
+enum OverlayPalette {
+    static func accent(for side: BodySide) -> Color {
+        switch side {
+        case .left: return Color(red: 0.45, green: 0.83, blue: 0.98)
+        case .right: return Color(red: 1.00, green: 0.72, blue: 0.42)
+        case .both, .none, .leftThenRight: return Color(red: 0.72, green: 0.85, blue: 1.00)
+        }
+    }
+}

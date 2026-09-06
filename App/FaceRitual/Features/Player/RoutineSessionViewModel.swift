@@ -61,7 +61,6 @@ final class RoutineSessionViewModel: ObservableObject {
         engine.onEvent = { [weak self] event in
             self?.handle(event)
         }
-        wireGuidanceCallbacks()
     }
 
     // MARK: - 生命周期
