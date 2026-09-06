@@ -10,6 +10,8 @@ struct HomeView: View {
     @Binding var path: NavigationPath
 
     @State private var paywallRoutine: Routine?
+    /// START 直接进播放器时持有它。
+    @State private var activeSession: Routine?
 
     private var greeting: String {
         let hour = Calendar.current.component(.hour, from: Date())
@@ -75,6 +77,11 @@ struct HomeView: View {
                 .accessibilityLabel(AppCopy.a11ySettings)
             }
         }
+        .fullScreenCover(item: $activeSession) { routine in
+            CoachPlayerView(
+                viewModel: RoutineSessionViewModel(routine: routine, mode: .coach, environment: environment)
+            )
+        }
         .sheet(item: $paywallRoutine) { routine in
             PaywallView(source: "home_\(routine.id.rawValue)")
         }
@@ -124,6 +131,16 @@ struct HomeView: View {
             }
             .buttonStyle(PrimaryButtonStyle())
             .accessibilityIdentifier(A11yID.homeStart)
+
+            // 想先看看今天做哪些动作的人走这里。
+            // 主按钮不该被「先看一眼」这个次要需求拖慢。
+            Button(AppCopy.seeTheMoves) {
+                path.append(AppRoute.routineDetail(routine.id))
+            }
+            .font(.footnote)
+            .foregroundStyle(Theme.textSecondary)
+            .frame(maxWidth: .infinity)
+            .accessibilityIdentifier(A11yID.homeSeeMoves)
         }
         .padding(20)
         .cardBackground(elevated: true)
@@ -230,23 +247,22 @@ struct HomeView: View {
 
     // MARK: - 动作
 
-    /// 进入 routine 详情。
+    /// START **直接进播放器**。
     ///
-    /// 用**导航推入**而不是 fullScreenCover。
+    /// 只剩一种练法之后，中间那个「选模式」页就成了纯粹多余的一次点击 ——
+    /// 那一页上只有一行 Coach 可选。Owner 要的是「打开 App → START → 跟着做」。
     ///
-    /// 之前是模态：首页 fullScreenCover → 详情，详情里再 fullScreenCover → 播放器。
-    /// 两层嵌套的 cover 在外层入场动画还没结束时触发内层，UIKit 会以
-    /// 「上一个转场还在进行」为由把内层丢掉 —— 用户点了「Coach」但什么也没发生。
-    /// 手快的用户、开了辅助功能「减弱动态效果」的用户，以及 CI 上动画很慢的
-    /// 模拟器都会撞到（2026-09-06 的 run 34035131613 就是这么挂的）。
+    /// 想先看看今天要做哪些动作的人，走卡片下方的次要入口进详情页。
     ///
-    /// 改成推入之后全 App 只剩播放器这一层 cover，这类问题从根上没有了。
-    /// `AppRoute.routineDetail` 本来就已经接好线，只是一直没人用。
+    /// 层级上仍然只有一层 cover：首页 → 播放器。
+    /// （2026-09-06 run 34035131613 的教训：嵌套 cover 时，外层入场动画还没结束
+    /// 就触发内层，UIKit 会把内层丢掉 —— 用户点了但什么也没发生。）
     private func start(_ routine: Routine) {
         if environment.access(to: routine, mode: .coach) == .requiresPremium {
             paywallRoutine = routine
         } else {
-            path.append(AppRoute.routineDetail(routine.id))
+            environment.analytics.track(.modeSelected(mode: .coach, routineID: routine.id))
+            activeSession = routine
         }
     }
 }

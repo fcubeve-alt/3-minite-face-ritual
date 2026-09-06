@@ -37,7 +37,6 @@ final class ClosedLoopUITests: XCTestCase {
 
     func testCoachModeCompletesAndSavesARecord() throws {
         startMorningRitual()
-        chooseMode(A11yID.modeCoach)
         walkThroughAllSegments()
         assertDoneScreenAppeared()
         returnHome()
@@ -51,7 +50,6 @@ final class ClosedLoopUITests: XCTestCase {
     /// 随 AR Mirror / Watch & Breathe 于 2026-09-07 一并移除。）
     func testRoutineCompletesWithoutCamera() throws {
         startMorningRitual()
-        chooseMode(A11yID.modeCoach)
         walkThroughAllSegments()
         assertDoneScreenAppeared()
     }
@@ -59,7 +57,6 @@ final class ClosedLoopUITests: XCTestCase {
     /// 镜像可以关掉，关掉之后播放器仍然正常工作。
     func testMirrorCanBeTurnedOff() throws {
         startMorningRitual()
-        chooseMode(A11yID.modeCoach)
 
         let toggle = waitForHittable(A11yID.playerMirrorToggle, message: "镜像开关没有出现")
         toggle.tap()
@@ -69,10 +66,22 @@ final class ClosedLoopUITests: XCTestCase {
         XCTAssertTrue(skip.isHittable, "关掉镜像不应影响播放控制")
     }
 
+    /// 次要入口「See the moves」通向详情页，从那里也能开始。
+    ///
+    /// 主按钮直达播放器之后，详情页很容易变成没人维护的死路 ——
+    /// 这条测试盯着它还活着。
+    func testSeeTheMovesLeadsToDetailAndCanStartFromThere() throws {
+        waitForHittable(A11yID.homeSeeMoves, message: "首页没有「See the moves」入口").tap()
+
+        let modeRow = waitForHittable(A11yID.modeCoach, message: "详情页没有出现")
+        modeRow.tap()
+
+        _ = waitForHittable(A11yID.playerSkipForward, message: "从详情页进不去播放器")
+    }
+
     /// 中途退出也要留下记录（规格 §12：不惩罚中断）。
     func testAbandonedSessionIsStillRecorded() throws {
         startMorningRitual()
-        chooseMode(A11yID.modeCoach)
 
         let close = waitForHittable(A11yID.playerClose, message: "播放器没有出现")
         // 等一会儿，让已完成秒数不为 0
@@ -182,15 +191,12 @@ final class ClosedLoopUITests: XCTestCase {
         return target
     }
 
+    /// 首页 START **直接进播放器**。
+    ///
+    /// 2026-09-07 起中间不再有「选模式」页 —— 只剩一种练法之后，
+    /// 那一页上只有一行可选，纯粹是多余的一次点击。
     private func startMorningRitual() {
         waitForHittable(A11yID.homeStart, message: "首页的 START 没有出现").tap()
-    }
-
-    private func chooseMode(_ identifier: String) {
-        // 必须等可点：这一行在外层 fullScreenCover 的入场动画期间就已经「存在」了，
-        // 那时候点它，内层 fullScreenCover（播放器）会因为
-        // 「上一个转场还在进行」而被 UIKit 丢掉 —— 表现就是停在原地什么也没发生。
-        waitForHittable(identifier, message: "模式选择行没有出现").tap()
     }
 
     /// 用「下一动作」把 9 个播放段走完，而不是干等 3 分钟。
@@ -222,18 +228,20 @@ final class ClosedLoopUITests: XCTestCase {
 
         // 断言**真的**回到了首页，而不是「首页的控件恰好还在无障碍树里」。
         //
-        // 详情页以前是盖在首页上的 fullScreenCover，首页控件一直留在树里，
-        // 于是下面那条月度汇总断言在根本没回到首页时也能通过 ——
-        // 而真实用户会被留在详情页，还得再按一次关闭。
-        // 改成导航推入之后，用「详情页的控件必须消失」把这条断言变成真的。
-        let modeRow = element(A11yID.modeCoach)
+        // 这条断言以前是空的：详情页是盖在首页上的 fullScreenCover，
+        // 首页控件一直留在树里，于是不管有没有真的回去，
+        // 下面那条月度汇总断言都会通过 —— 而真实用户被留在了详情页。
+        //
+        // 现在用「播放器的控件必须消失」来验证：播放器是 cover，
+        // 它还在的话跳过按钮就还在树里。
+        let playerControl = element(A11yID.playerSkipForward)
         let gone = XCTNSPredicateExpectation(
             predicate: NSPredicate(format: "exists == false"),
-            object: modeRow
+            object: playerControl
         )
         XCTAssertEqual(
             XCTWaiter().wait(for: [gone], timeout: 10), .completed,
-            "返回后仍然停在 routine 详情页 —— 没有真的回到首页"
+            "返回后播放器仍然在 —— 没有真的回到首页"
         )
     }
 

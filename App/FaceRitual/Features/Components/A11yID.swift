@@ -9,6 +9,7 @@ import Foundation
 /// 纯粹是给自动化测试定位用的。
 enum A11yID {
     static let homeStart = "home.start"
+    static let homeSeeMoves = "home.seeMoves"
     static let homeQuickRitual = "home.quickRitual"
     static let homeMonthlySummary = "home.monthlySummary"
 

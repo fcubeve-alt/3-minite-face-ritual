@@ -85,6 +85,8 @@ enum AppCopy {
     static let mirrorOptionalNote = "The mirror is optional. You can follow along without it."
     static let mirrorDeniedNote = "Camera access is off. You can still follow along — turn it on in Settings if you want to see yourself."
     static let mirrorUnavailableNote = "No front camera on this device."
+    /// 首页卡片上的次要入口 —— 先看看今天要做什么。
+    static let seeTheMoves = "See the moves"
     static let mirrorEnable = "Turn on the mirror"
     static let mirrorToggleOn = "Show me"
     static let mirrorToggleOff = "Hide me"
