@@ -325,7 +325,12 @@ def parse_file(path: pathlib.Path, types: dict[str, TypeInfo]) -> None:
                 # 出现同名成员是合法的，记进去会误报。
                 if conditional_depth == 0:
                     kind = "func" if member.group(1) else "property"
-                    owner.member_sites.setdefault(name, []).append((rel(path), lineno, kind))
+                    # 只留签名，去掉函数体与默认值 —— 重载的区别在参数表，
+                    # 而复制粘贴出来的重复往往连函数体都不一样。
+                    signature = " ".join(stripped.split("{")[0].split())
+                    owner.member_sites.setdefault(name, []).append(
+                        (rel(path), lineno, kind, signature)
+                    )
                 # 协议**本体**里的才是「要求」。
                 # 写在 `extension SomeProtocol` 里的是默认实现 ——
                 # 遵循者不需要再实现一遍，算成要求会大批误报。
@@ -356,7 +361,7 @@ def check_duplicate_members(types: dict[str, TypeInfo]) -> None:
     for info in types.values():
         for name, sites in info.member_sites.items():
             properties: dict = {}
-            for file, lineno, kind in sites:
+            for file, lineno, kind, _ in sites:
                 if kind != "property":
                     continue
                 properties.setdefault(file, []).append(lineno)
@@ -367,6 +372,33 @@ def check_duplicate_members(types: dict[str, TypeInfo]) -> None:
                         f"{file}:{ordered[1]}",
                         f"{info.name} 里重复声明了属性 {name!r}"
                         f"（另一处在第 {ordered[0]} 行）。Swift 会编译失败。",
+                    )
+
+
+def check_identical_declarations(types: dict[str, TypeInfo]) -> None:
+    """同一个类型、同一个文件里出现**一模一样**的声明行 —— 几乎必然是复制粘贴事故。
+
+    上一条规则（重复声明属性）刻意放过了方法，因为 Swift 允许重载。
+    但重载的参数表一定不同，所以**声明行原文完全相同**就不是重载，是重复。
+
+    加这条是因为我自己犯过：一个批量编辑脚本用「从 A 删到 B」的写法，
+    而 B 在文件里出现在 A 之前，于是变成了插入 ——
+    `private func safetyNote(_:)` 被复制成两份。
+    Mac 上一编译就炸（invalid redeclaration），Windows 上完全看不出来。
+    """
+    for info in types.values():
+        for name, sites in info.member_sites.items():
+            by_line: dict = {}
+            for file, lineno, _, text in sites:
+                by_line.setdefault((file, text), []).append(lineno)
+            for (file, text), lines_ in by_line.items():
+                if len(lines_) > 1:
+                    ordered = sorted(lines_)
+                    error(
+                        f"{file}:{ordered[1]}",
+                        f"{info.name} 里出现了两处一模一样的声明 {name!r}"
+                        f"（另一处在第 {ordered[0]} 行）：{text[:70]}"
+                        f" —— 参数表相同就不是重载，Swift 会报 invalid redeclaration。",
                     )
 
 
@@ -501,6 +533,7 @@ def run(files: list[pathlib.Path]) -> None:
     check_initializer_labels(types, files)
     check_protocol_conformance(types)
     check_duplicate_members(types)
+    check_identical_declarations(types)
 
 
 SELF_TEST_SOURCE = '''
@@ -518,6 +551,15 @@ struct Duplicated {
     var lockLossCount: Int { 0 }
     var other: Int { 1 }
     var lockLossCount: Int { 2 }
+}
+
+struct CopyPasted {
+    private func safetyNote(_ note: String) -> Int { 0 }
+    private func other() -> Int { 1 }
+    private func safetyNote(_ note: String) -> Int { 2 }
+    // 真正的重载不该被误报：参数表不同
+    private func overloaded(a: Int) -> Int { 0 }
+    private func overloaded(b: String) -> Int { 1 }
 }
 
 struct Person: Greeter {
@@ -562,6 +604,8 @@ def self_test() -> int:
             "init 标签对不上": any("Person(...)" in m for m in found),
             "协议要求未实现": any("greet" in m for m in found),
             "重复声明属性": any("重复声明了属性" in m for m in found),
+            "一模一样的声明": any("一模一样的声明" in m for m in found),
+            "重载不误报": not any("overloaded" in m for m in found),
         }
 
         print("自测（用故意写错的代码验证检查器有效）:")

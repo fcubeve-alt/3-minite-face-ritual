@@ -144,18 +144,6 @@ struct SettingsView: View {
     /// 普通用户不该在订阅设置里看到「Mock」这种字眼。
     private var developerSection: some View {
         Section {
-            Picker("Face Alignment Provider", selection: Binding(
-                get: { settings.preferredProviderKind },
-                set: { settings.preferredProviderKind = $0 }
-            )) {
-                ForEach(FaceAlignmentProviderKind.allCases) { kind in
-                    Text(kind.displayName).tag(kind)
-                }
-            }
-            Toggle("显示 AR Debug 图层", isOn: Binding(
-                get: { settings.showDebugOverlay },
-                set: { settings.showDebugOverlay = $0 }
-            ))
             if let mock = environment.entitlement as? MockEntitlementService {
                 Toggle("Mock Unlock（跳过付费墙）", isOn: Binding(
                     get: { environment.entitlementLevel == .premium },

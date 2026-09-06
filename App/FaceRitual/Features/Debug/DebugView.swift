@@ -13,8 +13,6 @@ struct DebugView: View {
     var body: some View {
         List {
             toolsSection
-            providerSection
-            landmarkCoverageSection
             anchorSection
             moveLibrarySection
             contentSection
@@ -27,15 +25,7 @@ struct DebugView: View {
 
     private var toolsSection: some View {
         Section {
-            NavigationLink("POC 测量（真机）") {
-                POCMeasurementView(
-                    anchors: environment.content.anchors,
-                    provider: environment.settings.preferredProviderKind
-                )
-            }
-            NavigationLink("ARKit 顶点标定") {
-                ARKitCalibrationView()
-            }
+            videoAvailabilityRow
             HStack {
                 Text("Terms / Privacy 链接")
                 Spacer()
@@ -45,77 +35,23 @@ struct DebugView: View {
         } header: {
             Text("Tools")
         } footer: {
-            Text("""
-            POC 测量把 AR_POC_REPORT.md §2 的九项指标变成按场景标注的数值，\
-            测完导出 JSON —— 不用再人肉观察手填表格。
-
-            ARKit 的 1220 个顶点没有官方语义编号，需要在真机上手工标定一次。\
-            标定完成后 ARKit provider 才会变为可用。
-            """)
+            Text("示范视频放在 App/FaceRitual/Resources/CoachVideos/，命名与交付要求见 docs/COACH_VIDEO_SPEC.md。缺素材时播放器会回落到示意动画，不影响使用。")
         }
     }
 
-    // MARK: - Provider
-
-    private var providerSection: some View {
-        Section("Face Alignment Providers") {
-            ForEach(FaceAlignmentProviderKind.allCases) { kind in
-                let provider = FaceAlignmentProviderFactory.make(kind)
-                VStack(alignment: .leading, spacing: 5) {
-                    HStack {
-                        Text(kind.displayName)
-                            .font(.system(size: 15, weight: .medium))
-                        Spacer()
-                        Text(provider.isAvailable ? "可用" : "不可用")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(provider.isAvailable ? Theme.accent : Theme.warning)
-                    }
-                    Text(provider.descriptor.summary)
-                        .font(.caption)
-                        .foregroundStyle(Theme.textSecondary)
-                    if let reason = provider.unavailableReason {
-                        Text(reason)
-                            .font(.caption2)
-                            .foregroundStyle(Theme.warning)
-                    }
-                    HStack(spacing: 10) {
-                        tag("landmarks \(provider.descriptor.supportedLandmarks.count)")
-                        if provider.descriptor.requiresTrueDepth { tag("TrueDepth") }
-                        if provider.descriptor.providesHeadPose { tag("head pose") }
-                        // 目前没有任何实现声称能做遮挡判断 —— 这是规格 §10 的边界。
-                        tag(provider.descriptor.providesOcclusionEstimate ? "occlusion" : "no occlusion")
-                    }
-                }
-                .padding(.vertical, 4)
-            }
-        }
-    }
-
-    /// 所选 provider 是否覆盖内容需要的全部 landmark。
-    /// 缺一个都会让某个 anchor 直接解析失败 —— 与其在脸上少画一个点，不如在这里先报出来。
-    private var landmarkCoverageSection: some View {
-        let provider = FaceAlignmentProviderFactory.make(environment.settings.preferredProviderKind)
-        let required = environment.requiredLandmarks
-        let missing = required.subtracting(provider.descriptor.supportedLandmarks)
-
-        return Section("Landmark Coverage") {
-            HStack {
-                Text("内容需要")
-                Spacer()
-                Text("\(required.count) 个语义 landmark")
-                    .foregroundStyle(Theme.textSecondary)
-            }
-            HStack {
-                Text("当前 provider 覆盖")
-                Spacer()
-                Text(missing.isEmpty ? "全部覆盖" : "缺 \(missing.count) 个")
-                    .foregroundStyle(missing.isEmpty ? Theme.accent : Theme.warning)
-            }
-            if missing.isEmpty == false {
-                Text(missing.map(\.rawValue).sorted().joined(separator: ", "))
-                    .font(.system(size: 11, design: .monospaced))
-                    .foregroundStyle(Theme.warning)
-            }
+    /// 示范视频素材进度。
+    ///
+    /// 缺素材不是错误 —— 播放器会回落到示意动画。但「缺了多少」得看得见，
+    /// 否则很容易以为素材已经齐了，而实际上文件名写错了 App 根本没找到。
+    private var videoAvailabilityRow: some View {
+        let steps = environment.content.routines.flatMap(\.steps)
+        let status = LoopingVideoPlayer.availability(for: steps)
+        return HStack {
+            Text("示范视频素材")
+            Spacer()
+            Text("\(status.present) / \(status.total)")
+                .font(.system(.footnote, design: .monospaced))
+                .foregroundStyle(status.present == status.total ? Theme.accent : Theme.warning)
         }
     }
 

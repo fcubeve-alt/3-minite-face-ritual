@@ -187,18 +187,14 @@ struct RoutineDetailView: View {
 
     /// 注意：view model 直接写在调用处，不先 let 出来 ——
     /// 两个播放视图的 init 都是 autoclosure，这样才能真正延迟到 `@StateObject` 首次构建时求值。
-    @ViewBuilder
+    /// 只剩一种播放器。
+    ///
+    /// AR Mirror 与 Watch & Breathe 于 2026-09-07 移除；
+    /// 枚举里那两个 case 只供历史练习记录解码，UI 上到不了。
     private func sessionView(for mode: PracticeMode) -> some View {
-        switch mode {
-        case .coach:
-            CoachPlayerView(
-                viewModel: RoutineSessionViewModel(routine: routine, mode: mode, environment: environment)
-            )
-        case .arMirror, .watch:
-            ARMirrorView(
-                viewModel: RoutineSessionViewModel(routine: routine, mode: mode, environment: environment)
-            )
-        }
+        CoachPlayerView(
+            viewModel: RoutineSessionViewModel(routine: routine, mode: mode, environment: environment)
+        )
     }
 
     // MARK: - 动作
@@ -210,49 +206,10 @@ struct RoutineDetailView: View {
         }
         environment.analytics.track(.modeSelected(mode: mode, routineID: routine.id))
         environment.settings.preferredMode = mode
-
-        guard mode != .coach else {
-            activeMode = .coach
-            return
-        }
-        requestCameraThenStart(mode)
+        // 摄像头不再是进入播放器的前提。镜像是可选的，
+        // 权限在播放器里由用户点「Turn on the mirror」时才请求。
+        activeMode = mode
     }
 
-    /// 规格 §4：摄像头由用户主动开启。权限请求只发生在这里。
-    ///
-    /// 先看**实际会被用到的那个 provider** 需不需要摄像头 ——
-    /// Mock provider 生成的是合成脸，不碰摄像头，那就不该弹权限框。
-    /// 这条同时让模拟器上的自动化测试能跑通整条闭环（模拟器没有摄像头）。
-    private func requestCameraThenStart(_ mode: PracticeMode) {
-        let resolved = FaceAlignmentProviderFactory
-            .makeFirstAvailable(preferring: environment.settings.preferredProviderKind)
-            .provider
-        guard resolved.descriptor.requiresCamera else {
-            activeMode = mode
-            return
-        }
-
-        switch CameraPermission.status {
-        case .authorized:
-            activeMode = mode
-        case .denied, .restricted:
-            cameraDeniedAlert = true
-        case .notDetermined:
-            isRequestingCamera = true
-            environment.analytics.track(.cameraPermissionRequested)
-            Task {
-                let granted = await CameraPermission.request()
-                await MainActor.run {
-                    isRequestingCamera = false
-                    environment.analytics.track(.cameraPermissionResult(granted: granted))
-                    if granted {
-                        activeMode = mode
-                    } else {
-                        cameraDeniedAlert = true
-                    }
-                }
-            }
-        }
-    }
 }
 

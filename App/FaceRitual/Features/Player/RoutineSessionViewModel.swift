@@ -25,13 +25,8 @@ final class RoutineSessionViewModel: ObservableObject {
     @Published private(set) var prepareCountdown: Int?
     @Published private(set) var completedRepetitions: Int = 0
     @Published private(set) var didFinish = false
-    /// AR 中途退回 Coach 后为 true。播放器不受影响，只是不再渲染摄像头与 overlay。
-    @Published private(set) var didFallBackToCoach = false
-
     let routine: Routine
     let mode: PracticeMode
-    /// AR / Watch 模式下才存在。
-    let guidance: ARGuidanceController?
 
     private let environment: AppEnvironment
     private let engine: RoutinePlayerEngine
@@ -43,7 +38,6 @@ final class RoutineSessionViewModel: ObservableObject {
     private var hasStarted = false
 
     var totalSegments: Int { plan.segments.count }
-    var usesCamera: Bool { mode != .coach }
 
     init(routine: Routine, mode: PracticeMode, environment: AppEnvironment) {
         self.routine = routine
@@ -53,13 +47,6 @@ final class RoutineSessionViewModel: ObservableObject {
         let plan = PlaybackPlan(routine: routine, prepareCountdownSeconds: 3)
         self.plan = plan
         self.engine = RoutinePlayerEngine(plan: plan)
-
-        self.guidance = mode == .coach
-            ? nil
-            : ARGuidanceController(
-                anchors: environment.content.anchors,
-                preferredProvider: environment.settings.preferredProviderKind
-            )
 
         self.sessionRecord = PracticeSession(
             routineID: routine.id,
@@ -84,13 +71,6 @@ final class RoutineSessionViewModel: ObservableObject {
         hasStarted = true
 
         environment.analytics.track(.routineStarted(routineID: routine.id, type: routine.type, mode: mode))
-        if mode == .arMirror, let guidance {
-            environment.analytics.track(.arMirrorStarted(routineID: routine.id, providerID: guidance.providerDescriptor.id))
-            sessionRecord.faceProviderID = guidance.providerDescriptor.id
-        }
-        if mode == .watch {
-            environment.analytics.track(.watchModeUsed(routineID: routine.id))
-        }
 
         // 用户全程双手在脸上，3–5 分钟不会碰屏幕。
         // 不阻止自动锁屏的话，动作做到一半屏幕就黑了。
@@ -116,7 +96,6 @@ final class RoutineSessionViewModel: ObservableObject {
         if wasRunningBeforeBackground {
             engine.pause()
         }
-        guidance?.stop()
         environment.voice.stop()
         ScreenWakeLock.shared.releaseAll()
     }
@@ -128,9 +107,6 @@ final class RoutineSessionViewModel: ObservableObject {
     func handleReturnedToForeground(viewSize: CGSize) {
         guard didFinish == false else { return }
         ScreenWakeLock.shared.acquire()
-        if usesCamera, viewSize.width > 0 {
-            startGuidance(viewSize: viewSize)
-        }
     }
 
     private var wasRunningBeforeBackground = false
@@ -162,7 +138,6 @@ final class RoutineSessionViewModel: ObservableObject {
         segmentProgress = engine.segmentProgress
         routineProgress = engine.routineProgress
         completedRepetitions = engine.completedRepetitions
-        guidance?.updateCyclePhase(engine.cyclePhase)
 
         // 每个循环开头给一次轻震动，作为节奏提示。
         let cycle = engine.completedRepetitions
@@ -175,7 +150,6 @@ final class RoutineSessionViewModel: ObservableObject {
     private func teardown() {
         ticker?.stop()
         ticker = nil
-        guidance?.stop()
         environment.voice.stop()
         ScreenWakeLock.shared.release()
     }
@@ -193,7 +167,6 @@ final class RoutineSessionViewModel: ObservableObject {
             currentSegmentIndex = index
             currentSegment = segment
             lastPulseCycle = -1
-            guidance?.updateMovement(segment: segment)
             environment.haptics.stepChange()
             if let cue = segment.step.voiceCue {
                 environment.voice.speak(voiceCueText(cue, side: segment.side, segment: segment))
@@ -205,16 +178,8 @@ final class RoutineSessionViewModel: ObservableObject {
                 environment.haptics.countdownTick()
             }
 
-        case let .segmentDidComplete(index):
-            if let segment = plan.segment(at: index), mode == .arMirror {
-                environment.analytics.track(
-                    .arStepCompleted(
-                        routineID: routine.id,
-                        stepID: segment.step.id,
-                        quality: guidance?.guidanceFrame.quality ?? .lost
-                    )
-                )
-            }
+        case .segmentDidComplete:
+            break
 
         case .sideDidChange:
             break
@@ -254,18 +219,6 @@ final class RoutineSessionViewModel: ObservableObject {
         sessionRecord.completedAt = Date()
         sessionRecord.completed = completed
         sessionRecord.secondsCompleted = secondsCompleted
-        if let guidance {
-            sessionRecord.faceLockLossCount = guidance.lockLossCount
-            sessionRecord.timeToFirstFaceLock = guidance.timeToFirstLock
-            environment.analytics.track(
-                .arSessionQuality(
-                    providerID: guidance.providerDescriptor.id,
-                    averageFPS: guidance.performanceMonitor.averageFPS,
-                    averageLatencyMS: guidance.performanceMonitor.averageLatencyMS,
-                    lockLossCount: guidance.lockLossCount
-                )
-            )
-        }
 
         environment.record(sessionRecord)
 
@@ -283,58 +236,6 @@ final class RoutineSessionViewModel: ObservableObject {
             )
         }
         teardown()
-    }
-
-    // MARK: - AR
-
-    private func wireGuidanceCallbacks() {
-        guidance?.onFaceLockLost = { [weak self] hint in
-            guard let self else { return }
-            self.environment.analytics.track(
-                .faceLockLost(
-                    routineID: self.routine.id,
-                    stepID: self.currentSegment?.step.id,
-                    hint: hint
-                )
-            )
-        }
-        guidance?.onFaceLockAcquired = { [weak self] seconds in
-            guard let self, let guidance = self.guidance else { return }
-            self.environment.analytics.track(
-                .faceLockAcquired(providerID: guidance.providerDescriptor.id, secondsToLock: seconds)
-            )
-        }
-    }
-
-    func startGuidance(viewSize: CGSize) {
-        guard let guidance else { return }
-        guidance.start(viewSize: viewSize, isMirrored: environment.settings.mirrorPreview)
-        // 回落只上报一次：切后台再回来会重新 start，重复上报会让漏斗数据虚高。
-        if let notice = guidance.fallbackNotice, didReportProviderFallback == false {
-            didReportProviderFallback = true
-            environment.analytics.track(
-                .guidanceFallback(routineID: routine.id, from: mode, to: mode, reason: notice)
-            )
-        }
-    }
-
-    private var didReportProviderFallback = false
-
-    /// AR 中途退回 Coach。**计时与动作序列不中断** —— 规格 §4：识别失败不得阻塞 routine。
-    ///
-    /// 这里只关掉摄像头与 overlay，播放器完全不受影响：
-    /// 用户不会因为「脸识别不出来」而丢掉这次练习。
-    /// 会话记录仍标记为 arMirror + didFallBackToCoach，
-    /// 这样 POC 阶段能看出「有多少人是被迫退回去的」。
-    func fallBackToCoach(reason: String) {
-        guard didFallBackToCoach == false else { return }
-        didFallBackToCoach = true
-        sessionRecord.didFallBackToCoach = true
-
-        guidance?.stop()
-        environment.analytics.track(
-            .guidanceFallback(routineID: routine.id, from: mode, to: .coach, reason: reason)
-        )
     }
 
     var completedSession: PracticeSession { sessionRecord }

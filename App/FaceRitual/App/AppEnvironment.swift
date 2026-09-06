@@ -155,15 +155,6 @@ final class AppEnvironment: ObservableObject {
     var movesAwaitingExpertGate: [GoldMove] { content.movesAwaitingExpertGate }
     var allMoves: [GoldMove] { content.sortedMoves }
 
-    /// 内容里出现的全部 landmark。用于检查所选 provider 是否够用。
-    var requiredLandmarks: Set<SemanticLandmark> {
-        var marks = Set(SemanticLandmark.required)
-        for anchor in content.anchors.values {
-            marks.formUnion(anchor.rule.referencedLandmarks)
-        }
-        return marks
-    }
-
     func access(to routine: Routine, mode: PracticeMode) -> AccessDecision {
         EntitlementPolicy.decide(mode: mode, routine: routine, level: entitlementLevel)
     }

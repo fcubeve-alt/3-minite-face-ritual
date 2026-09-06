@@ -13,7 +13,6 @@ final class AppSettings: ObservableObject {
         static let mirrored = "settings.mirrorPreview"
         static let voice = "settings.voiceEnabled"
         static let haptics = "settings.hapticsEnabled"
-        static let debugOverlay = "settings.debugOverlay"
         static let preferredMode = "settings.preferredPracticeMode"
         static let hasLaunchedBefore = "settings.hasLaunchedBefore"
         static func reminderEnabled(_ kind: ReminderKind) -> String { "settings.reminder.\(kind.rawValue).enabled" }
@@ -23,9 +22,6 @@ final class AppSettings: ObservableObject {
 
     private let defaults: UserDefaults
 
-    @Published var preferredProviderKind: FaceAlignmentProviderKind {
-        didSet { defaults.set(preferredProviderKind.rawValue, forKey: Key.providerKind) }
-    }
 
     /// AR Mirror 默认镜像 —— 用户期待的是镜子，不是相机原始视角。
     @Published var mirrorPreview: Bool {
@@ -41,9 +37,6 @@ final class AppSettings: ObservableObject {
     }
 
     /// Debug overlay：显示语义 landmark 与脸部坐标轴。POC 阶段的主要观察工具。
-    @Published var showDebugOverlay: Bool {
-        didSet { defaults.set(showDebugOverlay, forKey: Key.debugOverlay) }
-    }
 
     @Published var preferredMode: PracticeMode {
         didSet { defaults.set(preferredMode.rawValue, forKey: Key.preferredMode) }
@@ -67,14 +60,10 @@ final class AppSettings: ObservableObject {
         isFirstLaunch = defaults.bool(forKey: Key.hasLaunchedBefore) == false
         defaults.set(true, forKey: Key.hasLaunchedBefore)
 
-        preferredProviderKind = defaults.string(forKey: Key.providerKind)
-            .flatMap(FaceAlignmentProviderKind.init(rawValue:))
-            ?? FaceAlignmentProviderFactory.defaultKind
 
         mirrorPreview = defaults.object(forKey: Key.mirrored) as? Bool ?? true
         voiceEnabled = defaults.object(forKey: Key.voice) as? Bool ?? true
         hapticsEnabled = defaults.object(forKey: Key.haptics) as? Bool ?? true
-        showDebugOverlay = defaults.bool(forKey: Key.debugOverlay)
         preferredMode = defaults.string(forKey: Key.preferredMode)
             .flatMap(PracticeMode.init(rawValue:)) ?? .coach
 
@@ -106,11 +95,9 @@ final class AppSettings: ObservableObject {
     }
 
     func resetToDefaults() {
-        preferredProviderKind = FaceAlignmentProviderFactory.defaultKind
         mirrorPreview = true
         voiceEnabled = true
         hapticsEnabled = true
-        showDebugOverlay = false
         preferredMode = .coach
         reminders = Dictionary(
             uniqueKeysWithValues: ReminderKind.allCases.map {
