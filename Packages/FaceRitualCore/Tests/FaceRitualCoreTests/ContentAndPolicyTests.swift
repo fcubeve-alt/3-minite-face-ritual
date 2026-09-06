@@ -21,7 +21,78 @@ final class ContentBundleTests: XCTestCase {
         XCTAssertFalse(morning.isPremium, "规格 §11：Morning Core 永久免费")
         XCTAssertEqual(morning.totalDurationSeconds, 180, accuracy: 0.001)
         XCTAssertEqual(morning.formattedDuration, "3:00")
-        XCTAssertEqual(morning.steps.count, 5)
+    }
+
+    /// Sprint 3 §4 给出三套 Morning 原型，每套都必须正好 3 分钟。
+    /// 三套并存是文档的要求（§7「同一批用户交叉体验」），不是重复内容。
+    func testAllMorningPrototypesAreExactlyThreeMinutes() throws {
+        let morningRoutines = try loadBundle().routines(ofType: .morning)
+        XCTAssertEqual(morningRoutines.count, 3, "Sprint 3 §4 定义了 Prototype A / B / C")
+        for routine in morningRoutines {
+            XCTAssertEqual(
+                routine.totalDurationSeconds, 180, accuracy: 0.001,
+                "\(routine.id) 总时长应为 180s，实际 \(routine.totalDurationSeconds)"
+            )
+            XCTAssertFalse(routine.isPremium, "\(routine.id)：Morning 一律免费（规格 §11）")
+        }
+    }
+
+    /// 动作是资产、routine 只是时间线（文档二 §9）。
+    /// Prototype A 里 GM-11 与 GM-18 各出现两次，展开后必须是两个不同的 step，
+    /// 但指向同一个动作 —— 否则要么 step id 冲突，要么动作定义被复制了两份。
+    func testRepeatedMoveInOneRoutineBecomesDistinctSteps() throws {
+        let bundle = try loadBundle()
+        let routine = try XCTUnwrap(bundle.routine(id: "morning_prototype_a"))
+        let repeated = routine.steps.filter { $0.sourceMoveID?.rawValue == "GM-11" }
+        XCTAssertEqual(repeated.count, 2, "Prototype A 的 GM-11 出现两次")
+        XCTAssertNotEqual(repeated[0].id, repeated[1].id, "同一动作重复出现时 step id 必须不同")
+        XCTAssertEqual(repeated[0].title, repeated[1].title, "两处应引用同一个动作定义")
+        XCTAssertEqual(repeated[0].movement, repeated[1].movement)
+    }
+
+    /// 每个 step 都必须能追回动作库 —— 校验器靠它检查工具/适用范围约束。
+    func testEveryStepTracesBackToAGoldMove() throws {
+        let bundle = try loadBundle()
+        XCTAssertFalse(bundle.moves.isEmpty, "动作库不应为空")
+        for routine in bundle.routines {
+            for step in routine.steps {
+                let moveID = try XCTUnwrap(step.sourceMoveID, "\(routine.id)/\(step.id) 缺少来源动作")
+                XCTAssertNotNil(bundle.moves[moveID], "\(moveID) 不在动作库里")
+            }
+        }
+    }
+
+    /// Sprint 3 §9：Gua Sha / Roller 不得成为免费核心操的必要条件。
+    func testNoMorningRoutineRequiresATool() throws {
+        let bundle = try loadBundle()
+        for routine in bundle.routines(ofType: .morning) {
+            for step in routine.steps {
+                guard let moveID = step.sourceMoveID, let move = bundle.moves[moveID] else { continue }
+                XCTAssertFalse(
+                    move.requiresTool.isTool,
+                    "\(routine.id)/\(step.id) 用到了需要工具的 \(moveID)"
+                )
+            }
+        }
+    }
+
+    /// 安全措辞的英文是翻译，专家审的是中文原文 —— 两者必须并存。
+    func testSafetyNotesKeepTheirChineseSource() throws {
+        for move in try loadBundle().sortedMoves where move.safetyNote != nil {
+            XCTAssertFalse(
+                (move.source.stopSignalsZh ?? "").isEmpty,
+                "\(move.id) 有英文 safetyNote 却没有中文原文，Expert Gate 无从复核"
+            )
+        }
+    }
+
+    /// Sprint 3 开篇即声明全部动作仍需人工专家审核。
+    func testEveryGoldMoveIsStillAwaitingExpertGate() throws {
+        let bundle = try loadBundle()
+        XCTAssertEqual(
+            bundle.movesAwaitingExpertGate.count, bundle.moves.count,
+            "有动作被标成 expert_reviewed，但 Expert Gate 尚未进行"
+        )
     }
 
     func testEveryMovementAnchorReferenceResolvesOnBothSides() throws {
@@ -123,13 +194,39 @@ final class ContentBundleTests: XCTestCase {
 
 final class ContentValidatorTests: XCTestCase {
 
-    private func bundle(routines: [Routine], anchors: [FaceAnchor] = []) -> ContentBundle {
+    private func bundle(
+        routines: [Routine],
+        anchors: [FaceAnchor] = [],
+        moves: [GoldMove] = []
+    ) -> ContentBundle {
         var table: [FaceAnchorID: FaceAnchor] = [:]
         for anchor in anchors { table[anchor.id] = anchor }
+        var moveTable: [GoldMoveID: GoldMove] = [:]
+        for move in moves { moveTable[move.id] = move }
         return ContentBundle(
-            meta: ContentMeta(schemaVersion: 1, contentVersion: "test", reviewStatus: .expertReviewed),
+            meta: ContentMeta(schemaVersion: ContentSchema.currentVersion, contentVersion: "test", reviewStatus: .expertReviewed),
             routines: routines,
-            anchors: table
+            anchors: table,
+            moves: moveTable
+        )
+    }
+
+    private func move(
+        id: String,
+        tool: ToolRequirement = .none,
+        allowed: [RoutineType] = [.morning, .evening, .quick],
+        movement: MovementSpec = MovementSpec()
+    ) -> GoldMove {
+        GoldMove(
+            id: GoldMoveID(rawValue: id),
+            title: id,
+            shortCue: "cue",
+            region: .wholeFace,
+            defaultDurationSeconds: 15,
+            requiresTool: tool,
+            allowedRoutineTypes: allowed,
+            movement: movement,
+            source: GoldMoveSource(documentRef: "test", titleZh: "测试")
         )
     }
 
@@ -164,6 +261,65 @@ final class ContentValidatorTests: XCTestCase {
         let routine = Routine(id: "r", title: "r", type: .quick, isPremium: true, steps: [step(id: "s")])
         let issues = ContentValidator().validate(bundle(routines: [routine]))
         XCTAssertTrue(issues.contains { $0.severity == .error && $0.message.contains("Morning Core") })
+    }
+
+    func testToolMoveAllowedInMorningIsAnError() {
+        let tool = move(id: "T", tool: .guaSha, allowed: [.morning, .quick])
+        let routine = Routine(id: "r", title: "r", type: .morning, isPremium: false, steps: [step(id: "s")])
+        let issues = ContentValidator().validate(bundle(routines: [routine], moves: [tool]))
+        XCTAssertTrue(
+            issues.contains { $0.severity == .error && $0.message.contains("不能依赖工具") },
+            "工具动作允许出现在 morning routine 必须报 error（Sprint 3 §9）"
+        )
+    }
+
+    func testUsingAQuickOnlyMoveInAMorningRoutineIsAnError() {
+        let quickOnly = move(id: "Q", allowed: [.quick])
+        var built = quickOnly.makeStep(stepID: "s")
+        built.movement = MovementSpec(pathType: .expression)
+        let routine = Routine(id: "r", title: "r", type: .morning, isPremium: false, steps: [built])
+        let issues = ContentValidator().validate(bundle(routines: [routine], moves: [quickOnly]))
+        XCTAssertTrue(
+            issues.contains { $0.severity == .error && $0.message.contains("却出现在 morning") },
+            "动作声明的适用范围必须被强制执行"
+        )
+    }
+
+    func testTapWithoutAnyAnchorIsAnError() {
+        let routine = Routine(
+            id: "r",
+            title: "r",
+            type: .morning,
+            isPremium: false,
+            steps: [step(id: "s", movement: MovementSpec(pathType: .tap))]
+        )
+        let issues = ContentValidator().validate(bundle(routines: [routine]))
+        XCTAssertTrue(
+            issues.contains { $0.severity == .error && $0.message.contains("pathType=tap") },
+            "tap 没有 focusAnchors 也没有 startAnchor，AR 无处可画"
+        )
+    }
+
+    /// 表情肌动作没有手部接触，不需要 anchor —— 不得因此被判为错误。
+    func testExpressionMoveWithoutAnchorsIsNotAnError() {
+        let routine = Routine(
+            id: "r",
+            title: "r",
+            type: .morning,
+            isPremium: false,
+            steps: [step(id: "s", movement: MovementSpec(pathType: .expression))]
+        )
+        let issues = ContentValidator().validate(bundle(routines: [routine]))
+        XCTAssertFalse(
+            issues.contains { $0.severity == .error && $0.path.contains("steps") },
+            "表情动作没有 anchor 是正常的，不应报 error"
+        )
+    }
+
+    func testEmptyMoveLibraryIsAnError() {
+        let routine = Routine(id: "r", title: "r", type: .morning, isPremium: false, steps: [step(id: "s")])
+        let issues = ContentValidator().validate(bundle(routines: [routine]))
+        XCTAssertTrue(issues.contains { $0.severity == .error && $0.message.contains("动作库为空") })
     }
 
     func testLinePathWithoutEndAnchorIsAnError() {

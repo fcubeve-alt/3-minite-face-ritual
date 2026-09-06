@@ -53,6 +53,9 @@ public struct MovementSpec: Hashable, Codable, Sendable {
     public var repetitions: Int
     public var holdSeconds: Double
     public var overlayAssets: [String]
+    /// 没有单一轨迹时要高亮的区域（`expression` / `tap` 用）。
+    /// 例如 GM-15 全脸轻拍会列出额头、双颊、下颌外侧。
+    public var focusAnchorIDs: [FaceAnchorID]
     public var occlusionPolicy: OcclusionPolicy
     public var trackingSupport: TrackingSupport
     public var version: String
@@ -68,6 +71,7 @@ public struct MovementSpec: Hashable, Codable, Sendable {
         repetitions: Int = 1,
         holdSeconds: Double = 0,
         overlayAssets: [String] = [],
+        focusAnchorIDs: [FaceAnchorID] = [],
         occlusionPolicy: OcclusionPolicy = .continueGuidance,
         trackingSupport: TrackingSupport = .guidanceOnly,
         version: String = "0.0.1-mock"
@@ -82,19 +86,26 @@ public struct MovementSpec: Hashable, Codable, Sendable {
         self.repetitions = repetitions
         self.holdSeconds = holdSeconds
         self.overlayAssets = overlayAssets
+        self.focusAnchorIDs = focusAnchorIDs
         self.occlusionPolicy = occlusionPolicy
         self.trackingSupport = trackingSupport
         self.version = version
     }
 
-    /// AR overlay 是否有可渲染内容。press/hold 只需要起点。
+    /// AR overlay 是否有可渲染内容。
+    ///
+    /// 表情动作没有手部接触，脸上画不出东西 —— 但它仍然是合法动作，
+    /// 只是 AR 模式下退化为「提示 + 计时」（可选高亮区域）。
     public var isARRenderable: Bool {
-        guard startAnchorID != nil else { return false }
         switch pathType {
+        case .expression:
+            return focusAnchorIDs.isEmpty == false
+        case .tap:
+            return focusAnchorIDs.isEmpty == false || startAnchorID != nil
         case .press, .hold, .circle:
-            return true
+            return startAnchorID != nil
         case .line, .curve, .arc:
-            return endAnchorID != nil
+            return startAnchorID != nil && endAnchorID != nil
         }
     }
 

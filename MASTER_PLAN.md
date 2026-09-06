@@ -1,6 +1,10 @@
 # MASTER_PLAN — 3-Minute Face Ritual V2 工程执行计划
 
 > 本文件是 `3-Minute_Face_Ritual_Product_v2_CN.docx`（唯一 Source of Truth）到工程任务的转化。
+>
+> 内容侧另有两份专业文档，工程只负责**如实转写与结构化**，不增删动作、不改措辞：
+> - `Face_Ritual_Research_Sprint3_Movement_Specs_Prototypes_v0.3_CN.docx` —— 20 个动作规格 + 3 套 Morning 原型
+> - `Face_Ritual_AI_Video_Factory_v0.2_AR_Guidance_CN.docx` —— Gold Motion Library / 虚拟教练 / AR 指引架构
 > 规格变更 → 先改 docx → 再改本文件。本文件不新增产品定义。
 
 ---

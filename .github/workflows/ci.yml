@@ -39,7 +39,10 @@ jobs:
           python tools/check_swift_refs.py
 
       - name: 内容包校验
-        run: python tools/validate_content.py
+        # 同样先跑自测：逐条注入缺陷，确认每条规则真的会报错。
+        run: |
+          python tools/check_validator_teeth.py
+          python tools/validate_content.py
 
       - name: Golden vectors 是否最新
         # 改了 anchors.json 却忘了重新生成 golden，会让 Swift 测试断言一份过期的期望值。

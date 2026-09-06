@@ -25,6 +25,9 @@ public struct PlaybackSegment: Sendable, Hashable, Identifiable {
         var movement = step.movement
         movement.startAnchorID = movement.startAnchorID?.resolved(for: side)
         movement.endAnchorID = movement.endAnchorID?.resolved(for: side)
+        // focusAnchors 也要跟着改写，否则 tap/expression 类动作在右侧段
+        // 仍然高亮左脸的区域。
+        movement.focusAnchorIDs = movement.focusAnchorIDs.map { $0.resolved(for: side) }
         return movement
     }
 
@@ -34,6 +37,7 @@ public struct PlaybackSegment: Sendable, Hashable, Identifiable {
         var movement = step.movement
         movement.startAnchorID = movement.startAnchorID?.mirrored
         movement.endAnchorID = movement.endAnchorID?.mirrored
+        movement.focusAnchorIDs = movement.focusAnchorIDs.map(\.mirrored)
         return movement
     }
 }

@@ -1,6 +1,6 @@
 {
-  "schemaVersion": 1,
-  "contentVersion": "0.1.0-mock",
-  "reviewStatus": "mock_unreviewed",
-  "note": "M1 测试内容包。全部动作与位置均为占位 Mock Data，仅用于验证 App 系统、Routine Player 与 AR 链路是否跑通。不代表任何按摩方法、穴位定义或护理功效。正式内容由 Owner + 专业人员重新筛选与审核后替换本文件，代码无需改动。"
+  "schemaVersion": 2,
+  "contentVersion": "0.3.0-draft",
+  "reviewStatus": "draft",
+  "note": "内容来源：Face Ritual Research Sprint 3 v0.3（20 个 Gold Move + 3 套 Morning 原型）与 AI Video Factory v0.2（动作库/AR 架构）。动作文本、力度、停止信号均按文档转写，中文原文逐字保留在每个动作的 source 字段里，英文字段属翻译。全部条目状态为 draft —— Sprint 3 开篇即声明所有动作仍需人工专家（PT/皮肤科/淋巴引流方向）审核，Video Factory §22 要求所有位置定义经过 Evidence Gate。未经 Expert Gate 不得改为 expert_reviewed，也不得对外做任何功效表述。Evening 5-minute 与 Quick Rituals 在 Sprint 3 §11 中标注为「随后设计」，因此本内容包不含这两类 routine。"
 }

@@ -118,6 +118,16 @@ final class AppEnvironment: ObservableObject {
     var morningCore: Routine? { content.morningCore }
     var eveningCore: Routine? { content.eveningCore }
     var quickRituals: [Routine] { content.quickRituals }
+    /// 除主推之外的其余 Morning 版本。
+    ///
+    /// Sprint 3 §4 一次给出三套 3 分钟原型，§7 要求「同一批用户交叉体验」——
+    /// 所以另外两套必须是用户点得到的，不能藏在 Debug 页里。
+    var alternateMorningRoutines: [Routine] {
+        content.routines(ofType: .morning).filter { $0.id != content.morningCore?.id }
+    }
+    /// Gold Motion Library 里尚未通过 Expert Gate 的动作，供 Debug 页展示。
+    var movesAwaitingExpertGate: [GoldMove] { content.movesAwaitingExpertGate }
+    var allMoves: [GoldMove] { content.sortedMoves }
 
     /// 内容里出现的全部 landmark。用于检查所选 provider 是否够用。
     var requiredLandmarks: Set<SemanticLandmark> {

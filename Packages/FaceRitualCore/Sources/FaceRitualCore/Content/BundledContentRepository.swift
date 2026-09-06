@@ -11,6 +11,7 @@ public enum BundledContent {
         public static let meta = "content_meta"
         public static let routines = "routines"
         public static let anchors = "anchors"
+        public static let moves = "moves"
     }
 
     /// 注意 `bundle` 是 optional 而不是默认 `.module`。
@@ -25,7 +26,8 @@ public enum BundledContent {
         return JSONContentRepository.Source(
             metaData: try data(named: ResourceName.meta, bundle: resolved),
             routinesData: try data(named: ResourceName.routines, bundle: resolved),
-            anchorsData: try data(named: ResourceName.anchors, bundle: resolved)
+            anchorsData: try data(named: ResourceName.anchors, bundle: resolved),
+            movesData: try data(named: ResourceName.moves, bundle: resolved)
         )
     }
 

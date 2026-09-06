@@ -1,16 +1,24 @@
 {
   "_comment": [
-    "M1 测试 Anchor —— 规格 §8 第一阶段只建 3–5 个。",
-    "目的不是证明医学穴位准确性，而是验证：不同用户的脸上，目标位置能否稳定跟随 Face Geometry。",
-    "全部为纯几何定义，不含任何穴位含义、疗效或医学主张。",
-    "只需定义左侧，右侧由 FaceAnchor.mirroredToOppositeSide() 自动生成。",
-    "坐标约定：dx > 0 朝用户的右侧，dy > 0 朝脸的下方，单位 = 瞳距。",
-    "正式穴位/区域定义由 Owner + 专业资料重新审核后替换本文件。"
+    "Facial Region Map v0.1 —— 覆盖 Sprint 3 v0.3 的 20 个动作所引用的解剖区域。",
+    "",
+    "文档二 §22：HRFFA 的原生 landmark 不会天然输出「太阳穴」这类位置，",
+    "所以由 Face Ritual 自建映射：把 landmark、脸部比例与局部几何关系换算成可教学的位置/区域。",
+    "同一条也要求「优先把位置表示为『位置 + 允许区域』，而不是假装存在绝对单像素真值」——",
+    "这正是 toleranceRadius 的作用。",
+    "",
+    "⚠️ 这些位置是**几何草案**，由动作描述里的解剖区域反推而来（如「额头中央」「耳前」「颧骨外上」）。",
+    "文档二 §22 明确要求：所有位置定义必须经过专业资料 Evidence Gate。",
+    "因此全部标 draft，等 Expert Gate 逐个确认后才可改为 expert_reviewed。",
+    "工程侧只负责让位置随每个人的脸自适应，不负责判断位置在护理意义上是否正确。",
+    "",
+    "坐标约定：原点=双眼中点，dx>0 朝用户的右侧，dy>0 朝脸的下方，单位=瞳距。",
+    "只需定义左侧，右侧由 FaceAnchor.mirroredToOppositeSide() 自动生成。"
   ],
   "anchors": [
     {
       "id": "glabella_center",
-      "name": "Glabella (眉心区)",
+      "name": "Between the brows",
       "side": "none",
       "rule": {
         "type": "offset",
@@ -22,27 +30,91 @@
         "dx": 0.0,
         "dy": 0.05
       },
-      "toleranceRadius": 0.14,
+      "toleranceRadius": 0.13,
       "poseConstraints": { "maxYawDegrees": 30, "maxPitchDegrees": 25, "maxRollDegrees": 35 },
       "confidenceThreshold": 0.5,
-      "reviewStatus": "mock_unreviewed",
-      "version": "0.1.0-mock"
+      "reviewStatus": "draft",
+      "version": "0.1.0-draft"
+    },
+    {
+      "id": "forehead_center",
+      "name": "Centre of the forehead",
+      "side": "none",
+      "rule": {
+        "type": "offset",
+        "base": {
+          "type": "midpoint",
+          "a": { "type": "landmark", "id": "leftBrowInner" },
+          "b": { "type": "landmark", "id": "rightBrowInner" }
+        },
+        "dx": 0.0,
+        "dy": -0.42
+      },
+      "toleranceRadius": 0.18,
+      "poseConstraints": { "maxYawDegrees": 28, "maxPitchDegrees": 22, "maxRollDegrees": 32 },
+      "confidenceThreshold": 0.5,
+      "reviewStatus": "draft",
+      "version": "0.1.0-draft"
+    },
+    {
+      "id": "chin_center",
+      "name": "Centre of the chin",
+      "side": "none",
+      "rule": { "type": "landmark", "id": "chinCenter" },
+      "toleranceRadius": 0.16,
+      "poseConstraints": { "maxYawDegrees": 20, "maxPitchDegrees": 22, "maxRollDegrees": 28 },
+      "confidenceThreshold": 0.5,
+      "safetyNote": "靠近下颌与颈部。Sprint 3 §9 明确排除强颈部动作与深压 TMJ。",
+      "reviewStatus": "draft",
+      "version": "0.1.0-draft"
     },
     {
       "id": "brow_inner_left",
-      "name": "Inner Brow Left (左眉头区)",
+      "name": "Inner brow, left",
       "side": "left",
       "rule": { "type": "landmark", "id": "leftBrowInner" },
       "toleranceRadius": 0.12,
       "poseConstraints": { "maxYawDegrees": 28, "maxPitchDegrees": 22, "maxRollDegrees": 30 },
       "confidenceThreshold": 0.55,
-      "safetyNote": "靠近眼周。正式内容需专业安全审查后才能定义按压力度与禁忌。",
-      "reviewStatus": "mock_unreviewed",
-      "version": "0.1.0-mock"
+      "safetyNote": "靠近眼周。Sprint 3 §9：第一版不做直接眼睑/眶内附近按压。",
+      "reviewStatus": "draft",
+      "version": "0.1.0-draft"
+    },
+    {
+      "id": "forehead_lower_left",
+      "name": "Lower forehead, left",
+      "side": "left",
+      "rule": {
+        "type": "offset",
+        "base": { "type": "landmark", "id": "leftBrowPeak" },
+        "dx": 0.0,
+        "dy": -0.22
+      },
+      "toleranceRadius": 0.18,
+      "poseConstraints": { "maxYawDegrees": 28, "maxPitchDegrees": 22, "maxRollDegrees": 30 },
+      "confidenceThreshold": 0.5,
+      "reviewStatus": "draft",
+      "version": "0.1.0-draft"
+    },
+    {
+      "id": "hairline_left",
+      "name": "Hairline, left",
+      "side": "left",
+      "rule": {
+        "type": "offset",
+        "base": { "type": "landmark", "id": "leftBrowPeak" },
+        "dx": -0.02,
+        "dy": -1.00
+      },
+      "toleranceRadius": 0.20,
+      "poseConstraints": { "maxYawDegrees": 26, "maxPitchDegrees": 20, "maxRollDegrees": 30 },
+      "confidenceThreshold": 0.5,
+      "reviewStatus": "draft",
+      "version": "0.1.0-draft"
     },
     {
       "id": "temple_left",
-      "name": "Temple Left (左太阳穴区)",
+      "name": "Temple, left",
       "side": "left",
       "rule": {
         "type": "offset",
@@ -53,12 +125,45 @@
       "toleranceRadius": 0.18,
       "poseConstraints": { "maxYawDegrees": 22, "maxPitchDegrees": 25, "maxRollDegrees": 30 },
       "confidenceThreshold": 0.5,
-      "reviewStatus": "mock_unreviewed",
-      "version": "0.1.0-mock"
+      "reviewStatus": "draft",
+      "version": "0.1.0-draft"
+    },
+    {
+      "id": "cheekbone_left",
+      "name": "Cheekbone, left",
+      "side": "left",
+      "rule": {
+        "type": "offset",
+        "base": { "type": "landmark", "id": "leftEyeOuter" },
+        "dx": -0.02,
+        "dy": 0.34
+      },
+      "toleranceRadius": 0.20,
+      "poseConstraints": { "maxYawDegrees": 20, "maxPitchDegrees": 25, "maxRollDegrees": 30 },
+      "confidenceThreshold": 0.5,
+      "reviewStatus": "draft",
+      "version": "0.1.0-draft"
+    },
+    {
+      "id": "nose_side_left",
+      "name": "Beside the nostril, left",
+      "side": "left",
+      "rule": {
+        "type": "offset",
+        "base": { "type": "landmark", "id": "leftNoseAla" },
+        "dx": -0.10,
+        "dy": 0.0
+      },
+      "toleranceRadius": 0.13,
+      "poseConstraints": { "maxYawDegrees": 20, "maxPitchDegrees": 22, "maxRollDegrees": 28 },
+      "confidenceThreshold": 0.5,
+      "safetyNote": "GM-11 原文：不压鼻孔。",
+      "reviewStatus": "draft",
+      "version": "0.1.0-draft"
     },
     {
       "id": "cheek_mid_left",
-      "name": "Mid Cheek Left (左中颊区)",
+      "name": "Mid cheek, left",
       "side": "left",
       "rule": {
         "type": "offset",
@@ -74,12 +179,44 @@
       "toleranceRadius": 0.20,
       "poseConstraints": { "maxYawDegrees": 20, "maxPitchDegrees": 25, "maxRollDegrees": 30 },
       "confidenceThreshold": 0.5,
-      "reviewStatus": "mock_unreviewed",
-      "version": "0.1.0-mock"
+      "reviewStatus": "draft",
+      "version": "0.1.0-draft"
+    },
+    {
+      "id": "cheek_lower_left",
+      "name": "Lower cheek, left",
+      "side": "left",
+      "rule": {
+        "type": "lerp",
+        "from": { "type": "landmark", "id": "leftMouthCorner" },
+        "to": { "type": "landmark", "id": "leftJawAngle" },
+        "t": 0.45
+      },
+      "toleranceRadius": 0.20,
+      "poseConstraints": { "maxYawDegrees": 20, "maxPitchDegrees": 22, "maxRollDegrees": 28 },
+      "confidenceThreshold": 0.5,
+      "reviewStatus": "draft",
+      "version": "0.1.0-draft"
+    },
+    {
+      "id": "preauricular_left",
+      "name": "In front of the ear, left",
+      "side": "left",
+      "rule": {
+        "type": "offset",
+        "base": { "type": "landmark", "id": "leftEyeOuter" },
+        "dx": -0.48,
+        "dy": 0.42
+      },
+      "toleranceRadius": 0.20,
+      "poseConstraints": { "maxYawDegrees": 18, "maxPitchDegrees": 22, "maxRollDegrees": 28 },
+      "confidenceThreshold": 0.5,
+      "reviewStatus": "draft",
+      "version": "0.1.0-draft"
     },
     {
       "id": "jaw_angle_left",
-      "name": "Jaw Angle Left (左下颌角区)",
+      "name": "Jaw angle, left",
       "side": "left",
       "rule": {
         "type": "offset",
@@ -96,9 +233,37 @@
       "toleranceRadius": 0.20,
       "poseConstraints": { "maxYawDegrees": 18, "maxPitchDegrees": 22, "maxRollDegrees": 28 },
       "confidenceThreshold": 0.5,
-      "safetyNote": "靠近下颌/颈部。正式内容需专业安全审查与禁忌说明。",
-      "reviewStatus": "mock_unreviewed",
-      "version": "0.1.0-mock"
+      "safetyNote": "GM-18 原文：避免深压颈动脉区域；TMJ 疼痛立即停止。",
+      "reviewStatus": "draft",
+      "version": "0.1.0-draft"
+    },
+    {
+      "id": "mouth_corner_left",
+      "name": "Corner of the mouth, left",
+      "side": "left",
+      "rule": { "type": "landmark", "id": "leftMouthCorner" },
+      "toleranceRadius": 0.13,
+      "poseConstraints": { "maxYawDegrees": 20, "maxPitchDegrees": 22, "maxRollDegrees": 28 },
+      "confidenceThreshold": 0.5,
+      "reviewStatus": "draft",
+      "version": "0.1.0-draft"
+    },
+    {
+      "id": "upper_lip_left",
+      "name": "Above the upper lip, left",
+      "side": "left",
+      "rule": {
+        "type": "lerp",
+        "from": { "type": "landmark", "id": "subnasale" },
+        "to": { "type": "landmark", "id": "leftMouthCorner" },
+        "t": 0.55
+      },
+      "toleranceRadius": 0.12,
+      "poseConstraints": { "maxYawDegrees": 20, "maxPitchDegrees": 22, "maxRollDegrees": 28 },
+      "confidenceThreshold": 0.5,
+      "safetyNote": "GM-17 原文：避开唇红黏膜；唇疱疹/破损时跳过。",
+      "reviewStatus": "draft",
+      "version": "0.1.0-draft"
     }
   ]
 }

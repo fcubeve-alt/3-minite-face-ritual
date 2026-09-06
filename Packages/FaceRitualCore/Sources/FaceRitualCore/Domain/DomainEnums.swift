@@ -24,6 +24,26 @@ public enum PathType: String, Codable, Sendable, CaseIterable {
     case circle
     case press
     case hold
+    /// 表情肌动作，**没有手部接触**，因此没有路径可画。
+    /// Sprint 3 里的 GM-01 呼吸、GM-09 鼓气、GM-10 元音、GM-16 噘嘴都属于这类。
+    /// AR 模式下只显示提示与计时，可选地高亮 `focusAnchors` 指定的区域。
+    case expression
+    /// 轻拍。跨多个区域、没有单一轨迹（GM-15 全脸轻拍）。
+    /// 用 `focusAnchors` 列出要点到的区域。
+    case tap
+
+    /// 是否需要在脸上画一条轨迹。
+    public var drawsPath: Bool {
+        switch self {
+        case .line, .curve, .arc, .circle: return true
+        case .press, .hold, .expression, .tap: return false
+        }
+    }
+
+    /// 是否需要 startAnchor。表情动作没有接触点，可以没有。
+    public var requiresStartAnchor: Bool {
+        self != .expression
+    }
 }
 
 public enum MovementDirection: String, Codable, Sendable, CaseIterable {

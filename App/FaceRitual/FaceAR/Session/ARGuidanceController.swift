@@ -4,6 +4,18 @@ import UIKit
 import FaceRitualCore
 
 /// 一条待绘制的运动轨迹。渲染器只认这个结构，不认 provider、不认 anchor 规则。
+/// overlay 的绘制方式。
+///
+/// 不是所有动作都有轨迹：表情肌动作（GM-01 呼吸、GM-09 鼓气、GM-10 元音）
+/// 根本不用手，全脸轻拍（GM-15）跨多个区域也没有单一路线。
+/// 这类动作只标出「注意这一带」，不画 ● → ◎。
+enum OverlayStyle {
+    /// 有轨迹：● 起点 / 路径 / 方向 / 移动光点 / ◎ 终点。
+    case path
+    /// 只标区域：柔和的呼吸圈。多个区域时按 `sequence` 轮流点亮。
+    case focusRegion
+}
+
 struct MotionOverlay: Identifiable {
     let id: String
     let start: Point2D
@@ -13,6 +25,10 @@ struct MotionOverlay: Identifiable {
     let gesture: GestureHint
     let direction: MovementDirection
     let side: BodySide
+    var style: OverlayStyle = .path
+    /// focusRegion 用：这是第几个区域、共几个。用来让高亮按顺序流动，
+    /// 而不是所有区域同时闪 —— 后者看上去像报错。
+    var sequence: (index: Int, count: Int)?
 }
 
 /// 交给 Overlay Renderer 的一帧。
@@ -230,13 +246,10 @@ final class ARGuidanceController: ObservableObject {
 
         if let frame, let movement = currentMovement, assessment.shouldFreezeOverlay == false {
             var built: [MotionOverlay] = []
-            if let overlay = makeOverlay(movement: movement, geometry: geometry, frame: frame, side: currentSide, idSuffix: "primary") {
-                built.append(overlay)
-            }
+            built += makeOverlays(movement: movement, geometry: geometry, frame: frame, side: currentSide, idSuffix: "primary")
             // side == .both 时同时画两侧。
-            if let mirroredMovement,
-               let overlay = makeOverlay(movement: mirroredMovement, geometry: geometry, frame: frame, side: .both, idSuffix: "mirrored") {
-                built.append(overlay)
+            if let mirroredMovement {
+                built += makeOverlays(movement: mirroredMovement, geometry: geometry, frame: frame, side: .both, idSuffix: "mirrored")
             }
             if built.isEmpty == false {
                 lastGoodOverlays = built
@@ -258,7 +271,73 @@ final class ARGuidanceController: ObservableObject {
         return nil
     }
 
-    private func makeOverlay(
+    /// 一个 MovementSpec 可能产生多个 overlay：
+    /// 有轨迹的动作产生一条，只标区域的动作（expression / tap）每个区域一个。
+    private func makeOverlays(
+        movement: MovementSpec,
+        geometry: FaceGeometry,
+        frame: FaceFrame,
+        side: BodySide,
+        idSuffix: String
+    ) -> [MotionOverlay] {
+        switch movement.pathType {
+        case .expression, .tap:
+            let regions = makeFocusOverlays(
+                movement: movement, geometry: geometry, frame: frame, side: side, idSuffix: idSuffix
+            )
+            // tap 允许退化成单点（focusAnchors 为空但有 startAnchor）；
+            // expression 没有区域就是没有可画的东西 —— 这一段只剩提示与计时，
+            // 不是错误。
+            if regions.isEmpty == false { return regions }
+            if movement.pathType == .expression { return [] }
+        case .line, .curve, .arc, .circle, .press, .hold:
+            break
+        }
+        guard let overlay = makePathOverlay(
+            movement: movement, geometry: geometry, frame: frame, side: side, idSuffix: idSuffix
+        ) else { return [] }
+        return [overlay]
+    }
+
+    /// 只标区域的动作：每个 focusAnchor 一个呼吸圈。
+    private func makeFocusOverlays(
+        movement: MovementSpec,
+        geometry: FaceGeometry,
+        frame: FaceFrame,
+        side: BodySide,
+        idSuffix: String
+    ) -> [MotionOverlay] {
+        // 去重但保持顺序：内容里可能左右都列了同一个中线区域。
+        var seen: Set<FaceAnchorID> = []
+        let ids = movement.focusAnchorIDs.filter { seen.insert($0).inserted }
+
+        var resolved: [(FaceAnchorID, ResolvedAnchor)] = []
+        for anchorID in ids {
+            guard let anchor = anchors[anchorID],
+                  case let .success(point) = resolver.resolve(anchor, geometry: geometry, frame: frame),
+                  point.meetsDisplayThreshold
+            else { continue }
+            resolved.append((anchorID, point))
+        }
+
+        return resolved.enumerated().map { index, entry in
+            let (anchorID, point) = entry
+            return MotionOverlay(
+                id: "\(anchorID.rawValue)-focus-\(idSuffix)",
+                start: point.viewPoint,
+                end: nil,
+                path: MotionPath(kind: movement.pathType, points: [point.viewPoint]),
+                toleranceRadius: point.toleranceRadiusPoints,
+                gesture: movement.gestureHint,
+                direction: movement.direction,
+                side: side,
+                style: .focusRegion,
+                sequence: (index: index, count: resolved.count)
+            )
+        }
+    }
+
+    private func makePathOverlay(
         movement: MovementSpec,
         geometry: FaceGeometry,
         frame: FaceFrame,

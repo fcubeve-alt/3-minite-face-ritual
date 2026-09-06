@@ -87,6 +87,18 @@ public struct PathSampler: Sendable {
         case .press, .hold:
             return MotionPath(kind: movement.pathType, points: [start])
 
+        case .expression:
+            // 表情肌动作没有手部接触 —— 脸上没有任何轨迹可画。
+            // 返回空路径而不是伪造一个点：AR 模式下这一段本来就该退化为
+            // 「提示 + 计时」，画个假光点会让人以为要用手去碰那个位置。
+            return MotionPath(kind: .expression, points: [])
+
+        case .tap:
+            // 轻拍跨多个区域，没有单一轨迹。
+            // 每个区域各自成为一个 overlay（见 ARGuidanceController），
+            // 这里只负责单个区域的标记点。
+            return MotionPath(kind: .tap, points: [start])
+
         case .line:
             guard let endLocal else { return MotionPath(kind: .press, points: [start]) }
             let localPoints = sampleLine(from: startLocal, to: endLocal, count: samples)

@@ -1,7 +1,7 @@
 # PROJECT_STATE
 
 > 持续更新的工程状态。每个里程碑结束时集中 review。
-> 最近更新：2026-09-05
+> 最近更新：2026-09-06
 
 ---
 
@@ -27,7 +27,7 @@
 - `ContentRepository` 协议 + `JSONContentRepository` + `ContentValidator`
 - 宽容解码：缺省字段用默认值，新增字段不破坏旧内容包
 - **动作内容零硬编码**：全部在 `Resources/*.json`，代码里没有任何动作字面量
-- Mock 内容：Morning Core 180s / Evening Core 300s / 2 个 Quick Ritual，全部标 `mock_unreviewed`
+- **Gold Motion Library**（内容 schema v2，2026-09-06）：动作是资产，routine 只是引用动作的时间线
 - 内容作者只写一侧 anchor，另一侧自动镜像生成
 
 ### Face Geometry 抽象（规格 §7）
@@ -127,6 +127,63 @@ Subscription 架构（Mock Unlock + StoreKit2 骨架）· Analytics（含 §15 �
   内容校验只看 JSON 结构、golden vector 只验几何数学，两者都答不了
   「播放时这一段脸上会不会是空白」这个问题。
 
+### ✅ 按 Sprint 3 v0.3 + Video Factory v0.2 生成正式内容骨架（2026-09-06）
+
+两份新文档到位后，内容层从「Mock 占位」换成了文档里的真实动作，schema 升到 v2。
+
+**换掉了什么**
+
+| | 之前（v1 Mock） | 现在（v2，来自文档） |
+| --- | --- | --- |
+| 动作 | 5 个我编的占位动作 | **20 个 Gold Move（GM-01…GM-20）**，逐条转写自 Sprint 3 §3 |
+| Routine | Morning/Evening/2×Quick，全是占位 | **3 套 Morning 3 分钟原型 A/B/C**，逐格照搬 §4 时间表，各正好 180s |
+| 位置 | 5 个几何占位 anchor | **15 个声明 → 27 个（自动镜像）**，覆盖 20 个动作引用到的解剖区域 |
+| 结构 | routine 内联 step | routine 只写 `{move, durationSeconds?, side?}` 引用，`ContentAssembler` 展开 |
+
+**为什么改成「动作库 + 时间线」**（文档二 §4/§9「一次动作资产，多处复用」）：
+Prototype A 里 GM-11 与 GM-18 各出现两次，三套原型都用 GM-02。
+内联复制迟早会漂移 —— 改了一处忘了另一处，两个地方就成了两个动作。
+
+**新增的领域概念**
+- `GoldMove`：动作的唯一真源。带力度（`MovementIntensity`）、工具要求（`ToolRequirement`）、
+  证据等级（`EvidenceLevel`）、允许的 routine 类型，以及 `GoldMoveSource`——
+  **逐字保留的中文原文**（起始姿势、操作、时长、力度、停止信号、研究备注）。
+- 两种新 `pathType`：`expression`（表情肌动作，**没有手部接触**，AR 下退化为提示+计时）
+  与 `tap`（跨多区域轻拍，用 `focusAnchors` 列区域）。
+  两者都走通了 PathSampler → ARGuidanceController → AROverlayRenderer 与浏览器原型。
+
+**为什么中英并存**：用户看英文，Expert Gate 审中文原文。
+安全措辞（禁忌、停止信号、力度）经翻译会引入偏差，而那恰恰是专家要审的东西。
+校验器强制「有英文 safetyNote 就必须有 `source.stopSignalsZh`」。
+
+**刻意没做的事**
+- **没有写 Evening 5-minute 与 Quick Ritual。** Sprint 3 §11 写的是
+  「随后再用剩余 Gold Moves 设计 Evening 5-minute 与首批 3–5 个 Quick Rituals」——
+  也就是这两类**尚未设计**。代为编排就是发明内容（规格 §20）。
+  GM-19/GM-20 两个工具动作已在库里就位，等 Owner 给出时间表即可组装。
+- **anchors 位置仍是几何草案。** 文档二 §22 要求所有位置定义经过 Evidence Gate，
+  所以 27 个 anchor 全部标 `draft`。工程侧只保证位置随每张脸自适应，
+  不判断它在护理意义上是否正确。
+- **全部 20 个动作标 `draft`。** Sprint 3 开篇即声明仍需人工专家（PT / 皮肤科 /
+  淋巴引流方向）审核。测试断言「不得有任何动作被标成 expert_reviewed」。
+
+**新增的强制约束（都做过反向验证）**
+- Sprint 3 §9「Gua Sha / Roller 不得作为免费核心操的必要条件」→
+  工具动作既不能声明 `allowedRoutineTypes` 含 morning，也不能出现在 morning routine 里。
+- 动作声明的适用范围被强制执行：只允许 quick 的动作出现在 morning 里 = error。
+- `tap` 必须有 `focusAnchors` 或 `startAnchor`，否则 AR 上是一片空白。
+- `expression` 有 anchor 或 gestureHint = warning（多半是 pathType 选错了）。
+
+**`tools/check_validator_teeth.py`（新）**：反向验证内容校验器本身。
+15 条规则逐条注入缺陷，确认每条真的会报错。一条从不触发的检查比没有更糟 ——
+它给人「已经验过了」的错觉。已接入 `make check` 与 CI。
+
+**`simulate_routine.py` 抓到的问题**：GM-03「额头上提」到发际线时，43% 的路径点被判为「脸外」。
+查下来是**检查器的问题不是内容的问题** —— 合成脸的 landmark 最高只到 `foreheadCenter`
+（眉峰上方约 0.32 瞳距），再往上到发际线就没有点了，任何 landmark 模型都不标头皮。
+上边界改用解剖学上限（发际线约在眉线上方 0.9–1.0 瞳距，取 1.15 留余量），
+并验证过把发际线推到 1.6 瞳距时检查仍然会报错 —— 没有把牙齿拔掉。
+
 ### ✅ CI 上**真实编译并通过**（2026-09-06）
 
 推上 GitHub 后，macOS runner 的实测结果：
@@ -149,10 +206,12 @@ CI 抓到的**真产品 bug**（不是测试问题）：
 ### 已在本机**实际运行验证**的项目
 - `python tools/check_architecture.py` → 57 个 Swift 文件，**10 条规则 0 errors**（已自测确认非空转）
 - `python tools/check_swift_refs.py` → **0 errors**；`--self-test` 三条规则全部命中
-- `python tools/validate_content.py` → **0 errors**，1 个预期内 mock 警告
-- `python tools/golden/generate_golden.py` → 9 个 anchor 在 6 种尺度/位置/roll 变换下**最大漂移 2.0e-15 瞳距**
+- `python tools/validate_content.py` → **0 errors**，2 个预期内 warning
+  （内容包未经专家审核；5 个动作尚未被任何 routine 使用 —— 留给 Evening/Quick）
+- `python tools/check_validator_teeth.py` → **15/15 条校验规则确认有效**
+- `python tools/golden/generate_golden.py` → **27 个 anchor** 在 6 种尺度/位置/roll 变换下**最大漂移 2.0e-15 瞳距**
 - `golden --check` 的正反例：篡改 anchors.json 后退出码 1，还原后 0
-- `python tools/simulate_routine.py` → Morning Core 9 个播放段全部可渲染，左右完全对称
+- `python tools/simulate_routine.py` → 三套原型共 36 个播放段全部可渲染，覆盖 7 种 pathType
 - 四个检查器共 14 条规则，每条都做过**故意写错代码的反向验证**，确认不是空转。
   无障碍那条第一版用固定窗口判断，牙齿测试直接不过（窗口串到了相邻控件的 Text 上），
   改成按大括号配对确定按钮范围后才通过 —— 这也是为什么每条规则都要反向验证
@@ -186,7 +245,15 @@ CI 抓到的**真产品 bug**（不是测试问题）：
    需要：一台 iPhone + 一次 Xcode 真机部署（`make bootstrap && make open`，填 Team）。
 4. **调参**：根据实测调 One Euro 滤波与 `GuidanceThresholds`
 5. **Go / No-Go 判定**（规格 §18）
-6. 通过后进入 M2：Owner + 专业人员替换正式动作与穴位定义
+6. 通过后进入 M2：Expert Gate 审 20 个 Gold Move 与 27 个位置定义
+
+### 内容侧的下一步（等 Owner / 专家）
+- **Expert Gate**：20 个动作 + 27 个位置逐条审，通过的改 `expert_reviewed`。
+  Debug 页 → Gold Motion Library 一屏列出全部动作、中文原文、力度、停止信号与证据等级。
+- **三选一**：Sprint 3 §7 建议同一批用户交叉体验 A/B/C 再选。
+  三套现在都在首页点得到（B 为主卡片 —— §5 的推荐）。
+- **Evening 5-minute 与首批 Quick Rituals 的时间表**（§11 标注为「随后设计」）。
+  给出时间表后我只需要加一段 JSON，代码零改动。
 
 ---
 
@@ -216,9 +283,12 @@ CI 抓到的**真产品 bug**（不是测试问题）：
    完整上架要求见 `docs/APP_STORE_CHECKLIST.md`。
 
 ### 影响 M2
-4. **Morning / Evening / Quick Ritual 的正式动作清单**（顺序、时长、示范素材）—— 规格 §14 明确不得由 Claude 发明。
-5. **第一批 3–5 个 AR 位置/区域的专业定义** —— 当前 5 个 anchor 是纯几何占位，无医学含义。
-6. **安全审查与免责声明**（眼周、颈部、按压力度的禁忌）。
+4. **Morning 三套原型选哪一套**（或先都留着做用户测试）。Sprint 3 §5 推荐先测 Prototype B，
+   代码里 B 已是首页主卡片，A/C 在次级列表。
+5. **Evening 5-minute 与首批 3–5 个 Quick Ritual 的时间表** —— Sprint 3 §11 标注为「随后设计」，
+   工程侧不代为编排。给出后加一段 JSON 即可，代码零改动。
+6. **Expert Gate**：20 个 Gold Move 与 27 个位置定义的专业审核。
+   目前全部为 `draft`，UI 上有 MOCK 角标，测试会断言不得有任何一条被标成 `expert_reviewed`。
 7. **Coach 视频/虚拟教练素材**，以及它与 AR Motion Template 的共用版本号规则。
 
 ### 影响上线
@@ -244,8 +314,8 @@ CI 抓到的**真产品 bug**（不是测试问题）：
 3. **`GuidanceQuality` 只有 good/degraded/lost 三态，领域模型里根本没有 correctness 字段。**
    这是把规格 §10 的能力边界做成结构性保证，而不是靠开发纪律。
 
-4. **Mock 内容全部带 `mock_unreviewed` 标记，UI 上有 MOCK 角标，测试会断言它必须为真。**
-   目的是让测试动作**不可能**被误当成正式护理内容发布。
+4. **内容全部带 `draft` 标记，UI 上有 MOCK 角标，测试会断言它必须为真。**
+   目的是让未经 Expert Gate 的动作**不可能**被误当成正式护理内容发布。
 
 5. **内容 JSON 放在 Core package 而不是 App target。**
    这样单元测试加载的是**真实**内容包，不会出现「测试用一份、线上用另一份」的漂移。
@@ -265,7 +335,20 @@ CI 抓到的**真产品 bug**（不是测试问题）：
    集中一处后你和法务只需要看一个文件，不必翻遍 UI 代码。
    标了 ⚠️ 的条目是上线前必须确认的。
 
-9. **`PracticeSession` 改成手写宽容解码。**
+9. **只写 3 套 Morning 原型，不写 Evening 与 Quick Ritual。**
+   Sprint 3 §11 把这两类标为「随后设计」。补齐它们需要发明动作顺序与时长，
+   那正是规格 §20 划给 Owner 的部分。GM-19/GM-20 两个工具动作留在库里待命，
+   校验器会警告「5 个动作尚未被任何 routine 使用」—— 这个警告是提醒，不是缺陷。
+
+10. **三套原型都进 UI，而不是只放一套。**
+    Sprint 3 §4 说「目的不是现在选赢家」，§7 建议同一批用户交叉体验。
+    藏在 Debug 页里就交叉不了。
+
+11. **安全相关的中文原文逐字保留，不翻译覆盖。**
+    用户看英文字段，Expert Gate 审 `source.*` 里的中文原文。
+    禁忌与停止信号经翻译会引入偏差，而那恰恰是要审的东西。两份并存，谁也不覆盖谁。
+
+12. **`PracticeSession` 改成手写宽容解码。**
    这不是为了这次加的那个字段，而是因为合成 Codable + 「解码失败返回空数组」
    这个组合意味着**以后任何一次加字段都会静默清空所有用户的历史记录**。
    现在缺失字段一律取默认值，坏文件也会改名留存而不是被覆盖。

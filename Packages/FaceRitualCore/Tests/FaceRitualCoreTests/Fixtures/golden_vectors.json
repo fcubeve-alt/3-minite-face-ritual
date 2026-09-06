@@ -191,6 +191,28 @@
           ],
           "toleranceRadiusPoints": 12.0
         },
+        "cheek_lower_left": {
+          "view": [
+            135.5,
+            414.0
+          ],
+          "local": [
+            -0.645,
+            1.14
+          ],
+          "toleranceRadiusPoints": 20.0
+        },
+        "cheek_lower_right": {
+          "view": [
+            264.5,
+            414.0
+          ],
+          "local": [
+            0.645,
+            1.14
+          ],
+          "toleranceRadiusPoints": 20.0
+        },
         "cheek_mid_left": {
           "view": [
             142.4,
@@ -213,6 +235,72 @@
           ],
           "toleranceRadiusPoints": 20.0
         },
+        "cheekbone_left": {
+          "view": [
+            120.0,
+            334.0
+          ],
+          "local": [
+            -0.8,
+            0.34
+          ],
+          "toleranceRadiusPoints": 20.0
+        },
+        "cheekbone_right": {
+          "view": [
+            280.0,
+            334.0
+          ],
+          "local": [
+            0.8,
+            0.34
+          ],
+          "toleranceRadiusPoints": 20.0
+        },
+        "chin_center": {
+          "view": [
+            200.0,
+            472.0
+          ],
+          "local": [
+            0.0,
+            1.72
+          ],
+          "toleranceRadiusPoints": 16.0
+        },
+        "forehead_center": {
+          "view": [
+            200.0,
+            226.0
+          ],
+          "local": [
+            0.0,
+            -0.74
+          ],
+          "toleranceRadiusPoints": 18.0
+        },
+        "forehead_lower_left": {
+          "view": [
+            148.0,
+            238.0
+          ],
+          "local": [
+            -0.52,
+            -0.62
+          ],
+          "toleranceRadiusPoints": 18.0
+        },
+        "forehead_lower_right": {
+          "view": [
+            252.0,
+            238.0
+          ],
+          "local": [
+            0.52,
+            -0.62
+          ],
+          "toleranceRadiusPoints": 18.0
+        },
         "glabella_center": {
           "view": [
             200.0,
@@ -222,7 +310,29 @@
             0.0,
             -0.27
           ],
-          "toleranceRadiusPoints": 14.0
+          "toleranceRadiusPoints": 13.0
+        },
+        "hairline_left": {
+          "view": [
+            146.0,
+            160.0
+          ],
+          "local": [
+            -0.54,
+            -1.4
+          ],
+          "toleranceRadiusPoints": 20.0
+        },
+        "hairline_right": {
+          "view": [
+            254.0,
+            160.0
+          ],
+          "local": [
+            0.54,
+            -1.4
+          ],
+          "toleranceRadiusPoints": 20.0
         },
         "jaw_angle_left": {
           "view": [
@@ -243,6 +353,72 @@
           "local": [
             0.644,
             1.391
+          ],
+          "toleranceRadiusPoints": 20.0
+        },
+        "mouth_corner_left": {
+          "view": [
+            158.0,
+            405.0
+          ],
+          "local": [
+            -0.42,
+            1.05
+          ],
+          "toleranceRadiusPoints": 13.0
+        },
+        "mouth_corner_right": {
+          "view": [
+            242.0,
+            405.0
+          ],
+          "local": [
+            0.42,
+            1.05
+          ],
+          "toleranceRadiusPoints": 13.0
+        },
+        "nose_side_left": {
+          "view": [
+            168.0,
+            370.0
+          ],
+          "local": [
+            -0.32,
+            0.7
+          ],
+          "toleranceRadiusPoints": 13.0
+        },
+        "nose_side_right": {
+          "view": [
+            232.0,
+            370.0
+          ],
+          "local": [
+            0.32,
+            0.7
+          ],
+          "toleranceRadiusPoints": 13.0
+        },
+        "preauricular_left": {
+          "view": [
+            74.0,
+            342.0
+          ],
+          "local": [
+            -1.26,
+            0.42
+          ],
+          "toleranceRadiusPoints": 20.0
+        },
+        "preauricular_right": {
+          "view": [
+            326.0,
+            342.0
+          ],
+          "local": [
+            1.26,
+            0.42
           ],
           "toleranceRadiusPoints": 20.0
         },
@@ -267,41 +443,42 @@
             -0.08
           ],
           "toleranceRadiusPoints": 18.0
+        },
+        "upper_lip_left": {
+          "view": [
+            176.9,
+            392.85
+          ],
+          "local": [
+            -0.231,
+            0.9285
+          ],
+          "toleranceRadiusPoints": 12.0
+        },
+        "upper_lip_right": {
+          "view": [
+            223.1,
+            392.85
+          ],
+          "local": [
+            0.231,
+            0.9285
+          ],
+          "toleranceRadiusPoints": 12.0
         }
       },
       "paths": [
         {
-          "stepID": "mock_step_01_temple_circles",
-          "kind": "circle",
-          "pointCount": 72,
-          "first": [
-            92.0,
-            272.0
-          ],
-          "middle": [
-            91.115333065,
-            311.98042453
-          ],
-          "last": [
-            92.0,
-            272.0
-          ],
-          "center": [
-            92.0,
-            292.0
-          ]
-        },
-        {
-          "stepID": "mock_step_02_brow_sweep",
+          "stepID": "morning_prototype_b_02_GM-02",
           "kind": "line",
           "pointCount": 72,
           "first": [
-            178.0,
-            268.0
+            200.0,
+            226.0
           ],
           "middle": [
-            134.394366197,
-            280.169014085
+            145.23943662,
+            259.464788732
           ],
           "last": [
             92.0,
@@ -310,7 +487,82 @@
           "center": null
         },
         {
-          "stepID": "mock_step_03_cheek_lift",
+          "stepID": "morning_prototype_b_03_GM-06",
+          "kind": "circle",
+          "pointCount": 72,
+          "first": [
+            92.0,
+            276.0
+          ],
+          "middle": [
+            91.292266452,
+            307.984339624
+          ],
+          "last": [
+            92.0,
+            276.0
+          ],
+          "center": [
+            92.0,
+            292.0
+          ]
+        },
+        {
+          "stepID": "morning_prototype_b_04_GM-07",
+          "kind": "press",
+          "pointCount": 1,
+          "first": [
+            120.0,
+            334.0
+          ],
+          "middle": [
+            120.0,
+            334.0
+          ],
+          "last": [
+            120.0,
+            334.0
+          ],
+          "center": null
+        },
+        {
+          "stepID": "morning_prototype_b_05_GM-08",
+          "kind": "line",
+          "pointCount": 72,
+          "first": [
+            158.0,
+            405.0
+          ],
+          "middle": [
+            138.732394366,
+            369.0
+          ],
+          "last": [
+            120.0,
+            334.0
+          ],
+          "center": null
+        },
+        {
+          "stepID": "morning_prototype_b_07_GM-11",
+          "kind": "line",
+          "pointCount": 72,
+          "first": [
+            168.0,
+            370.0
+          ],
+          "middle": [
+            143.661971831,
+            351.746478873
+          ],
+          "last": [
+            120.0,
+            334.0
+          ],
+          "center": null
+        },
+        {
+          "stepID": "morning_prototype_b_08_GM-12",
           "kind": "curve",
           "pointCount": 72,
           "first": [
@@ -318,8 +570,8 @@
             357.75
           ],
           "middle": [
-            108.116598042,
-            331.102694386
+            108.910095531,
+            330.494446881
           ],
           "last": [
             92.0,
@@ -328,41 +580,59 @@
           "center": null
         },
         {
-          "stepID": "mock_step_04_jaw_release",
+          "stepID": "morning_prototype_b_09_GM-18",
           "kind": "arc",
           "pointCount": 72,
           "first": [
-            135.6,
-            439.1
+            200.0,
+            472.0
           ],
           "middle": [
-            140.306443255,
-            356.46910399
+            151.872439253,
+            390.740562283
           ],
           "last": [
-            92.0,
-            292.0
+            74.0,
+            342.0
           ],
           "center": [
-            26.468857468,
-            391.434689425
+            11.174959633,
+            528.953500663
           ]
         },
         {
-          "stepID": "mock_step_05_glabella_hold",
-          "kind": "hold",
-          "pointCount": 1,
+          "stepID": "morning_prototype_b_10_GM-03",
+          "kind": "line",
+          "pointCount": 72,
           "first": [
-            200.0,
-            273.0
+            148.0,
+            238.0
           ],
           "middle": [
-            200.0,
-            273.0
+            146.985915493,
+            198.450704225
           ],
           "last": [
-            200.0,
-            273.0
+            146.0,
+            160.0
+          ],
+          "center": null
+        },
+        {
+          "stepID": "morning_prototype_b_11_GM-13",
+          "kind": "line",
+          "pointCount": 72,
+          "first": [
+            135.5,
+            414.0
+          ],
+          "middle": [
+            104.316901408,
+            377.492957746
+          ],
+          "last": [
+            74.0,
+            342.0
           ],
           "center": null
         }
@@ -556,6 +826,28 @@
           ],
           "toleranceRadiusPoints": 5.04
         },
+        "cheek_lower_left": {
+          "view": [
+            172.91,
+            347.88
+          ],
+          "local": [
+            -0.645,
+            1.14
+          ],
+          "toleranceRadiusPoints": 8.4
+        },
+        "cheek_lower_right": {
+          "view": [
+            227.09,
+            347.88
+          ],
+          "local": [
+            0.645,
+            1.14
+          ],
+          "toleranceRadiusPoints": 8.4
+        },
         "cheek_mid_left": {
           "view": [
             175.808,
@@ -578,6 +870,72 @@
           ],
           "toleranceRadiusPoints": 8.4
         },
+        "cheekbone_left": {
+          "view": [
+            166.4,
+            314.28
+          ],
+          "local": [
+            -0.8,
+            0.34
+          ],
+          "toleranceRadiusPoints": 8.4
+        },
+        "cheekbone_right": {
+          "view": [
+            233.6,
+            314.28
+          ],
+          "local": [
+            0.8,
+            0.34
+          ],
+          "toleranceRadiusPoints": 8.4
+        },
+        "chin_center": {
+          "view": [
+            200.0,
+            372.24
+          ],
+          "local": [
+            0.0,
+            1.72
+          ],
+          "toleranceRadiusPoints": 6.72
+        },
+        "forehead_center": {
+          "view": [
+            200.0,
+            268.92
+          ],
+          "local": [
+            0.0,
+            -0.74
+          ],
+          "toleranceRadiusPoints": 7.56
+        },
+        "forehead_lower_left": {
+          "view": [
+            178.16,
+            273.96
+          ],
+          "local": [
+            -0.52,
+            -0.62
+          ],
+          "toleranceRadiusPoints": 7.56
+        },
+        "forehead_lower_right": {
+          "view": [
+            221.84,
+            273.96
+          ],
+          "local": [
+            0.52,
+            -0.62
+          ],
+          "toleranceRadiusPoints": 7.56
+        },
         "glabella_center": {
           "view": [
             200.0,
@@ -587,7 +945,29 @@
             0.0,
             -0.27
           ],
-          "toleranceRadiusPoints": 5.88
+          "toleranceRadiusPoints": 5.46
+        },
+        "hairline_left": {
+          "view": [
+            177.32,
+            241.2
+          ],
+          "local": [
+            -0.54,
+            -1.4
+          ],
+          "toleranceRadiusPoints": 8.4
+        },
+        "hairline_right": {
+          "view": [
+            222.68,
+            241.2
+          ],
+          "local": [
+            0.54,
+            -1.4
+          ],
+          "toleranceRadiusPoints": 8.4
         },
         "jaw_angle_left": {
           "view": [
@@ -608,6 +988,72 @@
           "local": [
             0.644,
             1.391
+          ],
+          "toleranceRadiusPoints": 8.4
+        },
+        "mouth_corner_left": {
+          "view": [
+            182.36,
+            344.1
+          ],
+          "local": [
+            -0.42,
+            1.05
+          ],
+          "toleranceRadiusPoints": 5.46
+        },
+        "mouth_corner_right": {
+          "view": [
+            217.64,
+            344.1
+          ],
+          "local": [
+            0.42,
+            1.05
+          ],
+          "toleranceRadiusPoints": 5.46
+        },
+        "nose_side_left": {
+          "view": [
+            186.56,
+            329.4
+          ],
+          "local": [
+            -0.32,
+            0.7
+          ],
+          "toleranceRadiusPoints": 5.46
+        },
+        "nose_side_right": {
+          "view": [
+            213.44,
+            329.4
+          ],
+          "local": [
+            0.32,
+            0.7
+          ],
+          "toleranceRadiusPoints": 5.46
+        },
+        "preauricular_left": {
+          "view": [
+            147.08,
+            317.64
+          ],
+          "local": [
+            -1.26,
+            0.42
+          ],
+          "toleranceRadiusPoints": 8.4
+        },
+        "preauricular_right": {
+          "view": [
+            252.92,
+            317.64
+          ],
+          "local": [
+            1.26,
+            0.42
           ],
           "toleranceRadiusPoints": 8.4
         },
@@ -632,41 +1078,42 @@
             -0.08
           ],
           "toleranceRadiusPoints": 7.56
+        },
+        "upper_lip_left": {
+          "view": [
+            190.298,
+            338.997
+          ],
+          "local": [
+            -0.231,
+            0.9285
+          ],
+          "toleranceRadiusPoints": 5.04
+        },
+        "upper_lip_right": {
+          "view": [
+            209.702,
+            338.997
+          ],
+          "local": [
+            0.231,
+            0.9285
+          ],
+          "toleranceRadiusPoints": 5.04
         }
       },
       "paths": [
         {
-          "stepID": "mock_step_01_temple_circles",
-          "kind": "circle",
-          "pointCount": 72,
-          "first": [
-            154.64,
-            288.24
-          ],
-          "middle": [
-            154.268439888,
-            305.031778303
-          ],
-          "last": [
-            154.64,
-            288.24
-          ],
-          "center": [
-            154.64,
-            296.64
-          ]
-        },
-        {
-          "stepID": "mock_step_02_brow_sweep",
+          "stepID": "morning_prototype_b_02_GM-02",
           "kind": "line",
           "pointCount": 72,
           "first": [
-            190.76,
-            286.56
+            200.0,
+            268.92
           ],
           "middle": [
-            172.445633803,
-            291.670985915
+            177.00056338,
+            282.975211268
           ],
           "last": [
             154.64,
@@ -675,7 +1122,82 @@
           "center": null
         },
         {
-          "stepID": "mock_step_03_cheek_lift",
+          "stepID": "morning_prototype_b_03_GM-06",
+          "kind": "circle",
+          "pointCount": 72,
+          "first": [
+            154.64,
+            289.92
+          ],
+          "middle": [
+            154.34275191,
+            303.353422642
+          ],
+          "last": [
+            154.64,
+            289.92
+          ],
+          "center": [
+            154.64,
+            296.64
+          ]
+        },
+        {
+          "stepID": "morning_prototype_b_04_GM-07",
+          "kind": "press",
+          "pointCount": 1,
+          "first": [
+            166.4,
+            314.28
+          ],
+          "middle": [
+            166.4,
+            314.28
+          ],
+          "last": [
+            166.4,
+            314.28
+          ],
+          "center": null
+        },
+        {
+          "stepID": "morning_prototype_b_05_GM-08",
+          "kind": "line",
+          "pointCount": 72,
+          "first": [
+            182.36,
+            344.1
+          ],
+          "middle": [
+            174.267605634,
+            328.98
+          ],
+          "last": [
+            166.4,
+            314.28
+          ],
+          "center": null
+        },
+        {
+          "stepID": "morning_prototype_b_07_GM-11",
+          "kind": "line",
+          "pointCount": 72,
+          "first": [
+            186.56,
+            329.4
+          ],
+          "middle": [
+            176.338028169,
+            321.733521127
+          ],
+          "last": [
+            166.4,
+            314.28
+          ],
+          "center": null
+        },
+        {
+          "stepID": "morning_prototype_b_08_GM-12",
           "kind": "curve",
           "pointCount": 72,
           "first": [
@@ -683,8 +1205,8 @@
             324.255
           ],
           "middle": [
-            161.408971177,
-            313.063131642
+            161.742240123,
+            312.80766769
           ],
           "last": [
             154.64,
@@ -693,41 +1215,59 @@
           "center": null
         },
         {
-          "stepID": "mock_step_04_jaw_release",
+          "stepID": "morning_prototype_b_09_GM-18",
           "kind": "arc",
           "pointCount": 72,
           "first": [
-            172.952,
-            358.422
+            200.0,
+            372.24
           ],
           "middle": [
-            174.928706167,
-            323.717023676
+            179.786424486,
+            338.111036159
           ],
           "last": [
-            154.64,
-            296.64
+            147.08,
+            317.64
           ],
           "center": [
-            127.116920136,
-            338.402569558
+            120.693483046,
+            396.160470279
           ]
         },
         {
-          "stepID": "mock_step_05_glabella_hold",
-          "kind": "hold",
-          "pointCount": 1,
+          "stepID": "morning_prototype_b_10_GM-03",
+          "kind": "line",
+          "pointCount": 72,
           "first": [
-            200.0,
-            288.66
+            178.16,
+            273.96
           ],
           "middle": [
-            200.0,
-            288.66
+            177.734084507,
+            257.349295775
           ],
           "last": [
-            200.0,
-            288.66
+            177.32,
+            241.2
+          ],
+          "center": null
+        },
+        {
+          "stepID": "morning_prototype_b_11_GM-13",
+          "kind": "line",
+          "pointCount": 72,
+          "first": [
+            172.91,
+            347.88
+          ],
+          "middle": [
+            159.813098592,
+            332.547042254
+          ],
+          "last": [
+            147.08,
+            317.64
           ],
           "center": null
         }
@@ -921,6 +1461,28 @@
           ],
           "toleranceRadiusPoints": 20.16
         },
+        "cheek_lower_left": {
+          "view": [
+            91.64,
+            491.52
+          ],
+          "local": [
+            -0.645,
+            1.14
+          ],
+          "toleranceRadiusPoints": 33.6
+        },
+        "cheek_lower_right": {
+          "view": [
+            308.36,
+            491.52
+          ],
+          "local": [
+            0.645,
+            1.14
+          ],
+          "toleranceRadiusPoints": 33.6
+        },
         "cheek_mid_left": {
           "view": [
             103.232,
@@ -943,6 +1505,72 @@
           ],
           "toleranceRadiusPoints": 33.6
         },
+        "cheekbone_left": {
+          "view": [
+            65.6,
+            357.12
+          ],
+          "local": [
+            -0.8,
+            0.34
+          ],
+          "toleranceRadiusPoints": 33.6
+        },
+        "cheekbone_right": {
+          "view": [
+            334.4,
+            357.12
+          ],
+          "local": [
+            0.8,
+            0.34
+          ],
+          "toleranceRadiusPoints": 33.6
+        },
+        "chin_center": {
+          "view": [
+            200.0,
+            588.96
+          ],
+          "local": [
+            0.0,
+            1.72
+          ],
+          "toleranceRadiusPoints": 26.88
+        },
+        "forehead_center": {
+          "view": [
+            200.0,
+            175.68
+          ],
+          "local": [
+            0.0,
+            -0.74
+          ],
+          "toleranceRadiusPoints": 30.24
+        },
+        "forehead_lower_left": {
+          "view": [
+            112.64,
+            195.84
+          ],
+          "local": [
+            -0.52,
+            -0.62
+          ],
+          "toleranceRadiusPoints": 30.24
+        },
+        "forehead_lower_right": {
+          "view": [
+            287.36,
+            195.84
+          ],
+          "local": [
+            0.52,
+            -0.62
+          ],
+          "toleranceRadiusPoints": 30.24
+        },
         "glabella_center": {
           "view": [
             200.0,
@@ -952,7 +1580,29 @@
             0.0,
             -0.27
           ],
-          "toleranceRadiusPoints": 23.52
+          "toleranceRadiusPoints": 21.84
+        },
+        "hairline_left": {
+          "view": [
+            109.28,
+            64.8
+          ],
+          "local": [
+            -0.54,
+            -1.4
+          ],
+          "toleranceRadiusPoints": 33.6
+        },
+        "hairline_right": {
+          "view": [
+            290.72,
+            64.8
+          ],
+          "local": [
+            0.54,
+            -1.4
+          ],
+          "toleranceRadiusPoints": 33.6
         },
         "jaw_angle_left": {
           "view": [
@@ -973,6 +1623,72 @@
           "local": [
             0.644,
             1.391
+          ],
+          "toleranceRadiusPoints": 33.6
+        },
+        "mouth_corner_left": {
+          "view": [
+            129.44,
+            476.4
+          ],
+          "local": [
+            -0.42,
+            1.05
+          ],
+          "toleranceRadiusPoints": 21.84
+        },
+        "mouth_corner_right": {
+          "view": [
+            270.56,
+            476.4
+          ],
+          "local": [
+            0.42,
+            1.05
+          ],
+          "toleranceRadiusPoints": 21.84
+        },
+        "nose_side_left": {
+          "view": [
+            146.24,
+            417.6
+          ],
+          "local": [
+            -0.32,
+            0.7
+          ],
+          "toleranceRadiusPoints": 21.84
+        },
+        "nose_side_right": {
+          "view": [
+            253.76,
+            417.6
+          ],
+          "local": [
+            0.32,
+            0.7
+          ],
+          "toleranceRadiusPoints": 21.84
+        },
+        "preauricular_left": {
+          "view": [
+            -11.68,
+            370.56
+          ],
+          "local": [
+            -1.26,
+            0.42
+          ],
+          "toleranceRadiusPoints": 33.6
+        },
+        "preauricular_right": {
+          "view": [
+            411.68,
+            370.56
+          ],
+          "local": [
+            1.26,
+            0.42
           ],
           "toleranceRadiusPoints": 33.6
         },
@@ -997,41 +1713,42 @@
             -0.08
           ],
           "toleranceRadiusPoints": 30.24
+        },
+        "upper_lip_left": {
+          "view": [
+            161.192,
+            455.988
+          ],
+          "local": [
+            -0.231,
+            0.9285
+          ],
+          "toleranceRadiusPoints": 20.16
+        },
+        "upper_lip_right": {
+          "view": [
+            238.808,
+            455.988
+          ],
+          "local": [
+            0.231,
+            0.9285
+          ],
+          "toleranceRadiusPoints": 20.16
         }
       },
       "paths": [
         {
-          "stepID": "mock_step_01_temple_circles",
-          "kind": "circle",
-          "pointCount": 72,
-          "first": [
-            18.56,
-            252.96
-          ],
-          "middle": [
-            17.07375955,
-            320.127113211
-          ],
-          "last": [
-            18.56,
-            252.96
-          ],
-          "center": [
-            18.56,
-            286.56
-          ]
-        },
-        {
-          "stepID": "mock_step_02_brow_sweep",
+          "stepID": "morning_prototype_b_02_GM-02",
           "kind": "line",
           "pointCount": 72,
           "first": [
-            163.04,
-            246.24
+            200.0,
+            175.68
           ],
           "middle": [
-            89.782535211,
-            266.683943662
+            108.002253521,
+            231.90084507
           ],
           "last": [
             18.56,
@@ -1040,7 +1757,82 @@
           "center": null
         },
         {
-          "stepID": "mock_step_03_cheek_lift",
+          "stepID": "morning_prototype_b_03_GM-06",
+          "kind": "circle",
+          "pointCount": 72,
+          "first": [
+            18.56,
+            259.68
+          ],
+          "middle": [
+            17.37100764,
+            313.413690569
+          ],
+          "last": [
+            18.56,
+            259.68
+          ],
+          "center": [
+            18.56,
+            286.56
+          ]
+        },
+        {
+          "stepID": "morning_prototype_b_04_GM-07",
+          "kind": "press",
+          "pointCount": 1,
+          "first": [
+            65.6,
+            357.12
+          ],
+          "middle": [
+            65.6,
+            357.12
+          ],
+          "last": [
+            65.6,
+            357.12
+          ],
+          "center": null
+        },
+        {
+          "stepID": "morning_prototype_b_05_GM-08",
+          "kind": "line",
+          "pointCount": 72,
+          "first": [
+            129.44,
+            476.4
+          ],
+          "middle": [
+            97.070422535,
+            415.92
+          ],
+          "last": [
+            65.6,
+            357.12
+          ],
+          "center": null
+        },
+        {
+          "stepID": "morning_prototype_b_07_GM-11",
+          "kind": "line",
+          "pointCount": 72,
+          "first": [
+            146.24,
+            417.6
+          ],
+          "middle": [
+            105.352112676,
+            386.934084507
+          ],
+          "last": [
+            65.6,
+            357.12
+          ],
+          "center": null
+        },
+        {
+          "stepID": "morning_prototype_b_08_GM-12",
           "kind": "curve",
           "pointCount": 72,
           "first": [
@@ -1048,8 +1840,8 @@
             397.02
           ],
           "middle": [
-            45.63588471,
-            352.252526569
+            46.968960492,
+            351.23067076
           ],
           "last": [
             18.56,
@@ -1058,41 +1850,59 @@
           "center": null
         },
         {
-          "stepID": "mock_step_04_jaw_release",
+          "stepID": "morning_prototype_b_09_GM-18",
           "kind": "arc",
           "pointCount": 72,
           "first": [
-            91.808,
-            533.688
+            200.0,
+            588.96
           ],
           "middle": [
-            99.714824668,
-            394.868094704
+            119.145697946,
+            452.444144635
           ],
           "last": [
-            18.56,
-            286.56
+            -11.68,
+            370.56
           ],
           "center": [
-            -91.532319454,
-            453.610278234
+            -117.226067817,
+            684.641881115
           ]
         },
         {
-          "stepID": "mock_step_05_glabella_hold",
-          "kind": "hold",
-          "pointCount": 1,
+          "stepID": "morning_prototype_b_10_GM-03",
+          "kind": "line",
+          "pointCount": 72,
           "first": [
-            200.0,
-            254.64
+            112.64,
+            195.84
           ],
           "middle": [
-            200.0,
-            254.64
+            110.936338028,
+            129.397183099
           ],
           "last": [
-            200.0,
-            254.64
+            109.28,
+            64.8
+          ],
+          "center": null
+        },
+        {
+          "stepID": "morning_prototype_b_11_GM-13",
+          "kind": "line",
+          "pointCount": 72,
+          "first": [
+            91.64,
+            491.52
+          ],
+          "middle": [
+            39.252394366,
+            430.188169014
+          ],
+          "last": [
+            -11.68,
+            370.56
           ],
           "center": null
         }
@@ -1286,6 +2096,28 @@
           ],
           "toleranceRadiusPoints": 12.0
         },
+        "cheek_lower_left": {
+          "view": [
+            30.5,
+            584.0
+          ],
+          "local": [
+            -0.645,
+            1.14
+          ],
+          "toleranceRadiusPoints": 20.0
+        },
+        "cheek_lower_right": {
+          "view": [
+            159.5,
+            584.0
+          ],
+          "local": [
+            0.645,
+            1.14
+          ],
+          "toleranceRadiusPoints": 20.0
+        },
         "cheek_mid_left": {
           "view": [
             37.4,
@@ -1308,6 +2140,72 @@
           ],
           "toleranceRadiusPoints": 20.0
         },
+        "cheekbone_left": {
+          "view": [
+            15.0,
+            504.0
+          ],
+          "local": [
+            -0.8,
+            0.34
+          ],
+          "toleranceRadiusPoints": 20.0
+        },
+        "cheekbone_right": {
+          "view": [
+            175.0,
+            504.0
+          ],
+          "local": [
+            0.8,
+            0.34
+          ],
+          "toleranceRadiusPoints": 20.0
+        },
+        "chin_center": {
+          "view": [
+            95.0,
+            642.0
+          ],
+          "local": [
+            0.0,
+            1.72
+          ],
+          "toleranceRadiusPoints": 16.0
+        },
+        "forehead_center": {
+          "view": [
+            95.0,
+            396.0
+          ],
+          "local": [
+            0.0,
+            -0.74
+          ],
+          "toleranceRadiusPoints": 18.0
+        },
+        "forehead_lower_left": {
+          "view": [
+            43.0,
+            408.0
+          ],
+          "local": [
+            -0.52,
+            -0.62
+          ],
+          "toleranceRadiusPoints": 18.0
+        },
+        "forehead_lower_right": {
+          "view": [
+            147.0,
+            408.0
+          ],
+          "local": [
+            0.52,
+            -0.62
+          ],
+          "toleranceRadiusPoints": 18.0
+        },
         "glabella_center": {
           "view": [
             95.0,
@@ -1317,7 +2215,29 @@
             0.0,
             -0.27
           ],
-          "toleranceRadiusPoints": 14.0
+          "toleranceRadiusPoints": 13.0
+        },
+        "hairline_left": {
+          "view": [
+            41.0,
+            330.0
+          ],
+          "local": [
+            -0.54,
+            -1.4
+          ],
+          "toleranceRadiusPoints": 20.0
+        },
+        "hairline_right": {
+          "view": [
+            149.0,
+            330.0
+          ],
+          "local": [
+            0.54,
+            -1.4
+          ],
+          "toleranceRadiusPoints": 20.0
         },
         "jaw_angle_left": {
           "view": [
@@ -1338,6 +2258,72 @@
           "local": [
             0.644,
             1.391
+          ],
+          "toleranceRadiusPoints": 20.0
+        },
+        "mouth_corner_left": {
+          "view": [
+            53.0,
+            575.0
+          ],
+          "local": [
+            -0.42,
+            1.05
+          ],
+          "toleranceRadiusPoints": 13.0
+        },
+        "mouth_corner_right": {
+          "view": [
+            137.0,
+            575.0
+          ],
+          "local": [
+            0.42,
+            1.05
+          ],
+          "toleranceRadiusPoints": 13.0
+        },
+        "nose_side_left": {
+          "view": [
+            63.0,
+            540.0
+          ],
+          "local": [
+            -0.32,
+            0.7
+          ],
+          "toleranceRadiusPoints": 13.0
+        },
+        "nose_side_right": {
+          "view": [
+            127.0,
+            540.0
+          ],
+          "local": [
+            0.32,
+            0.7
+          ],
+          "toleranceRadiusPoints": 13.0
+        },
+        "preauricular_left": {
+          "view": [
+            -31.0,
+            512.0
+          ],
+          "local": [
+            -1.26,
+            0.42
+          ],
+          "toleranceRadiusPoints": 20.0
+        },
+        "preauricular_right": {
+          "view": [
+            221.0,
+            512.0
+          ],
+          "local": [
+            1.26,
+            0.42
           ],
           "toleranceRadiusPoints": 20.0
         },
@@ -1362,41 +2348,42 @@
             -0.08
           ],
           "toleranceRadiusPoints": 18.0
+        },
+        "upper_lip_left": {
+          "view": [
+            71.9,
+            562.85
+          ],
+          "local": [
+            -0.231,
+            0.9285
+          ],
+          "toleranceRadiusPoints": 12.0
+        },
+        "upper_lip_right": {
+          "view": [
+            118.1,
+            562.85
+          ],
+          "local": [
+            0.231,
+            0.9285
+          ],
+          "toleranceRadiusPoints": 12.0
         }
       },
       "paths": [
         {
-          "stepID": "mock_step_01_temple_circles",
-          "kind": "circle",
-          "pointCount": 72,
-          "first": [
-            -13.0,
-            442.0
-          ],
-          "middle": [
-            -13.884666935,
-            481.98042453
-          ],
-          "last": [
-            -13.0,
-            442.0
-          ],
-          "center": [
-            -13.0,
-            462.0
-          ]
-        },
-        {
-          "stepID": "mock_step_02_brow_sweep",
+          "stepID": "morning_prototype_b_02_GM-02",
           "kind": "line",
           "pointCount": 72,
           "first": [
-            73.0,
-            438.0
+            95.0,
+            396.0
           ],
           "middle": [
-            29.394366197,
-            450.169014085
+            40.23943662,
+            429.464788732
           ],
           "last": [
             -13.0,
@@ -1405,7 +2392,82 @@
           "center": null
         },
         {
-          "stepID": "mock_step_03_cheek_lift",
+          "stepID": "morning_prototype_b_03_GM-06",
+          "kind": "circle",
+          "pointCount": 72,
+          "first": [
+            -13.0,
+            446.0
+          ],
+          "middle": [
+            -13.707733548,
+            477.984339624
+          ],
+          "last": [
+            -13.0,
+            446.0
+          ],
+          "center": [
+            -13.0,
+            462.0
+          ]
+        },
+        {
+          "stepID": "morning_prototype_b_04_GM-07",
+          "kind": "press",
+          "pointCount": 1,
+          "first": [
+            15.0,
+            504.0
+          ],
+          "middle": [
+            15.0,
+            504.0
+          ],
+          "last": [
+            15.0,
+            504.0
+          ],
+          "center": null
+        },
+        {
+          "stepID": "morning_prototype_b_05_GM-08",
+          "kind": "line",
+          "pointCount": 72,
+          "first": [
+            53.0,
+            575.0
+          ],
+          "middle": [
+            33.732394366,
+            539.0
+          ],
+          "last": [
+            15.0,
+            504.0
+          ],
+          "center": null
+        },
+        {
+          "stepID": "morning_prototype_b_07_GM-11",
+          "kind": "line",
+          "pointCount": 72,
+          "first": [
+            63.0,
+            540.0
+          ],
+          "middle": [
+            38.661971831,
+            521.746478873
+          ],
+          "last": [
+            15.0,
+            504.0
+          ],
+          "center": null
+        },
+        {
+          "stepID": "morning_prototype_b_08_GM-12",
           "kind": "curve",
           "pointCount": 72,
           "first": [
@@ -1413,8 +2475,8 @@
             527.75
           ],
           "middle": [
-            3.116598042,
-            501.102694386
+            3.910095531,
+            500.494446881
           ],
           "last": [
             -13.0,
@@ -1423,41 +2485,59 @@
           "center": null
         },
         {
-          "stepID": "mock_step_04_jaw_release",
+          "stepID": "morning_prototype_b_09_GM-18",
           "kind": "arc",
           "pointCount": 72,
           "first": [
-            30.6,
-            609.1
+            95.0,
+            642.0
           ],
           "middle": [
-            35.306443255,
-            526.46910399
+            46.872439253,
+            560.740562283
           ],
           "last": [
-            -13.0,
-            462.0
+            -31.0,
+            512.0
           ],
           "center": [
-            -78.531142532,
-            561.434689425
+            -93.825040367,
+            698.953500663
           ]
         },
         {
-          "stepID": "mock_step_05_glabella_hold",
-          "kind": "hold",
-          "pointCount": 1,
+          "stepID": "morning_prototype_b_10_GM-03",
+          "kind": "line",
+          "pointCount": 72,
           "first": [
-            95.0,
-            443.0
+            43.0,
+            408.0
           ],
           "middle": [
-            95.0,
-            443.0
+            41.985915493,
+            368.450704225
           ],
           "last": [
-            95.0,
-            443.0
+            41.0,
+            330.0
+          ],
+          "center": null
+        },
+        {
+          "stepID": "morning_prototype_b_11_GM-13",
+          "kind": "line",
+          "pointCount": 72,
+          "first": [
+            30.5,
+            584.0
+          ],
+          "middle": [
+            -0.683098592,
+            547.492957746
+          ],
+          "last": [
+            -31.0,
+            512.0
           ],
           "center": null
         }
@@ -1651,6 +2731,28 @@
           ],
           "toleranceRadiusPoints": 12.0
         },
+        "cheek_lower_left": {
+          "view": [
+            103.42891734,
+            388.48884672
+          ],
+          "local": [
+            -0.645,
+            1.14
+          ],
+          "toleranceRadiusPoints": 20.0
+        },
+        "cheek_lower_right": {
+          "view": [
+            226.115207942,
+            428.352038995
+          ],
+          "local": [
+            0.645,
+            1.14
+          ],
+          "toleranceRadiusPoints": 20.0
+        },
         "cheek_mid_left": {
           "view": [
             127.373413236,
@@ -1673,6 +2775,72 @@
           ],
           "toleranceRadiusPoints": 20.0
         },
+        "cheekbone_left": {
+          "view": [
+            113.408900888,
+            307.614562004
+          ],
+          "local": [
+            -0.8,
+            0.34
+          ],
+          "toleranceRadiusPoints": 20.0
+        },
+        "cheekbone_right": {
+          "view": [
+            265.577943495,
+            357.057281104
+          ],
+          "local": [
+            0.8,
+            0.34
+          ],
+          "toleranceRadiusPoints": 20.0
+        },
+        "chin_center": {
+          "view": [
+            146.849076968,
+            463.581720803
+          ],
+          "local": [
+            -0.0,
+            1.72
+          ],
+          "toleranceRadiusPoints": 16.0
+        },
+        "forehead_center": {
+          "view": [
+            222.867257584,
+            229.621817794
+          ],
+          "local": [
+            0.0,
+            -0.74
+          ],
+          "toleranceRadiusPoints": 18.0
+        },
+        "forehead_lower_left": {
+          "view": [
+            169.704114804,
+            224.965612282
+          ],
+          "local": [
+            -0.52,
+            -0.62
+          ],
+          "toleranceRadiusPoints": 18.0
+        },
+        "forehead_lower_right": {
+          "view": [
+            268.613992499,
+            257.103379697
+          ],
+          "local": [
+            0.52,
+            -0.62
+          ],
+          "toleranceRadiusPoints": 18.0
+        },
         "glabella_center": {
           "view": [
             208.343458848,
@@ -1682,7 +2850,29 @@
             0.0,
             -0.27
           ],
-          "toleranceRadiusPoints": 14.0
+          "toleranceRadiusPoints": 13.0
+        },
+        "hairline_left": {
+          "view": [
+            191.905327333,
+            150.165170022
+          ],
+          "local": [
+            -0.54,
+            -1.4
+          ],
+          "toleranceRadiusPoints": 20.0
+        },
+        "hairline_right": {
+          "view": [
+            294.619431092,
+            183.539005415
+          ],
+          "local": [
+            0.54,
+            -1.4
+          ],
+          "toleranceRadiusPoints": 20.0
         },
         "jaw_angle_left": {
           "view": [
@@ -1703,6 +2893,72 @@
           "local": [
             0.644,
             1.391
+          ],
+          "toleranceRadiusPoints": 20.0
+        },
+        "mouth_corner_left": {
+          "view": [
+            127.608841906,
+            386.882220447
+          ],
+          "local": [
+            -0.42,
+            1.05
+          ],
+          "toleranceRadiusPoints": 13.0
+        },
+        "mouth_corner_right": {
+          "view": [
+            207.497589275,
+            412.839647975
+          ],
+          "local": [
+            0.42,
+            1.05
+          ],
+          "toleranceRadiusPoints": 13.0
+        },
+        "nose_side_left": {
+          "view": [
+            147.935001872,
+            356.685412321
+          ],
+          "local": [
+            -0.32,
+            0.7
+          ],
+          "toleranceRadiusPoints": 13.0
+        },
+        "nose_side_right": {
+          "view": [
+            208.802618915,
+            376.462499961
+          ],
+          "local": [
+            0.32,
+            0.7
+          ],
+          "toleranceRadiusPoints": 13.0
+        },
+        "preauricular_left": {
+          "view": [
+            67.188165183,
+            301.008232393
+          ],
+          "local": [
+            -1.26,
+            0.42
+          ],
+          "toleranceRadiusPoints": 20.0
+        },
+        "preauricular_right": {
+          "view": [
+            306.854407289,
+            378.880514976
+          ],
+          "local": [
+            1.26,
+            0.42
           ],
           "toleranceRadiusPoints": 20.0
         },
@@ -1727,41 +2983,42 @@
             -0.08
           ],
           "toleranceRadiusPoints": 18.0
+        },
+        "upper_lip_left": {
+          "view": [
+            149.338366546,
+            381.167304968
+          ],
+          "local": [
+            -0.231,
+            0.9285
+          ],
+          "toleranceRadiusPoints": 12.0
+        },
+        "upper_lip_right": {
+          "view": [
+            193.277177599,
+            395.443890108
+          ],
+          "local": [
+            0.231,
+            0.9285
+          ],
+          "toleranceRadiusPoints": 12.0
         }
       },
       "paths": [
         {
-          "stepID": "mock_step_01_temple_circles",
-          "kind": "circle",
-          "pointCount": 72,
-          "first": [
-            105.938372083,
-            239.996582151
-          ],
-          "middle": [
-            92.742373208,
-            277.746848308
-          ],
-          "last": [
-            105.938372083,
-            239.996582151
-          ],
-          "center": [
-            99.758032195,
-            259.017712477
-          ]
-        },
-        {
-          "stepID": "mock_step_02_brow_sweep",
+          "stepID": "morning_prototype_b_02_GM-02",
           "kind": "line",
           "pointCount": 72,
           "first": [
-            188.965300462,
-            262.767817602
+            222.867257584,
+            229.621817794
           ],
           "middle": [
-            143.733446129,
-            260.866355849
+            160.445678513,
+            244.526778478
           ],
           "last": [
             99.758032195,
@@ -1770,7 +3027,82 @@
           "center": null
         },
         {
-          "stepID": "mock_step_03_cheek_lift",
+          "stepID": "morning_prototype_b_03_GM-06",
+          "kind": "circle",
+          "pointCount": 72,
+          "first": [
+            104.702304105,
+            243.800808216
+          ],
+          "middle": [
+            94.145505005,
+            274.001021142
+          ],
+          "last": [
+            104.702304105,
+            243.800808216
+          ],
+          "center": [
+            99.758032195,
+            259.017712477
+          ]
+        },
+        {
+          "stepID": "morning_prototype_b_04_GM-07",
+          "kind": "press",
+          "pointCount": 1,
+          "first": [
+            113.408900888,
+            307.614562004
+          ],
+          "middle": [
+            113.408900888,
+            307.614562004
+          ],
+          "last": [
+            113.408900888,
+            307.614562004
+          ],
+          "center": null
+        },
+        {
+          "stepID": "morning_prototype_b_05_GM-08",
+          "kind": "line",
+          "pointCount": 72,
+          "first": [
+            127.608841906,
+            386.882220447
+          ],
+          "middle": [
+            120.408871812,
+            346.690168279
+          ],
+          "last": [
+            113.408900888,
+            307.614562004
+          ],
+          "center": null
+        },
+        {
+          "stepID": "morning_prototype_b_07_GM-11",
+          "kind": "line",
+          "pointCount": 72,
+          "first": [
+            147.935001872,
+            356.685412321
+          ],
+          "middle": [
+            130.428809824,
+            331.804417794
+          ],
+          "last": [
+            113.408900888,
+            307.614562004
+          ],
+          "center": null
+        },
+        {
+          "stepID": "morning_prototype_b_08_GM-12",
           "kind": "curve",
           "pointCount": 72,
           "first": [
@@ -1778,8 +3110,8 @@
             337.12413494
           ],
           "middle": [
-            103.002430692,
-            301.186887464
+            103.945050466,
+            300.85361392
           ],
           "last": [
             99.758032195,
@@ -1788,41 +3120,59 @@
           "center": null
         },
         {
-          "stepID": "mock_step_04_jaw_release",
+          "stepID": "morning_prototype_b_09_GM-18",
           "kind": "arc",
           "pointCount": 72,
           "first": [
-            95.767696433,
-            412.391266979
+            146.849076968,
+            463.581720803
           ],
           "middle": [
-            125.778141087,
-            335.258985831
+            126.187593914,
+            371.427168883
           ],
           "last": [
-            99.758032195,
-            259.017712477
+            67.188165183,
+            301.008232393
           ],
           "center": [
-            6.707203207,
-            333.335485097
+            -50.333807707,
+            459.397572298
           ]
         },
         {
-          "stepID": "mock_step_05_glabella_hold",
-          "kind": "hold",
-          "pointCount": 1,
+          "stepID": "morning_prototype_b_10_GM-03",
+          "kind": "line",
+          "pointCount": 72,
           "first": [
-            208.343458848,
-            274.32147406
+            169.704114804,
+            224.965612282
           ],
           "middle": [
-            208.343458848,
-            274.32147406
+            180.961067635,
+            187.038627474
           ],
           "last": [
-            208.343458848,
-            274.32147406
+            191.905327333,
+            150.165170022
+          ],
+          "center": null
+        },
+        {
+          "stepID": "morning_prototype_b_11_GM-13",
+          "kind": "line",
+          "pointCount": 72,
+          "first": [
+            103.42891734,
+            388.48884672
+          ],
+          "middle": [
+            85.053324697,
+            344.132478893
+          ],
+          "last": [
+            67.188165183,
+            301.008232393
           ],
           "center": null
         }
@@ -2016,6 +3366,28 @@
           ],
           "toleranceRadiusPoints": 10.56
         },
+        "cheek_lower_left": {
+          "view": [
+            200.955034026,
+            434.908609732
+          ],
+          "local": [
+            -0.645,
+            1.14
+          ],
+          "toleranceRadiusPoints": 17.6
+        },
+        "cheek_lower_right": {
+          "view": [
+            303.83909401,
+            386.932984659
+          ],
+          "local": [
+            0.645,
+            1.14
+          ],
+          "toleranceRadiusPoints": 17.6
+        },
         "cheek_mid_left": {
           "view": [
             185.538530952,
@@ -2038,6 +3410,72 @@
           ],
           "toleranceRadiusPoints": 17.6
         },
+        "cheekbone_left": {
+          "view": [
+            158.840670184,
+            376.869054615
+          ],
+          "local": [
+            -0.8,
+            0.34
+          ],
+          "toleranceRadiusPoints": 17.6
+        },
+        "cheekbone_right": {
+          "view": [
+            286.448806599,
+            317.364403362
+          ],
+          "local": [
+            0.8,
+            0.34
+          ],
+          "toleranceRadiusPoints": 17.6
+        },
+        "chin_center": {
+          "view": [
+            273.967500097,
+            457.178746646
+          ],
+          "local": [
+            -0.0,
+            1.72
+          ],
+          "toleranceRadiusPoints": 14.08
+        },
+        "forehead_center": {
+          "view": [
+            182.479098795,
+            260.981236908
+          ],
+          "local": [
+            0.0,
+            -0.74
+          ],
+          "toleranceRadiusPoints": 15.84
+        },
+        "forehead_lower_left": {
+          "view": [
+            145.469303305,
+            289.890858797
+          ],
+          "local": [
+            -0.52,
+            -0.62
+          ],
+          "toleranceRadiusPoints": 15.84
+        },
+        "forehead_lower_right": {
+          "view": [
+            228.414591974,
+            251.212835482
+          ],
+          "local": [
+            0.52,
+            -0.62
+          ],
+          "toleranceRadiusPoints": 15.84
+        },
         "glabella_center": {
           "view": [
             199.958590101,
@@ -2047,7 +3485,29 @@
             0.0,
             -0.27
           ],
-          "toleranceRadiusPoints": 12.32
+          "toleranceRadiusPoints": 11.44
+        },
+        "hairline_left": {
+          "view": [
+            114.865684114,
+            228.425700435
+          ],
+          "local": [
+            -0.54,
+            -1.4
+          ],
+          "toleranceRadiusPoints": 17.6
+        },
+        "hairline_right": {
+          "view": [
+            201.001176194,
+            188.260060839
+          ],
+          "local": [
+            0.54,
+            -1.4
+          ],
+          "toleranceRadiusPoints": 17.6
         },
         "jaw_angle_left": {
           "view": [
@@ -2068,6 +3528,72 @@
           "local": [
             0.644,
             1.391
+          ],
+          "toleranceRadiusPoints": 17.6
+        },
+        "mouth_corner_left": {
+          "view": [
+            215.552791576,
+            419.362810476
+          ],
+          "local": [
+            -0.42,
+            1.05
+          ],
+          "toleranceRadiusPoints": 11.44
+        },
+        "mouth_corner_right": {
+          "view": [
+            282.547063194,
+            388.122868568
+          ],
+          "local": [
+            0.42,
+            1.05
+          ],
+          "toleranceRadiusPoints": 11.44
+        },
+        "nose_side_left": {
+          "view": [
+            210.51165764,
+            387.729489932
+          ],
+          "local": [
+            -0.32,
+            0.7
+          ],
+          "toleranceRadiusPoints": 11.44
+        },
+        "nose_side_right": {
+          "view": [
+            261.554912206,
+            363.927629431
+          ],
+          "local": [
+            0.32,
+            0.7
+          ],
+          "toleranceRadiusPoints": 11.44
+        },
+        "preauricular_left": {
+          "view": [
+            125.128563527,
+            400.357048671
+          ],
+          "local": [
+            -1.26,
+            0.42
+          ],
+          "toleranceRadiusPoints": 17.6
+        },
+        "preauricular_right": {
+          "view": [
+            326.111378381,
+            306.637222947
+          ],
+          "local": [
+            1.26,
+            0.42
           ],
           "toleranceRadiusPoints": 17.6
         },
@@ -2092,41 +3618,42 @@
             -0.08
           ],
           "toleranceRadiusPoints": 15.84
+        },
+        "upper_lip_left": {
+          "view": [
+            226.107868235,
+            402.643580688
+          ],
+          "local": [
+            -0.231,
+            0.9285
+          ],
+          "toleranceRadiusPoints": 10.56
+        },
+        "upper_lip_right": {
+          "view": [
+            262.954717625,
+            385.461612639
+          ],
+          "local": [
+            0.231,
+            0.9285
+          ],
+          "toleranceRadiusPoints": 10.56
         }
       },
       "paths": [
         {
-          "stepID": "mock_step_01_temple_circles",
-          "kind": "circle",
-          "pointCount": 72,
-          "first": [
-            113.451193951,
-            337.834215723
-          ],
-          "middle": [
-            127.614509699,
-            370.049648628
-          ],
-          "last": [
-            113.451193951,
-            337.834215723
-          ],
-          "center": [
-            120.889275357,
-            353.785232775
-          ]
-        },
-        {
-          "stepID": "mock_step_02_brow_sweep",
+          "stepID": "morning_prototype_b_02_GM-02",
           "kind": "line",
           "pointCount": 72,
           "first": [
-            180.552950992,
-            302.660262264
+            182.479098795,
+            260.981236908
           ],
           "middle": [
-            150.300946445,
-            328.582782523
+            151.250455925,
+            308.036784108
           ],
           "last": [
             120.889275357,
@@ -2135,7 +3662,82 @@
           "center": null
         },
         {
-          "stepID": "mock_step_03_cheek_lift",
+          "stepID": "morning_prototype_b_03_GM-06",
+          "kind": "circle",
+          "pointCount": 72,
+          "first": [
+            114.938810232,
+            341.024419134
+          ],
+          "middle": [
+            126.269462831,
+            366.796765458
+          ],
+          "last": [
+            114.938810232,
+            341.024419134
+          ],
+          "center": [
+            120.889275357,
+            353.785232775
+          ]
+        },
+        {
+          "stepID": "morning_prototype_b_04_GM-07",
+          "kind": "press",
+          "pointCount": 1,
+          "first": [
+            158.840670184,
+            376.869054615
+          ],
+          "middle": [
+            158.840670184,
+            376.869054615
+          ],
+          "last": [
+            158.840670184,
+            376.869054615
+          ],
+          "center": null
+        },
+        {
+          "stepID": "morning_prototype_b_05_GM-08",
+          "kind": "line",
+          "pointCount": 72,
+          "first": [
+            215.552791576,
+            419.362810476
+          ],
+          "middle": [
+            186.797349743,
+            397.816680744
+          ],
+          "last": [
+            158.840670184,
+            376.869054615
+          ],
+          "center": null
+        },
+        {
+          "stepID": "morning_prototype_b_07_GM-11",
+          "kind": "line",
+          "pointCount": 72,
+          "first": [
+            210.51165764,
+            387.729489932
+          ],
+          "middle": [
+            184.312283719,
+            382.222790335
+          ],
+          "last": [
+            158.840670184,
+            376.869054615
+          ],
+          "center": null
+        },
+        {
+          "stepID": "morning_prototype_b_08_GM-12",
           "kind": "curve",
           "pointCount": 72,
           "first": [
@@ -2143,8 +3745,8 @@
             387.480236188
           ],
           "middle": [
-            148.285533069,
-            378.97779161
+            148.692177946,
+            378.197578348
           ],
           "last": [
             120.889275357,
@@ -2153,41 +3755,59 @@
           "center": null
         },
         {
-          "stepID": "mock_step_04_jaw_release",
+          "stepID": "morning_prototype_b_09_GM-18",
           "kind": "arc",
           "pointCount": 72,
           "first": [
-            210.369581276,
-            454.889945725
+            273.967500097,
+            457.178746646
           ],
           "middle": [
-            183.392442546,
-            387.237258759
+            205.36260735,
+            410.26904855
           ],
           "last": [
-            120.889275357,
-            353.785232775
+            125.128563527,
+            400.357048671
           ],
           "center": [
-            105.605022489,
-            457.460752744
+            144.551166878,
+            572.826860751
           ]
         },
         {
-          "stepID": "mock_step_05_glabella_hold",
-          "kind": "hold",
-          "pointCount": 1,
+          "stepID": "morning_prototype_b_10_GM-03",
+          "kind": "line",
+          "pointCount": 72,
           "first": [
-            199.958590101,
-            298.46612698
+            145.469303305,
+            289.890858797
           ],
           "middle": [
-            199.958590101,
-            298.46612698
+            129.951975264,
+            258.725426388
           ],
           "last": [
-            199.958590101,
-            298.46612698
+            114.865684114,
+            228.425700435
+          ],
+          "center": null
+        },
+        {
+          "stepID": "morning_prototype_b_11_GM-13",
+          "kind": "line",
+          "pointCount": 72,
+          "first": [
+            200.955034026,
+            434.908609732
+          ],
+          "middle": [
+            162.507809548,
+            417.389508349
+          ],
+          "last": [
+            125.128563527,
+            400.357048671
           ],
           "center": null
         }

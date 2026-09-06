@@ -1,7 +1,7 @@
 # 内容编写指南
 
 > 给 Owner 与专业审核人员。
-> **替换正式动作内容不需要改任何 Swift 代码** —— 只改 `Resources/` 下的三个 JSON。
+> **替换正式动作内容不需要改任何 Swift 代码** —— 只改 `Resources/` 下的四个 JSON。
 >
 > 规格 §14 与 §20 明确：动作、穴位含义、疗效、安全性由 Owner 与专业人员定义，
 > 工程侧不代为决定。这份文档只讲**怎么写**，不讲**写什么**。
@@ -14,8 +14,25 @@
 Packages/FaceRitualCore/Sources/FaceRitualCore/Resources/
 ├── content_meta.json   # 版本与审核状态
 ├── anchors.json        # 面部位置定义
-└── routines.json       # routine 与动作
+├── moves.json          # Gold Motion Library —— 动作的唯一真源
+└── routines.json       # 时间线：只写「第几分几秒做哪个动作」
 ```
+
+### 动作是资产，routine 只是时间线
+
+Video Factory v0.2 §4/§9「一次动作资产，多处复用」。
+一个动作在多个 routine 里出现是常态 —— Prototype A 里 GM-11 与 GM-18 各出现两次，
+三套原型都用 GM-02。如果每处都内联一份定义，改了一处忘了另一处，
+两个地方就变成了两个不同的动作，而且没人会发现。
+
+所以 `routines.json` 里的一步长这样：
+
+```jsonc
+{ "move": "GM-08", "durationSeconds": 20, "roleNote": "脸颊静态" }
+```
+
+只有 `durationSeconds` 与 `side` 可以覆盖（同一动作在不同原型里时长确实不同），
+其余一律来自动作库。
 
 放在 Core package 而不是 App target，是为了让单元测试加载的就是**线上那一份**，
 不会出现「测试用一份、发布用另一份」。
@@ -32,6 +49,12 @@ python tools/validate_content.py
 python tools/golden/generate_golden.py
 ```
 
+想看每一段在脸上到底画出了什么（哪一段是空白、左右是否对称）：
+
+```bash
+python tools/simulate_routine.py
+```
+
 ---
 
 ## 审核状态：三档
@@ -41,8 +64,8 @@ python tools/golden/generate_golden.py
 | 值 | 含义 |
 | --- | --- |
 | `mock_unreviewed` | 占位测试数据。UI 上会显示 MOCK 角标 |
-| `draft` | 已写好但未经专业审核 |
-| `expert_reviewed` | 已通过专业审核，可发布 |
+| `draft` | 已写好但未经专业审核。**当前 20 个动作与 27 个位置全部是这一档** |
+| `expert_reviewed` | 已通过 Expert Gate，可发布 |
 
 **只有全部为 `expert_reviewed` 时，`content_meta.json` 才可以标 `expert_reviewed`。**
 单元测试 `testShippedContentIsFlaggedAsUnreviewed` 会在 M1 阶段断言内容仍是未审核状态 ——
@@ -136,7 +159,84 @@ python tools/golden/generate_golden.py
 
 ---
 
-## routines.json：动作
+## moves.json：Gold Motion Library
+
+动作的唯一真源。每条对应专业文档里的一个动作（当前是 Sprint 3 v0.3 的 GM-01…GM-20）。
+
+```jsonc
+{
+  "id": "GM-08",
+  "title": "Happy Cheeks Sculpting",      // 用户看到的英文
+  "shortCue": "Smile, tuck lips, hold",
+  "voiceCue": "...",
+  "safetyNote": "...",                     // ⚠️ 这是翻译，见下
+
+  "region": "cheek",                       // 覆盖度检查与主题匹配
+  "defaultDurationSeconds": 20,
+  "side": "both",
+  "intensity": "light",                    // none|veryLight|light|lightToModerate
+  "requiresTool": "none",                  // none|facialRoller|guaSha
+  "evidenceLevel": "randomisedTrial",      // 只用于排序与风险判断，不得对外表述
+  "allowedRoutineTypes": ["morning", "evening", "quick"],
+
+  "movement": { /* 见下一节，与 AR / Coach 共用 */ },
+
+  "source": {                              // 逐字保留的中文原文，不翻译
+    "documentRef": "Sprint 3 v0.3 · GM-08",
+    "titleZh": "...", "startingPositionZh": "...", "instructionZh": "...",
+    "durationZh": "...", "intensityZh": "...", "stopSignalsZh": "...",
+    "evidenceZh": "...", "usageZh": "...", "researchNoteZh": "..."
+  },
+  "reviewStatus": "draft",
+  "version": "0.3.0-draft"
+}
+```
+
+### 为什么中英并存
+
+**用户看英文字段，Expert Gate 审 `source.*` 里的中文原文。**
+
+安全相关的措辞（禁忌、停止信号、力度）经翻译一定会引入偏差，
+而那恰恰是专家要审的东西。所以两份并存，谁也不覆盖谁。
+校验器强制：**填了英文 `safetyNote` 就必须有 `source.stopSignalsZh`**，
+否则专家无从对照复核。
+
+### 硬性约束
+
+| 约束 | 依据 | 违反后果 |
+| --- | --- | --- |
+| 需要工具的动作不得 `allowedRoutineTypes` 含 `morning` | Sprint 3 §9：Gua Sha / Roller 不得作为免费核心操的必要条件 | error |
+| 需要工具的动作不得出现在 morning routine 里 | 同上（双重拦截） | error |
+| routine 类型必须在动作的 `allowedRoutineTypes` 里 | Video Factory §4 | error |
+| `allowedRoutineTypes` 不得为空 | 否则这个动作永远用不上 | error |
+| 必须有 `source.documentRef` 与 `source.titleZh` | 无法溯源就无法审 | error |
+
+### 尚未被使用的动作
+
+校验器会警告「N 个动作尚未被任何 routine 使用」。
+**这是提醒不是缺陷** —— Sprint 3 §11 把 Evening 5-minute 与 Quick Rituals 标为
+「随后设计」，剩余动作正是留给它们的。
+
+---
+
+## routines.json：时间线
+
+```jsonc
+{
+  "id": "morning_prototype_b",
+  "title": "Morning Ritual",
+  "type": "morning",            // morning | evening | quick
+  "isPremium": false,
+  "reviewStatus": "draft",
+  "steps": [
+    { "move": "GM-01", "roleNote": "准备" },
+    { "move": "GM-08", "durationSeconds": 20, "roleNote": "脸颊静态" }
+  ]
+}
+```
+
+step id 由系统合成为 `<routineID>_<两位序号>_<moveID>` ——
+同一动作在一个 routine 里重复出现时不会撞 id。
 
 ### 时长约定
 
@@ -153,7 +253,7 @@ python tools/golden/generate_golden.py
 | `both` | 两侧同时显示 |
 | `leftThenRight` | 自动展开成先左后右两段，语音会提示换边 |
 
-### movement：AR 与 Coach 的共同真源
+### movement：AR 与 Coach 的共同真源（写在 moves.json 里）
 
 **同一份 `movement` 同时驱动 Coach 示范与脸上的 AR 路线**（规格 §4「一个动作真源」）。
 所以不会出现「老师往上、脸上路线往下」这种矛盾。
@@ -162,7 +262,7 @@ python tools/golden/generate_golden.py
 "movement": {
   "startAnchor": "cheek_mid_left",   // 只写 _left，播放时按当前侧自动改写
   "endAnchor": "temple_left",
-  "pathType": "curve",               // line | curve | arc | circle | press | hold
+  "pathType": "curve",               // line|curve|arc|circle|press|hold|expression|tap
   "pathGeometry": {
     // 控制点表达在 start→end 的局部框架里：
     //   along        沿轴向的比例（0=起点，1=终点）
@@ -188,6 +288,34 @@ python tools/golden/generate_golden.py
 | `arc` | start + end | `controlOffsets[0].perpendicular` 作为弧高 |
 | `circle` | start（作圆心） | `radius`（瞳距）、`sweepDegrees`、`clockwise` |
 | `press` / `hold` | start | `holdSeconds` |
+| `expression` | 无 | `focusAnchors` |
+| `tap` | `focusAnchors` 或 start | — |
+
+#### expression：表情肌动作
+
+**没有手部接触，所以脸上没有轨迹可画。**
+GM-01 呼吸、GM-09 鼓气、GM-10 元音、GM-16 噘嘴都是这类。
+
+AR 模式下这一段退化为「提示 + 计时」：填了 `focusAnchors` 就柔和地点亮那几片区域，
+不填就只有语音与倒计时 —— **这不是错误**，是这类动作本来的样子。
+
+填了 `startAnchor` / `endAnchor` / `gestureHint` 会报 warning：
+表情动作不用手，画 ● 起点会让人以为要用手指去碰那个位置。
+
+#### tap：跨区域轻拍
+
+GM-15 全脸轻拍跨额头、双颊、下颌外侧，没有单一轨迹。
+用 `focusAnchors` 列出要点到的区域，AR 会按顺序轮流点亮 ——
+全部同时闪看上去像报错。
+
+```jsonc
+"movement": {
+  "pathType": "tap",
+  "focusAnchors": ["forehead_center", "cheek_mid_left", "cheek_mid_right",
+                   "jaw_angle_left", "jaw_angle_right"],
+  "gestureHint": "fingertips", "tempo": 120, "repetitions": 20
+}
+```
 
 ### occlusionPolicy
 
@@ -230,11 +358,16 @@ python tools/golden/generate_golden.py
 
 ## 替换流程建议
 
-1. 先只替换 **Morning Core** 的 5 个动作与它们用到的 anchor，跑一遍真机
-2. 确认位置与路线在几个不同的人脸上都合适
-3. 再补 Evening Core 与 Quick Rituals
-4. 全部 `reviewStatus` 改成 `expert_reviewed`
-5. `content_meta.json` 的 `reviewStatus` 改成 `expert_reviewed`，`contentVersion` 升版本
-6. 更新 `testShippedContentIsFlaggedAsUnreviewed` 这条测试（它当前断言内容**必须**是未审核状态）
-7. `python tools/validate_content.py` + `python tools/golden/generate_golden.py`
-8. 提交
+1. **Expert Gate 先审动作库**（`moves.json` 的 20 条）。
+   App 里 Settings → Developer → Debug → Gold Motion Library 一屏列出
+   全部动作、中文原文、力度、工具要求、证据等级与停止信号。
+2. 顺带审这些动作用到的 `anchors.json` 位置定义（当前全是几何草案）。
+3. 真机上跑一遍，确认位置与路线在几个不同的人脸上都合适。
+4. 三套 Morning 原型交叉体验后选定（Sprint 3 §7）。
+5. 补 Evening 5-minute 与 Quick Rituals 的时间表 —— 只需在 `routines.json` 加条目。
+6. 审过的条目 `reviewStatus` 改成 `expert_reviewed`。
+7. 全部通过后，`content_meta.json` 的 `reviewStatus` 改成 `expert_reviewed`，`contentVersion` 升版本。
+8. 更新这两条测试（它们当前断言内容**必须**未审核）：
+   `testShippedContentIsFlaggedAsUnreviewed`、`testEveryGoldMoveIsStillAwaitingExpertGate`。
+9. `python tools/validate_content.py` + `python tools/golden/generate_golden.py` + `python tools/simulate_routine.py`
+10. 提交

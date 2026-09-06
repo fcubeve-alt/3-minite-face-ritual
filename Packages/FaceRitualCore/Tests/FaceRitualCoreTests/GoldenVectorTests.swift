@@ -142,7 +142,8 @@ final class GoldenVectorTests: XCTestCase {
     func testMotionPathsMatchReference() throws {
         let resolver = FaceAnchorResolver()
         let sampler = PathSampler()
-        let morning = try XCTUnwrap(bundle.routine(id: RoutineID(rawValue: "morning_core")))
+        // 必须与 tools/golden/generate_golden.py 的 GOLDEN_ROUTINE_ID 一致。
+        let morning = try XCTUnwrap(bundle.routine(id: RoutineID(rawValue: "morning_prototype_b")))
 
         for testCase in fixture.cases {
             let geometry = testCase.makeGeometry()
@@ -151,7 +152,7 @@ final class GoldenVectorTests: XCTestCase {
             for expected in testCase.paths {
                 let step = try XCTUnwrap(
                     morning.steps.first { $0.id.rawValue == expected.stepID },
-                    "morning_core 应包含 step \(expected.stepID)"
+                    "参考 routine 应包含 step \(expected.stepID)"
                 )
                 let movement = step.movement
                 let startID = try XCTUnwrap(movement.startAnchorID)

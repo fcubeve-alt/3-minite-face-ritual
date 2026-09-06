@@ -43,12 +43,65 @@ struct AROverlayRenderer: View {
     private func draw(overlay: MotionOverlay, in context: inout GraphicsContext, size: CGSize) {
         let accent = OverlayPalette.accent(for: overlay.side)
 
-        drawPath(overlay: overlay, context: &context, accent: accent)
-        drawDirectionArrows(overlay: overlay, context: &context, accent: accent)
-        drawEndMarker(overlay: overlay, context: &context, accent: accent)
-        drawStartMarker(overlay: overlay, context: &context, accent: accent)
-        drawMovingDot(overlay: overlay, context: &context, accent: accent)
-        drawGestureHint(overlay: overlay, context: &context, accent: accent)
+        switch overlay.style {
+        case .focusRegion:
+            drawFocusRegion(overlay: overlay, context: &context, accent: accent)
+            drawGestureHint(overlay: overlay, context: &context, accent: accent)
+        case .path:
+            drawPath(overlay: overlay, context: &context, accent: accent)
+            drawDirectionArrows(overlay: overlay, context: &context, accent: accent)
+            drawEndMarker(overlay: overlay, context: &context, accent: accent)
+            drawStartMarker(overlay: overlay, context: &context, accent: accent)
+            drawMovingDot(overlay: overlay, context: &context, accent: accent)
+            drawGestureHint(overlay: overlay, context: &context, accent: accent)
+        }
+    }
+
+    /// 只标区域的动作（全脸轻拍、表情肌动作）。
+    ///
+    /// 刻意**不**画 ● 起点和移动光点：那两个图元的含义是「手指放这里、沿这条线走」。
+    /// 这类动作要么根本不用手，要么覆盖一整片区域，画成路径起点会误导。
+    /// 这里画的是柔和的呼吸圈 —— 「注意这一带」，仅此而已。
+    ///
+    /// 多个区域时按 `sequence` 轮流点亮，形成从上到下的流动感；
+    /// 全部同时闪会看上去像报错。
+    private func drawFocusRegion(overlay: MotionOverlay, context: inout GraphicsContext, accent: Color) {
+        let center = overlay.start.cgPoint
+        let radius = max(overlay.toleranceRadius, 14)
+
+        // 该区域在本轮中的高亮强度。
+        var emphasis = 1.0
+        if let sequence = overlay.sequence, sequence.count > 1 {
+            let slot = Double(sequence.index) / Double(sequence.count)
+            // 与当前相位的环形距离，越近越亮。
+            var distance = abs(frame.cyclePhase - slot)
+            if distance > 0.5 { distance = 1 - distance }
+            emphasis = clamp(1 - distance * Double(sequence.count) * 0.8, 0.25, 1)
+        }
+
+        let pulse = 0.92 + 0.08 * sin(frame.cyclePhase * 2 * .pi)
+        let outer = radius * pulse
+
+        context.fill(
+            Path(ellipseIn: CGRect(
+                x: center.x - outer, y: center.y - outer,
+                width: outer * 2, height: outer * 2
+            )),
+            with: .radialGradient(
+                Gradient(colors: [accent.opacity(0.30 * emphasis), accent.opacity(0)]),
+                center: center,
+                startRadius: 0,
+                endRadius: outer
+            )
+        )
+        context.stroke(
+            Path(ellipseIn: CGRect(
+                x: center.x - outer, y: center.y - outer,
+                width: outer * 2, height: outer * 2
+            )),
+            with: .color(accent.opacity(0.30 + 0.45 * emphasis)),
+            lineWidth: 2
+        )
     }
 
     /// 路径本体：底层虚线 + 已走过部分的实线拖尾。

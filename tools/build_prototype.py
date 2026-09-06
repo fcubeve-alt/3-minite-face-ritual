@@ -31,11 +31,16 @@ def load(name: str) -> dict:
 def main() -> int:
     anchors = load("anchors.json")
     routines = load("routines.json")
+    moves = load("moves.json")
 
     # 原型只需要这两份数据里真正用得上的部分，注释字段带着也无妨，保持原样最省心。
     template = TEMPLATE.read_text(encoding="utf-8")
 
-    for marker, doc in (("/*__ANCHORS__*/", anchors), ("/*__ROUTINES__*/", routines)):
+    for marker, doc in (
+        ("/*__ANCHORS__*/", anchors),
+        ("/*__ROUTINES__*/", routines),
+        ("/*__MOVES__*/", moves),
+    ):
         if marker not in template:
             print(f"模板里找不到占位符 {marker}")
             return 1
@@ -46,9 +51,11 @@ def main() -> int:
 
     anchor_count = len(anchors["anchors"])
     routine_count = len(routines["routines"])
+    move_count = len(moves["moves"])
     size_kb = OUTPUT.stat().st_size / 1024
     print(f"已生成 {OUTPUT.relative_to(ROOT)}")
-    print(f"  注入 {anchor_count} 个 anchor（自动镜像后会更多）、{routine_count} 个 routine")
+    print(f"  注入 {anchor_count} 个 anchor（自动镜像后会更多）、"
+          f"{move_count} 个动作、{routine_count} 个 routine")
     print(f"  文件大小 {size_kb:.0f} KB")
     print()
     print("  打开方式（必须走 http，不能双击文件）：")

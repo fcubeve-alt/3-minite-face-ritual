@@ -29,11 +29,14 @@ struct HomeView: View {
         environment.morningCore ?? environment.eveningCore
     }
 
-    /// 次级入口：Evening + 全部 Quick Rituals。
+    /// 次级入口：其余 Morning 原型 + Evening + 全部 Quick Rituals。
+    ///
+    /// 其余 Morning 原型排在最前：Sprint 3 §4 一次给出 A/B/C 三套 3 分钟版本，
+    /// §7 要求同一批用户交叉体验后再选，所以另外两套必须点得到。
     /// 傍晚把 Evening 排到最前，保留「按时间给出合适建议」的意图，
     /// 但不再以牺牲免费入口为代价。
     private var secondaryRituals: [Routine] {
-        var list: [Routine] = []
+        var list: [Routine] = environment.alternateMorningRoutines
         if let evening = environment.eveningCore, evening.id != featuredRoutine?.id {
             list.append(evening)
         }

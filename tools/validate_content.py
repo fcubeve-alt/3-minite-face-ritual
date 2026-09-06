@@ -19,7 +19,7 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 CONTENT_DIR = ROOT / "Packages" / "FaceRitualCore" / "Sources" / "FaceRitualCore" / "Resources"
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 MORNING_TARGET_SECONDS = 180
 EVENING_TARGET_SECONDS = 300
 DURATION_TOLERANCE = 30
@@ -40,9 +40,18 @@ SEMANTIC_LANDMARKS = {
     "foreheadCenter",
 }
 
-PATH_TYPES = {"line", "curve", "arc", "circle", "press", "hold"}
+PATH_TYPES = {"line", "curve", "arc", "circle", "press", "hold", "expression", "tap"}
 SIDES = {"none", "left", "right", "both", "leftThenRight"}
 REVIEW_STATUSES = {"mock_unreviewed", "draft", "expert_reviewed"}
+ROUTINE_TYPES = {"morning", "evening", "quick"}
+INTENSITIES = {"none", "veryLight", "light", "lightToModerate"}
+TOOLS = {"none", "facialRoller", "guaSha"}
+EVIDENCE_LEVELS = {"classicPractice", "indirect", "protocolLevel", "randomisedTrial", "supportive"}
+REGIONS = {
+    "wholeFace", "forehead", "glabella", "temple", "eyeArea",
+    "midface", "cheek", "perioral", "jawline", "neck",
+}
+GESTURE_HINTS = {"none", "singleFinger", "twoFinger", "fingertips", "palm", "tool"}
 
 issues: list[tuple[str, str, str]] = []
 
@@ -226,6 +235,12 @@ def validate_movement(movement: dict, anchors: dict, path: str) -> None:
             if candidate not in anchors:
                 error(path, f"{label} 引用了不存在的 anchor: {candidate}")
 
+    focus = movement.get("focusAnchors", [])
+    for anchor_id in focus:
+        for candidate in {anchor_id, mirror_id(anchor_id)}:
+            if candidate not in anchors:
+                error(path, f"focusAnchors 引用了不存在的 anchor: {candidate}")
+
     if path_type in ("line", "curve", "arc"):
         if not start or not end:
             error(path, f"pathType={path_type} 需要同时提供 startAnchor 与 endAnchor")
@@ -234,12 +249,25 @@ def validate_movement(movement: dict, anchors: dict, path: str) -> None:
             error(path, "pathType=circle 需要 startAnchor 作为圆心")
         if (movement.get("pathGeometry") or {}).get("radius", 0) <= 0:
             warn(path, "circle 未指定 radius，将使用默认 0.35 瞳距")
+    elif path_type == "expression":
+        # 表情肌动作没有手部接触，本来就没有轨迹。填了 anchor 多半是选错了 pathType。
+        if start or end:
+            warn(path, "pathType=expression 不应有 start/endAnchor（表情动作没有手部接触点）；要高亮区域请用 focusAnchors")
+        if movement.get("gestureHint", "none") != "none":
+            warn(path, "pathType=expression 不应有 gestureHint —— 手不参与")
+    elif path_type == "tap":
+        if not focus and not start:
+            error(path, "pathType=tap 需要 focusAnchors（跨区域轻拍）或 startAnchor（单点轻拍），否则 AR 无处可画")
     else:  # press / hold
         if not start:
             error(path, f"pathType={path_type} 需要 startAnchor")
 
     if movement.get("repetitions", 1) < 1:
         error(path, "repetitions 必须 >= 1")
+
+    hint = movement.get("gestureHint", "none")
+    if hint not in GESTURE_HINTS:
+        error(path, f"未知 gestureHint: {hint!r}")
 
     if movement.get("trackingSupport") == "observableCorrectionExperimental":
         warn(path, "trackingSupport=observableCorrectionExperimental 需逐个动作验证达标后才可启用（规格 §10）")
@@ -250,9 +278,63 @@ def validate_movement(movement: dict, anchors: dict, path: str) -> None:
             error(path, f"controlOffsets[{index}] 缺少 along / perpendicular")
 
 
-def validate_routines(doc: dict, anchors: dict) -> None:
+def validate_moves(doc: dict, anchors: dict) -> dict:
+    """Gold Motion Library。动作是资产，routine 只是引用它的时间线（文档二 §4/§9）。"""
+    table: dict = {}
+    for move in doc.get("moves", []):
+        move_id = move.get("id", "<missing id>")
+        path = f"moves.{move_id}"
+        if move_id in table:
+            error(path, "move id 重复")
+
+        for field, allowed in (
+            ("region", REGIONS),
+            ("side", SIDES),
+            ("intensity", INTENSITIES),
+            ("requiresTool", TOOLS),
+            ("evidenceLevel", EVIDENCE_LEVELS),
+            ("reviewStatus", REVIEW_STATUSES),
+        ):
+            value = move.get(field)
+            if value not in allowed:
+                error(path, f"未知 {field}: {value!r}")
+
+        duration = move.get("defaultDurationSeconds", 0)
+        if not isinstance(duration, (int, float)) or duration <= 0:
+            error(path, "defaultDurationSeconds 必须 > 0")
+
+        allowed_types = move.get("allowedRoutineTypes", [])
+        if not allowed_types:
+            error(path, "allowedRoutineTypes 为空，这个动作永远不可能被任何 routine 使用")
+        for value in allowed_types:
+            if value not in ROUTINE_TYPES:
+                error(path, f"未知 allowedRoutineTypes 项: {value!r}")
+
+        tool = move.get("requiresTool", "none")
+        if tool != "none" and "morning" in allowed_types:
+            # Sprint 3 §9：Gua Sha / Roller 不得成为免费核心操的必要条件。
+            error(path, f"需要工具的动作（{tool}）不得允许出现在 morning routine —— 免费核心操不能依赖工具（Sprint 3 §9）")
+
+        if not move.get("shortCue"):
+            warn(path, "缺少 shortCue，屏幕上会没有文字提示")
+
+        source = move.get("source") or {}
+        if not source.get("documentRef"):
+            error(path, "缺少 source.documentRef，无法溯源到专业文档")
+        if not source.get("titleZh"):
+            error(path, "缺少 source.titleZh —— 用户看英文，专家审中文原文，两者都必须在")
+        if move.get("safetyNote") and not source.get("stopSignalsZh"):
+            warn(path, "有英文 safetyNote 但缺 source.stopSignalsZh，Expert Gate 无从对照原文复核")
+
+        validate_movement(move.get("movement", {}), anchors, f"{path}.movement")
+        table[move_id] = move
+    return table
+
+
+def validate_routines(doc: dict, anchors: dict, moves: dict) -> None:
     seen_routines: set[str] = set()
     has_free_morning = False
+    used_moves: set[str] = set()
 
     for routine in doc.get("routines", []):
         routine_id = routine.get("id", "<missing id>")
@@ -263,6 +345,8 @@ def validate_routines(doc: dict, anchors: dict) -> None:
         seen_routines.add(routine_id)
 
         routine_type = routine.get("type")
+        if routine_type not in ROUTINE_TYPES:
+            error(path, f"未知 routine type: {routine_type!r}")
         is_premium = routine.get("isPremium", False)
         if routine_type == "morning":
             if is_premium:
@@ -275,42 +359,62 @@ def validate_routines(doc: dict, anchors: dict) -> None:
             error(path, "routine 没有任何 step")
             continue
 
+        # 复刻 ContentAssembler：把引用展开成 step。
         seen_steps: set[str] = set()
         total = 0.0
-        for index, step in enumerate(steps):
-            step_id = step.get("id", "<missing id>")
+        for index, ref in enumerate(steps):
+            move_id = ref.get("move")
+            step_id = f"{routine_id}_{index + 1:02d}_{move_id}"
             step_path = f"{path}.steps[{index}]:{step_id}"
+
             if step_id in seen_steps:
                 error(step_path, "step id 在同一 routine 内重复")
             seen_steps.add(step_id)
 
-            duration = step.get("durationSeconds", 0)
-            if duration <= 0:
+            move = moves.get(move_id)
+            if move is None:
+                error(step_path, f"引用了动作库里不存在的动作: {move_id!r}")
+                continue
+            used_moves.add(move_id)
+
+            allowed_types = move.get("allowedRoutineTypes", [])
+            if routine_type not in allowed_types:
+                joined = "/".join(allowed_types)
+                error(step_path, f"动作 {move_id} 声明只允许用于 {joined}，却出现在 {routine_type} routine 里")
+            tool = move.get("requiresTool", "none")
+            if tool != "none" and routine_type == "morning":
+                error(step_path, f"morning routine 用到了需要工具的动作 {move_id}（{tool}）—— 免费核心操不能依赖工具（Sprint 3 §9）")
+
+            duration = ref.get("durationSeconds", move.get("defaultDurationSeconds", 0))
+            if not isinstance(duration, (int, float)) or duration <= 0:
                 error(step_path, "durationSeconds 必须 > 0")
+                duration = 0
             elif duration > 90:
                 warn(step_path, "单个动作超过 90 秒，与规格 §4「每个动作短」不符")
             total += duration
 
-            side = step.get("side", "none")
+            side = ref.get("side", move.get("side", "none"))
             if side not in SIDES:
                 error(step_path, f"未知 side: {side!r}")
             if side == "leftThenRight" and duration / 2 < 5:
                 warn(step_path, "leftThenRight 展开后单侧不足 5 秒，节奏会过于仓促")
 
-            if not step.get("shortCue"):
-                warn(step_path, "缺少 shortCue，屏幕上会没有文字提示")
-
-            validate_movement(step.get("movement", {}), anchors, step_path)
-
         target = {"morning": MORNING_TARGET_SECONDS, "evening": EVENING_TARGET_SECONDS}.get(routine_type)
         if target is not None and abs(total - target) > DURATION_TOLERANCE:
             warn(path, f"总时长 {total:.0f}s 偏离目标 {target}s 超过 {DURATION_TOLERANCE}s")
 
-        print(f"  {routine_id:<20} type={routine_type:<8} premium={str(is_premium):<5} "
+        print(f"  {routine_id:<22} type={routine_type:<8} premium={str(is_premium):<5} "
               f"steps={len(steps):<2} total={total:.0f}s")
 
     if not has_free_morning:
         error("routines", "缺少免费的 Morning Core（type=morning 且 isPremium=false）。规格 §11 要求它永久免费。")
+
+    # 库里有、但没被任何 routine 用到的动作。不是错误 —— Sprint 3 §11 说
+    # Evening 与 Quick Ritual 尚未设计，剩余动作正是留给它们的。
+    unused = sorted(set(moves) - used_moves)
+    if unused:
+        joined = ", ".join(unused)
+        warn("moves", f"{len(unused)} 个动作尚未被任何 routine 使用: {joined}")
 
 
 def main() -> int:
@@ -325,6 +429,7 @@ def main() -> int:
     check_landmark_pairing()
 
     anchors_doc = load("anchors.json")
+    moves_doc = load("moves.json")
     routines_doc = load("routines.json")
 
     print("\nAnchors:")
@@ -333,8 +438,17 @@ def main() -> int:
         print(f"  {anchor_id:<22} side={anchors[anchor_id].get('side', 'none')}")
     print(f"  → 共 {len(anchors)} 个（含自动镜像）")
 
+    print("\nGold Motion Library:")
+    moves = validate_moves(moves_doc, anchors)
+    for move_id in sorted(moves):
+        move = moves[move_id]
+        path_type = move.get("movement", {}).get("pathType", "?")
+        print(f"  {move_id:<7} {path_type:<11} {move.get('region', '?'):<10} "
+              f"{move.get('defaultDurationSeconds', 0):>3.0f}s  {move.get('title', '')}")
+    print(f"  → 共 {len(moves)} 个动作")
+
     print("\nRoutines:")
-    validate_routines(routines_doc, anchors)
+    validate_routines(routines_doc, anchors, moves)
 
     unreviewed = meta.get("reviewStatus") != "expert_reviewed"
     if unreviewed:

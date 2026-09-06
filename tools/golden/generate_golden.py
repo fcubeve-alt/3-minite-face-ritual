@@ -324,6 +324,14 @@ def make_path(movement, start_local, end_local, frame):
     if path_type in ("press", "hold"):
         return {"kind": path_type, "points": [frame.to_view(start_local)], "center": None}
 
+    if path_type == "expression":
+        # 表情肌动作没有手部接触，脸上没有轨迹。空路径而不是伪造的点。
+        return {"kind": "expression", "points": [], "center": None}
+
+    if path_type == "tap":
+        # 轻拍每个区域各自是一个标记点，这里只算单点。
+        return {"kind": "tap", "points": [frame.to_view(start_local)], "center": None}
+
     if path_type == "line":
         pts = sample_line(start_local, end_local, SAMPLE_COUNT)
         return {"kind": "line", "points": [frame.to_view(p) for p in pts], "center": None}
@@ -362,6 +370,9 @@ def make_path(movement, start_local, end_local, frame):
 # ---------------------------------------------------------------------------
 # 主流程
 # ---------------------------------------------------------------------------
+# Swift 侧的 GoldenVectorTests 必须加载同一个 routine。
+GOLDEN_ROUTINE_ID = "morning_prototype_b"
+
 # 输出精度。
 #
 # 这个数字有实际后果：Swift 测试是从这个文件里的坐标**重建**几何的，
@@ -380,7 +391,20 @@ def round_point(p, digits=OUTPUT_DIGITS):
 def main() -> int:
     anchors = load_anchor_table()
     routines_doc = json.loads((CONTENT_DIR / "routines.json").read_text(encoding="utf-8"))
-    morning = next(r for r in routines_doc["routines"] if r["id"] == "morning_core")
+    moves_doc = json.loads((CONTENT_DIR / "moves.json").read_text(encoding="utf-8"))
+    moves = {m["id"]: m for m in moves_doc["moves"]}
+
+    # 用 Prototype B 作为参考 routine —— Sprint 3 §5 当前推荐先测这一套，
+    # 而且它同时覆盖 line / press / curve / arc / expression / tap 六种路径类型。
+    reference = next(r for r in routines_doc["routines"] if r["id"] == GOLDEN_ROUTINE_ID)
+    # 复刻 ContentAssembler：把引用展开成带 id 的 step。
+    morning_steps = []
+    for index, ref in enumerate(reference["steps"]):
+        move = moves[ref["move"]]
+        morning_steps.append({
+            "id": f"{reference['id']}_{index + 1:02d}_{ref['move']}",
+            "movement": move["movement"],
+        })
 
     cases = []
     # anchor_id -> 局部坐标（用于跨变换的不变性检查）
@@ -401,21 +425,24 @@ def main() -> int:
             }
             invariance.setdefault(anchor_id, []).append((name, local))
 
-        # 用 Morning Core 的每个 step 生成路径（左侧那一段）。
+        # 用参考 routine 的每个 step 生成路径（左侧那一段）。
         paths = []
-        for step in morning["steps"]:
+        for step in morning_steps:
             movement = step["movement"]
             start_id = movement.get("startAnchor")
             end_id = movement.get("endAnchor")
             if not start_id:
+                # 表情肌动作没有接触点，本来就画不出路径。
                 continue
             start_local = frame.to_local(evaluate_rule(anchors[start_id]["rule"], landmarks, frame))
             end_local = (
                 frame.to_local(evaluate_rule(anchors[end_id]["rule"], landmarks, frame)) if end_id else None
             )
             path = make_path(movement, start_local, end_local, frame)
-            # 只存首/中/末三点，golden 文件不必臃肿，覆盖度已经够。
             pts = path["points"]
+            if not pts:
+                continue
+            # 只存首/中/末三点，golden 文件不必臃肿，覆盖度已经够。
             paths.append({
                 "stepID": step["id"],
                 "kind": path["kind"],

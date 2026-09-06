@@ -18,6 +18,10 @@ help: ## 显示可用命令
 content: ## 校验内容包 JSON（不需要 Xcode）
 	python tools/validate_content.py
 
+.PHONY: teeth
+teeth: ## 反向验证：确认每条内容校验规则真的会报错
+	python tools/check_validator_teeth.py
+
 .PHONY: golden
 golden: ## 重新生成几何 golden vectors（改了 anchors.json 后必须跑）
 	python tools/golden/generate_golden.py
@@ -44,7 +48,7 @@ prototype: ## 生成并打开浏览器版 AR 概念验证（不需要 Mac / iPho
 	@echo "必须走 http 而不是双击文件：file:// 下浏览器会拦掉 CDN 模块与摄像头权限。"
 
 .PHONY: check
-check: arch refs content golden simulate ## 跑所有不依赖 Xcode 的校验
+check: arch refs content teeth golden simulate ## 跑所有不依赖 Xcode 的校验
 
 # ---------------------------------------------------------------------------
 # 需要 macOS + Xcode

@@ -16,7 +16,7 @@
 
 用法:
     python tools/simulate_routine.py            # 跑全部 routine
-    python tools/simulate_routine.py morning_core
+    python tools/simulate_routine.py morning_prototype_b
 退出码 0 = 每一段都能正常渲染。
 """
 
@@ -61,6 +61,25 @@ def warn(where: str, message: str) -> None:
 # ---------------------------------------------------------------------------
 # PlaybackPlan（对应 PlaybackPlan.swift）
 # ---------------------------------------------------------------------------
+def assemble(routine: dict, moves: dict) -> dict:
+    """复刻 ContentAssembler：routine 只写引用，动作在库里。"""
+    steps = []
+    for index, ref in enumerate(routine["steps"]):
+        move = moves.get(ref["move"])
+        if move is None:
+            error(routine["id"], f"引用了动作库里不存在的动作: {ref['move']!r}")
+            continue
+        steps.append({
+            "id": f"{routine['id']}_{index + 1:02d}_{ref['move']}",
+            "title": move["title"],
+            "durationSeconds": ref.get("durationSeconds", move["defaultDurationSeconds"]),
+            "side": ref.get("side", move.get("side", "none")),
+            "movement": move["movement"],
+            "moveID": move["id"],
+        })
+    return {**routine, "steps": steps}
+
+
 def build_segments(routine: dict) -> list[dict]:
     """把 steps 展开成播放段，leftThenRight 拆成两段。"""
     segments = []
@@ -99,11 +118,25 @@ def resolve_anchor_id(anchor_id: str | None, side: str) -> str | None:
 # 落点合理性
 # ---------------------------------------------------------------------------
 def face_bounds() -> tuple[float, float, float, float]:
-    """合成脸的包围盒（视图坐标），外扩一点点作为「还算在脸上」的判据。"""
+    """合成脸的包围盒（视图坐标），外扩一点点作为「还算在脸上」的判据。
+
+    上边界要单独算。原因：landmark 集合最高只到 `foreheadCenter`（眉峰上方
+    约 0.32 瞳距），再往上到发际线就没有点了 —— 任何 landmark 模型都不标头皮。
+    直接用「最高 landmark 再外扩 0.35」当上边界，会把额头上半部分判成「脸外」，
+    于是 GM-03「额头上提」这类到发际线的动作会被误报。
+
+    所以上边界改用解剖学上限：发际线大约在眉线上方 0.9–1.0 瞳距
+    （成人瞳距约 63mm，眉到发际线约 55–65mm），留一点余量取 1.15。
+    超过这个高度就真的画到头皮上去了，检查仍然有效。
+    """
     xs = [p[0] * INTEROCULAR + FACE_CENTER[0] for p in CANONICAL_FACE.values()]
     ys = [p[1] * INTEROCULAR + FACE_CENTER[1] for p in CANONICAL_FACE.values()]
     margin = 0.35 * INTEROCULAR
-    return min(xs) - margin, min(ys) - margin, max(xs) + margin, max(ys) + margin
+
+    brow_y = CANONICAL_FACE["leftBrowPeak"][1]
+    hairline_ceiling = (brow_y - 1.15) * INTEROCULAR + FACE_CENTER[1]
+
+    return min(xs) - margin, min(min(ys) - margin, hairline_ceiling), max(xs) + margin, max(ys) + margin
 
 
 def path_length(points: list[tuple[float, float]]) -> float:
@@ -123,7 +156,7 @@ def simulate(routine: dict, anchors: dict, landmarks: dict, frame: FaceFrame) ->
     min_x, min_y, max_x, max_y = face_bounds()
 
     print(f"\n{routine_id}  —  {len(routine['steps'])} steps → {len(segments)} 播放段，{total:.0f}s")
-    print(f"  {'段':<3} {'侧':<6} {'时长':>6} {'动作':<26} {'路径':<7} {'长度':>8}  anchor")
+    print(f"  {'段':<3} {'侧':<6} {'时长':>6} {'动作':<26} {'路径':<10} {'长度':>8}  anchor")
 
     for index, segment in enumerate(segments):
         step = segment["step"]
@@ -134,6 +167,36 @@ def simulate(routine: dict, anchors: dict, landmarks: dict, frame: FaceFrame) ->
         start_id = resolve_anchor_id(movement.get("startAnchor"), side)
         end_id = resolve_anchor_id(movement.get("endAnchor"), side)
         path_type = movement.get("pathType", "line")
+        focus_ids = [resolve_anchor_id(a, side) for a in movement.get("focusAnchors", [])]
+
+        # 没有轨迹的动作：只标区域，或者干脆只有提示与计时。
+        if path_type in ("expression", "tap"):
+            missing = [a for a in focus_ids if a not in anchors]
+            if missing:
+                error(where, f"focusAnchors 不存在（按 side={side} 改写后）: {missing}")
+                continue
+            if not focus_ids and start_id is None:
+                if path_type == "tap":
+                    error(where, "tap 既没有 focusAnchors 也没有 startAnchor —— 脸上什么都不会显示")
+                    continue
+                # expression 没有区域是允许的：这一段本来就只有语音提示 + 计时。
+                print(f"  {index:<3} {side:<6} {segment['duration']:>5.0f}s "
+                      f"{step['title'][:26]:<26} {path_type:<10} "
+                      f"{'—':>8}  仅提示与计时（无 overlay）")
+                continue
+
+            marker_ids = focus_ids or [start_id]
+            outside_count = 0
+            for anchor_id in marker_ids:
+                view = evaluate_rule(anchors[anchor_id]["rule"], landmarks, frame)
+                if not (min_x <= view[0] <= max_x and min_y <= view[1] <= max_y):
+                    outside_count += 1
+            if outside_count:
+                error(where, f"{outside_count}/{len(marker_ids)} 个高亮区域落在脸部范围之外")
+            print(f"  {index:<3} {side:<6} {segment['duration']:>5.0f}s "
+                  f"{step['title'][:26]:<26} {path_type:<10} "
+                  f"{len(marker_ids):>5} 区域  {', '.join(marker_ids)}")
+            continue
 
         if start_id is None:
             error(where, "没有 startAnchor —— 这一段在脸上什么都不会显示")
@@ -198,7 +261,7 @@ def simulate(routine: dict, anchors: dict, landmarks: dict, frame: FaceFrame) ->
         anchor_text = start_id + (f" → {end_id}" if end_id else "")
         print(
             f"  {index:<3} {side:<6} {segment['duration']:>5.0f}s "
-            f"{step['title'][:26]:<26} {path_type:<7} "
+            f"{step['title'][:26]:<26} {path_type:<10} "
             f"{length / INTEROCULAR:>6.2f}瞳距  {anchor_text}"
         )
 
@@ -226,6 +289,7 @@ def main() -> int:
     frame = FaceFrame(landmarks)
     anchors = load_anchor_table()
     routines = json.loads((CONTENT_DIR / "routines.json").read_text(encoding="utf-8"))["routines"]
+    moves = {m["id"]: m for m in json.loads((CONTENT_DIR / "moves.json").read_text(encoding="utf-8"))["moves"]}
 
     wanted = sys.argv[1] if len(sys.argv) > 1 else None
     if wanted:
@@ -233,6 +297,8 @@ def main() -> int:
         if not routines:
             print(f"找不到 routine: {wanted}")
             return 1
+
+    routines = [assemble(r, moves) for r in routines]
 
     print("无头 routine 模拟")
     print(f"合成脸：瞳距 {INTEROCULAR:.0f}px，正脸，双眼中点 {FACE_CENTER}")

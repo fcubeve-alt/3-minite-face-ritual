@@ -136,23 +136,40 @@ engine.tick(deltaTime: 1.0/60.0)   // 没有内部 Timer
 
 ---
 
-## 5. 内容层（可替换 Mock Data）
+## 5. 内容层（可替换内容数据）
+
+**动作是资产，routine 只是时间线**（Video Factory v0.2 §4/§9）。
+同一个动作会在多个 routine 里出现 —— Prototype A 里 GM-11 与 GM-18 各出现两次，
+三套原型都用 GM-02。内联复制迟早会漂移，所以 routine 里只写引用：
+
+```jsonc
+{ "move": "GM-08", "durationSeconds": 20 }
+```
+
+`ContentAssembler` 在加载时把引用展开成 `RoutineStep`，
+并在每一步上留下 `sourceMoveID` —— 校验器靠它把「工具动作不得进 morning」
+这类长在 `GoldMove` 上的约束，施加到展开后的 routine 上。
+
 
 ```
 Resources/Content/
-├── routines.json      # Routine + RoutineStep + MovementSpec
-├── anchors.json       # FaceAnchor v1（当前 5 个测试点）
+├── moves.json         # Gold Motion Library —— 动作的唯一真源（GoldMove + MovementSpec）
+├── routines.json      # 时间线：只写「第几步用哪个动作」，由 ContentAssembler 展开
+├── anchors.json       # FaceAnchor（15 个声明 → 27 个，自动镜像）
 └── content_meta.json  # schemaVersion / contentVersion / reviewStatus
 ```
 
-每个 routine / anchor 都带 `reviewStatus` 字段：
+每个 move / routine / anchor 都带 `reviewStatus` 字段：
 
 ```json
-"reviewStatus": "mock_unreviewed"
+"reviewStatus": "draft"
 ```
 
-`ContentValidator` 在 DEBUG 下把所有 `mock_unreviewed` 打印为警告，UI 上以 "MOCK CONTENT" 角标显示，
-确保测试动作**不可能**被误当成正式内容发布。Owner 审核后改为 `expert_reviewed` 即可。
+`ContentValidator` 把所有非 `expert_reviewed` 的条目报为警告，UI 上以 "MOCK CONTENT" 角标显示，
+单元测试断言内容包必须仍是未审核状态 —— 确保未经 Expert Gate 的动作**不可能**被误当成正式内容发布。
+
+用户看到的是英文字段；`GoldMoveSource` 里**逐字保留中文原文**（起始姿势、操作、力度、停止信号）。
+安全措辞经翻译会引入偏差，而那恰恰是 Expert Gate 要审的东西，所以两份并存，谁也不覆盖谁。
 
 ---
 

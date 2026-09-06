@@ -16,6 +16,7 @@ struct DebugView: View {
             providerSection
             landmarkCoverageSection
             anchorSection
+            moveLibrarySection
             contentSection
         }
         .scrollContentBackground(.hidden)
@@ -139,12 +140,72 @@ struct DebugView: View {
         }
     }
 
+    /// Gold Motion Library。
+    ///
+    /// 这一屏是 Expert Gate 的工作面：每个动作旁边直接显示中文原文来源、
+    /// 力度、工具要求与证据等级 —— 专家审的是原文，用户看的是英文，
+    /// 两份并存才审得动。
+    private var moveLibrarySection: some View {
+        let moves = environment.allMoves
+        let pending = environment.movesAwaitingExpertGate.count
+        return Section("Gold Motion Library (\(moves.count))") {
+            HStack {
+                Text("待专家审核")
+                Spacer()
+                Text("\(pending) / \(moves.count)")
+                    .font(.system(.footnote, design: .monospaced))
+                    .foregroundStyle(pending > 0 ? Theme.warning : Theme.accent)
+            }
+            ForEach(moves) { move in
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack {
+                        Text(move.id.rawValue)
+                            .font(.system(size: 13, weight: .medium, design: .monospaced))
+                        Text(move.title)
+                            .font(.system(size: 13))
+                            .foregroundStyle(Theme.textSecondary)
+                        Spacer()
+                        if move.reviewStatus.isPublishable == false {
+                            MockContentBadge(compact: true)
+                        }
+                    }
+                    Text(move.source.titleZh)
+                        .font(.caption)
+                        .foregroundStyle(Theme.textSecondary)
+                    HStack(spacing: 5) {
+                        tag(move.region.rawValue)
+                        tag(move.movement.pathType.rawValue)
+                        tag(move.intensity.rawValue)
+                        if move.requiresTool.isTool { tag(move.requiresTool.rawValue) }
+                    }
+                    Text("\(move.source.documentRef) · \(move.evidenceLevel.rawValue) · "
+                         + move.allowedRoutineTypes.map(\.rawValue).joined(separator: "/"))
+                        .font(.system(size: 10, design: .monospaced))
+                        .foregroundStyle(Theme.textTertiary)
+                    if let stop = move.source.stopSignalsZh {
+                        Text("停止信号：" + stop)
+                            .font(.system(size: 10))
+                            .foregroundStyle(Theme.warning)
+                    }
+                }
+                .padding(.vertical, 3)
+            }
+        }
+    }
+
     private var contentSection: some View {
         Section("Content (\(environment.content.meta.contentVersion))") {
             HStack {
                 Text("Routines")
                 Spacer()
                 Text("\(environment.content.routines.count)")
+                    .foregroundStyle(Theme.textSecondary)
+            }
+            HStack {
+                Text("Schema")
+                Spacer()
+                Text("v\(environment.content.meta.schemaVersion)")
+                    .font(.system(.footnote, design: .monospaced))
                     .foregroundStyle(Theme.textSecondary)
             }
             HStack {

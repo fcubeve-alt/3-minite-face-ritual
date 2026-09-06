@@ -6,11 +6,29 @@ public struct ContentBundle: Sendable {
     public let routines: [Routine]
     /// 已展开左右镜像后的 anchor 表。
     public let anchors: [FaceAnchorID: FaceAnchor]
+    /// Gold Motion Library。动作的唯一真源（文档二 §2/§4）。
+    public let moves: [GoldMoveID: GoldMove]
 
-    public init(meta: ContentMeta, routines: [Routine], anchors: [FaceAnchorID: FaceAnchor]) {
+    public init(
+        meta: ContentMeta,
+        routines: [Routine],
+        anchors: [FaceAnchorID: FaceAnchor],
+        moves: [GoldMoveID: GoldMove] = [:]
+    ) {
         self.meta = meta
         self.routines = routines
         self.anchors = anchors
+        self.moves = moves
+    }
+
+    /// 按 Gold Move ID 排序的动作库，供 Debug 页与专家审阅使用。
+    public var sortedMoves: [GoldMove] {
+        moves.values.sorted { $0.id.rawValue < $1.id.rawValue }
+    }
+
+    /// 尚未通过 Expert Gate 的动作。Sprint 3 文档开头即声明全部动作仍需人工专家审核。
+    public var movesAwaitingExpertGate: [GoldMove] {
+        sortedMoves.filter { $0.reviewStatus.isPublishable == false }
     }
 
     public func routine(id: RoutineID) -> Routine? {
@@ -40,6 +58,7 @@ public struct ContentBundle: Sendable {
         if routines.contains(where: { $0.reviewStatus.isPublishable == false }) { return true }
         if routines.contains(where: { $0.steps.contains { $0.reviewStatus.isPublishable == false } }) { return true }
         if anchors.values.contains(where: { $0.reviewStatus.isPublishable == false }) { return true }
+        if moves.values.contains(where: { $0.reviewStatus.isPublishable == false }) { return true }
         return false
     }
 }
@@ -79,11 +98,14 @@ public final class JSONContentRepository: ContentRepository, @unchecked Sendable
         public let metaData: Data
         public let routinesData: Data
         public let anchorsData: Data
+        /// Gold Motion Library。
+        public let movesData: Data
 
-        public init(metaData: Data, routinesData: Data, anchorsData: Data) {
+        public init(metaData: Data, routinesData: Data, anchorsData: Data, movesData: Data) {
             self.metaData = metaData
             self.routinesData = routinesData
             self.anchorsData = anchorsData
+            self.movesData = movesData
         }
     }
 
@@ -113,9 +135,26 @@ public final class JSONContentRepository: ContentRepository, @unchecked Sendable
             throw ContentLoadError.schemaVersionMismatch(found: meta.schemaVersion, expected: ContentSchema.currentVersion)
         }
 
+        // 先解动作库 —— routine 只是引用它的时间线。
+        let moveList: [GoldMove]
+        do {
+            moveList = try decoder.decode(MovesFile.self, from: source.movesData).moves
+        } catch {
+            throw ContentLoadError.decodingFailed(resource: "moves.json", underlying: String(describing: error))
+        }
+        var moveTable: [GoldMoveID: GoldMove] = [:]
+        for move in moveList { moveTable[move.id] = move }
+
+        let blueprints: [RoutineBlueprint]
+        do {
+            blueprints = try decoder.decode(RoutinesFile.self, from: source.routinesData).routines
+        } catch {
+            throw ContentLoadError.decodingFailed(resource: "routines.json", underlying: String(describing: error))
+        }
+
         let routines: [Routine]
         do {
-            routines = try decoder.decode(RoutinesFile.self, from: source.routinesData).routines
+            routines = try blueprints.map { try ContentAssembler.assemble(blueprint: $0, moves: moveTable) }
         } catch {
             throw ContentLoadError.decodingFailed(resource: "routines.json", underlying: String(describing: error))
         }
@@ -136,7 +175,12 @@ public final class JSONContentRepository: ContentRepository, @unchecked Sendable
             }
         }
 
-        let bundle = ContentBundle(meta: meta, routines: routines, anchors: anchorTable)
+        let bundle = ContentBundle(
+            meta: meta,
+            routines: routines,
+            anchors: anchorTable,
+            moves: moveTable
+        )
         let issues = validator.validate(bundle)
         let blocking = issues.filter { $0.severity == .error }
         if blocking.isEmpty == false, failOnValidationError {
@@ -152,6 +196,7 @@ public final class JSONContentRepository: ContentRepository, @unchecked Sendable
         return validator.validate(cached)
     }
 
-    private struct RoutinesFile: Decodable { let routines: [Routine] }
+    private struct RoutinesFile: Decodable { let routines: [RoutineBlueprint] }
     private struct AnchorsFile: Decodable { let anchors: [FaceAnchor] }
+    private struct MovesFile: Decodable { let moves: [GoldMove] }
 }

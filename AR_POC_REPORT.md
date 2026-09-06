@@ -72,16 +72,20 @@ OK temple_right           最大漂移 = 7.153e-16 瞳距
 无头跑完整 routine，对每个播放段解析 anchor、采样路径、检查落点：
 
 ```
-morning_core  —  5 steps → 9 播放段，180s
-  0   left      18s Temple Circles    circle   1.26瞳距  temple_left
-  1   right     18s Temple Circles    circle   1.26瞳距  temple_right
-  2   left      18s Brow Sweep        line     0.89瞳距  brow_inner_left → temple_left
-  3   right     18s Brow Sweep        line     0.89瞳距  brow_inner_right → temple_right
-  4   left      18s Cheek Lift        curve    0.87瞳距  cheek_mid_left → temple_left
-  5   right     18s Cheek Lift        curve    0.87瞳距  cheek_mid_right → temple_right
-  6   left      18s Jaw Release       arc      1.67瞳距  jaw_angle_left → temple_left
-  7   right     18s Jaw Release       arc      1.67瞳距  jaw_angle_right → temple_right
-  8   none      36s Glabella Hold     hold     0.00瞳距  glabella_center
+morning_prototype_b  —  12 steps → 12 播放段，180s
+  0   none      15s Settle and Breathe       expression      —  仅提示与计时（无 overlay）
+  1   both      15s Forehead Sweep           line       1.27瞳距  forehead_center → temple_left
+  2   both      15s Temple Circles           circle     1.00瞳距  temple_left
+  3   both      15s Cheek Lifter             press      0.00瞳距  cheekbone_left
+  4   both      20s Happy Cheeks Sculpting   line       0.81瞳距  mouth_corner_left → cheekbone_left
+  5   none      15s Cheek Puff               expression   2 区域  cheek_mid_left, cheek_mid_right
+  6   both      15s Midface Sweep            line       0.60瞳距  nose_side_left → cheekbone_left
+  7   both      15s Cheek to Temple          curve      0.86瞳距  cheek_mid_left → temple_left
+  8   both      15s Jawline Sweep            arc        1.88瞳距  chin_center → preauricular_left
+  9   both      15s Forehead Lift            line       0.78瞳距  forehead_lower_left → hairline_left
+  10  both      15s Palm Effleurage          line       0.95瞳距  cheek_lower_left → preauricular_left
+  11  both      10s Light Tapping            tap          5 区域  forehead_center, cheek_mid_left, ...
+（Prototype A / C 同样 12 段 180s）
 每一段都能正常渲染，无问题
 ```
 
@@ -93,13 +97,17 @@ golden vector 验的是变换不变性，测不出镜像错误；这个 bug 原�
 ### 1.3 内容包
 
 ```
-morning_core     type=morning  premium=False steps=5  total=180s
-evening_core     type=evening  premium=True  steps=5  total=300s
-quick_depuff     type=quick    premium=True  steps=3  total=180s
-quick_tired_eyes type=quick    premium=True  steps=3  total=180s
-anchors: 9 个（5 个声明 + 4 个自动镜像）
-errors=0 warnings=1（预期内：内容标记为 mock_unreviewed）
+Gold Motion Library: 20 个动作（GM-01…GM-20），Sprint 3 v0.3
+morning_prototype_b    type=morning  premium=False steps=12 total=180s
+morning_prototype_a    type=morning  premium=False steps=12 total=180s
+morning_prototype_c    type=morning  premium=False steps=12 total=180s
+anchors: 27 个（15 个声明 + 12 个自动镜像）
+errors=0 warnings=2（均为预期内：
+  · 内容包整体标记为 draft，待 Expert Gate
+  · 5 个动作尚未被任何 routine 使用 —— Sprint 3 §11 把 Evening/Quick 标为「随后设计」）
 ```
+
+`tools/check_validator_teeth.py`：15 条内容校验规则逐条注入缺陷，全部确认会报错。
 
 ---
 

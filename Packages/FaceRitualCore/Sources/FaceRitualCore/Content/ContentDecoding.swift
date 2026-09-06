@@ -35,6 +35,7 @@ extension MovementSpec {
         case pathType, pathGeometry, direction, gestureHint
         case tempoCyclesPerMinute = "tempo"
         case repetitions, holdSeconds, overlayAssets
+        case focusAnchorIDs = "focusAnchors"
         case occlusionPolicy, trackingSupport, version
     }
 
@@ -51,6 +52,7 @@ extension MovementSpec {
             repetitions: try container.value(.repetitions, default: 1),
             holdSeconds: try container.value(.holdSeconds, default: 0),
             overlayAssets: try container.value(.overlayAssets, default: [String]()),
+            focusAnchorIDs: try container.value(.focusAnchorIDs, default: [FaceAnchorID]()),
             occlusionPolicy: try container.value(.occlusionPolicy, default: OcclusionPolicy.continueGuidance),
             trackingSupport: try container.value(.trackingSupport, default: TrackingSupport.guidanceOnly),
             version: try container.value(.version, default: "0.0.1-mock")

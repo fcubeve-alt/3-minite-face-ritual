@@ -111,6 +111,27 @@
 // ---------------------------------------------------------------------------
 const ANCHORS_DOC = /*__ANCHORS__*/;
 const ROUTINES_DOC = /*__ROUTINES__*/;
+const MOVES_DOC = /*__MOVES__*/;
+
+// 动作是资产，routine 只是引用它的时间线（文档二 §9）。
+// 这里复刻 ContentAssembler.swift：把引用展开成带 id 的 step。
+const MOVES = Object.fromEntries(MOVES_DOC.moves.map(m => [m.id, m]));
+const ROUTINES = ROUTINES_DOC.routines.map(r => ({
+  ...r,
+  steps: r.steps.map((ref, i) => {
+    const move = MOVES[ref.move];
+    if (!move) throw new Error(`routine ${r.id} 引用了不存在的动作 ${ref.move}`);
+    return {
+      id: `${r.id}_${String(i + 1).padStart(2, "0")}_${ref.move}`,
+      title: move.title,
+      shortCue: move.shortCue,
+      durationSeconds: ref.durationSeconds ?? move.defaultDurationSeconds,
+      side: ref.side ?? move.side ?? "none",
+      movement: move.movement,
+      moveID: move.id,
+    };
+  }),
+}));
 
 // ---------------------------------------------------------------------------
 // 几何：与 Swift 的 FaceFrame / FaceAnchorResolver / PathSampler 一一对应
@@ -269,7 +290,9 @@ function buildPath(movement, startLocal, endLocal, frame) {
   const g = movement.pathGeometry || {};
   const type = movement.pathType || "line";
   let pts;
-  if (type === "press" || type === "hold") pts = [startLocal];
+  if (type === "expression") pts = [];            // 没有手部接触，脸上没有轨迹
+  else if (type === "tap") pts = [startLocal];      // 每个区域各自一个标记点
+  else if (type === "press" || type === "hold") pts = [startLocal];
   else if (type === "circle")
     pts = sampleCircle(startLocal, g.radius ?? 0.35, g.sweepDegrees ?? 360, g.clockwise !== false);
   else if (!endLocal) pts = [startLocal];
@@ -382,7 +405,7 @@ let landmarker = null, running = false, showMesh = false;
 let segments = [], segIndex = -1, segStart = 0, playing = false;
 let frameTimes = [];
 
-for (const r of ROUTINES_DOC.routines) {
+for (const r of ROUTINES) {
   const o = document.createElement("option");
   o.value = r.id; o.textContent = `${r.title} (${r.steps.length} moves)`;
   routineSel.appendChild(o);
@@ -425,7 +448,7 @@ document.getElementById("start").onclick = async () => {
   }
 };
 document.getElementById("play").onclick = () => {
-  const routine = ROUTINES_DOC.routines.find(r => r.id === routineSel.value);
+  const routine = ROUTINES.find(r => r.id === routineSel.value);
   segments = buildSegments(routine); segIndex = 0; segStart = performance.now(); playing = true;
 };
 document.getElementById("next").onclick = () => {
@@ -475,6 +498,42 @@ function loop() {
   const sideLabel = seg.side === "left" ? "左" : seg.side === "right" ? "右" : "";
   moveTitle.textContent = seg.step.title + (sideLabel ? ` · ${sideLabel}侧` : "");
   moveCue.textContent = `${seg.step.shortCue || ""}   ${Math.ceil(seg.duration - elapsed)}s`;
+
+  const cyclePreview = mv.tempo ? 60 / mv.tempo : Math.max(0.5, seg.duration / (mv.repetitions || 1));
+
+  // 没有轨迹的动作：表情肌动作不用手，全脸轻拍跨多个区域。
+  // 这类只标出「注意这一带」，不画 ● → ◎（画了会被误读成「手放这里、沿线走」）。
+  const pathType = mv.pathType || "line";
+  if (pathType === "expression" || pathType === "tap") {
+    const focus = (mv.focusAnchors || []).map(a => resolveAnchorId(a, seg.side));
+    const ids = focus.length ? focus : (mv.startAnchor ? [resolveAnchorId(mv.startAnchor, seg.side)] : []);
+    const color = ACCENT[seg.side] || ACCENT.none;
+    const phase = (elapsed % cyclePreview) / cyclePreview;
+    ids.forEach((id, i) => {
+      const a = ANCHORS[id];
+      if (!a) return;
+      const p = evalRule(a.rule, lm, frame);
+      if (!p) return;
+      // 多个区域时按顺序轮流点亮，全部同时闪会看上去像报错。
+      let emphasis = 1;
+      if (ids.length > 1) {
+        let d = Math.abs(phase - i / ids.length);
+        if (d > 0.5) d = 1 - d;
+        emphasis = Math.min(1, Math.max(0.25, 1 - d * ids.length * 0.8));
+      }
+      const r = Math.max((a.toleranceRadius ?? 0.12) * frame.scale, 14)
+              * (0.92 + 0.08 * Math.sin(phase * 2 * Math.PI));
+      const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
+      grad.addColorStop(0, color + Math.round(0x30 * emphasis).toString(16).padStart(2, "0"));
+      grad.addColorStop(1, color + "00");
+      ctx.fillStyle = grad;
+      ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 2*Math.PI); ctx.fill();
+      ctx.strokeStyle = color + Math.round(0x4c + 0x73 * emphasis).toString(16).padStart(2, "0");
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 2*Math.PI); ctx.stroke();
+    });
+    return;
+  }
 
   const startId = resolveAnchorId(mv.startAnchor, seg.side);
   const endId = resolveAnchorId(mv.endAnchor, seg.side);

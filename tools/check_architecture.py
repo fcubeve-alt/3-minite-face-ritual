@@ -335,11 +335,15 @@ def check_no_hardcoded_content() -> None:
 
     content_dir = CORE / "Resources"
     routines = json.loads((content_dir / "routines.json").read_text(encoding="utf-8"))
+    moves = json.loads((content_dir / "moves.json").read_text(encoding="utf-8"))
     ids = set()
+    for move in moves["moves"]:
+        ids.add(move["id"])
     for routine in routines["routines"]:
         ids.add(routine["id"])
-        for step in routine["steps"]:
-            ids.add(step["id"])
+        # routine 现在只写引用，step id 由 ContentAssembler 合成 —— 这里复刻同一规则。
+        for index, ref in enumerate(routine["steps"]):
+            ids.add(f"{routine['id']}_{index + 1:02d}_{ref['move']}")
 
     allow = {
         "Packages/FaceRitualCore/Tests",       # 测试当然要引用具体 id
