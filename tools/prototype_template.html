@@ -96,6 +96,15 @@
   <button id="toggleMesh">显示/隐藏 landmark</button>
 </div>
 
+<div id="controls">
+  <select id="scenarioSel"></select>
+  <button id="rec" class="primary" disabled>开始测量</button>
+  <button id="exportBtn" disabled>导出测量数据</button>
+  <span id="recStatus" class="chip">未在测量</span>
+</div>
+
+<div id="measureOut"></div>
+
 <div id="notes">
   <p><b>怎么看：</b>● 是起点，◎ 是终点，白点沿着路线走，箭头指方向。
      左脸用蓝色、右脸用橙色。</p>
@@ -107,7 +116,29 @@
      landmark 来自 MediaPipe，与 iOS 版用的不是同一个模型，所以帧率和抖动特性会有差异。</p>
   <p><b>没有轨迹的动作是正常的：</b>呼吸、鼓气、元音这类表情肌动作不用手，
      脸上只会柔和地点亮区域或者干脆只有计时；全脸轻拍会按顺序轮流点亮几片区域。</p>
+  <p><b>测量是干什么的：</b>anchor 在<b>脸部局部坐标系</b>里的位置理论上恒定
+     —— 坐标系以双眼为原点、瞳距为单位，对远近、平移、歪头天然不变。
+     所以它在你脸上的残余波动<b>就是漂移本身</b>，不需要任何真值标注。
+     选一个场景、保持姿势十几秒、点停止，就能拿到数字。</p>
+  <p><b>drift</b>（相对整段均值的偏离）= 点慢慢跑偏；
+     <b>jitter</b>（相邻帧位移）= 点在原地抖。两者要调的滤波参数不同。
+     单位都是瞳距，所以不同的人、不同距离之间可以直接比。</p>
+  <p><b>⚠️ 别把这里的绝对值当成 iOS 的预期值：</b>MediaPipe 与 Vision/HRFFA 是
+     不同的模型，笔记本摄像头也不是 iPhone 前摄。这里能回答的是
+     「FaceFrame 这套坐标系在真人脸上站不站得住」，那部分是可以迁移的。</p>
 </div>
+
+<style>
+  #measureOut {
+    max-width: 760px; margin: 10px auto 0; padding: 0 14px;
+    font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    white-space: pre-wrap; color: #9aa4b2;
+  }
+  #measureOut table { border-collapse: collapse; width: 100%; font-size: 11px; }
+  #measureOut th, #measureOut td { text-align: left; padding: 3px 6px; border-bottom: 1px solid #2a2f3a; }
+  #measureOut th { color: #c8d0da; }
+  .over { color: #ffb454; }
+</style>
 
 <script type="module">
 // ---------------------------------------------------------------------------
@@ -323,6 +354,114 @@ function pointAt(points, t) {
 }
 
 // ---------------------------------------------------------------------------
+// 稳定性测量 —— 与 Core 的 StabilityMeter.swift **逐字段对应**。
+//
+// 两边算的必须是同一套统计量，否则浏览器测出来的数和 iOS 测出来的没法比。
+// 分位数用最近秩线性插值，和 Swift 那版一致。
+// ---------------------------------------------------------------------------
+function percentile(sorted, q) {
+  if (!sorted.length) return 0;
+  if (sorted.length === 1) return sorted[0];
+  const pos = (sorted.length - 1) * Math.min(1, Math.max(0, q));
+  const lo = Math.floor(pos), hi = Math.min(sorted.length - 1, lo + 1);
+  return sorted[lo] + (sorted[hi] - sorted[lo]) * (pos - lo);
+}
+
+class StabilityMeter {
+  constructor(capacity = 900) { this.capacity = capacity; this.samples = []; this.steps = []; this.last = null; }
+  record(p) {
+    if (this.last) {
+      this.steps.push(Math.hypot(p.x - this.last.x, p.y - this.last.y));
+      if (this.steps.length > this.capacity) this.steps.shift();
+    }
+    this.last = p;
+    this.samples.push(p);
+    if (this.samples.length > this.capacity) this.samples.shift();
+  }
+  get center() {
+    if (!this.samples.length) return { x: 0, y: 0 };
+    let sx = 0, sy = 0;
+    for (const p of this.samples) { sx += p.x; sy += p.y; }
+    return { x: sx / this.samples.length, y: sy / this.samples.length };
+  }
+  deviations() {
+    const c = this.center;
+    return this.samples.map(p => Math.hypot(p.x - c.x, p.y - c.y)).sort((a, b) => a - b);
+  }
+  get driftRMS() {
+    if (!this.samples.length) return 0;
+    const c = this.center;
+    let sum = 0;
+    for (const p of this.samples) { const d = Math.hypot(p.x - c.x, p.y - c.y); sum += d * d; }
+    return Math.sqrt(sum / this.samples.length);
+  }
+  get driftP95() { return percentile(this.deviations(), 0.95); }
+  get driftMax() { const d = this.deviations(); return d.length ? d[d.length - 1] : 0; }
+  get jitterMedian() { return percentile([...this.steps].sort((a, b) => a - b), 0.5); }
+  get jitterP95() { return percentile([...this.steps].sort((a, b) => a - b), 0.95); }
+}
+
+// 与 POCRecorder.standardScenarios 保持一致 —— 标签固定，不同人测的才对得上。
+const SCENARIOS = [
+  { id: "dist_15", label: "很近 · 约 15cm", section: "B 距离" },
+  { id: "dist_30", label: "正常 · 约 30cm", section: "B 距离" },
+  { id: "dist_60", label: "较远 · 约 60cm", section: "B 距离" },
+  { id: "dist_100", label: "很远 · 约 1m", section: "B 距离" },
+  { id: "pose_up", label: "轻微抬头 · 约 15°", section: "C 头部姿态" },
+  { id: "pose_down", label: "轻微低头 · 约 15°", section: "C 头部姿态" },
+  { id: "pose_yaw20", label: "转头 · 约 20°", section: "C 头部姿态" },
+  { id: "pose_yaw40", label: "大幅转头 · 约 40°", section: "C 头部姿态" },
+  { id: "still", label: "静止不动", section: "D 漂移" },
+  { id: "sway", label: "缓慢左右平移", section: "D 漂移" },
+  { id: "occl_finger", label: "单指点在脸上", section: "E 手遮挡" },
+  { id: "occl_twofinger", label: "两指划过", section: "E 手遮挡" },
+  { id: "occl_palm", label: "手掌盖住半张脸", section: "E 手遮挡" },
+  { id: "routine", label: "完整走一遍 routine", section: "A 基础运行" },
+];
+
+const recorder = {
+  active: null, meters: new Map(), frames: 0, lostFrames: 0, startedAt: 0, done: [],
+  begin(scenario) {
+    this.active = scenario; this.meters = new Map();
+    this.frames = 0; this.lostFrames = 0; this.startedAt = performance.now();
+  },
+  // detected=false 表示这一帧没识别到脸。位置本来就没意义，
+  // 混进统计会让漂移虚高、反而掩盖真实问题 —— 只计入丢失率。
+  sample(detected, localPoints) {
+    if (!this.active) return;
+    this.frames++;
+    if (!detected) { this.lostFrames++; return; }
+    for (const [id, p] of localPoints) {
+      if (!this.meters.has(id)) this.meters.set(id, new StabilityMeter());
+      this.meters.get(id).record(p);
+    }
+  },
+  finish() {
+    if (!this.active) return null;
+    const stability = [...this.meters.entries()]
+      .sort((a, b) => a[0] < b[0] ? -1 : 1)
+      .map(([id, m]) => ({
+        anchorID: id,
+        sampleCount: m.samples.length,
+        driftRMS: m.driftRMS, driftP95: m.driftP95, driftMax: m.driftMax,
+        jitterMedian: m.jitterMedian, jitterP95: m.jitterP95,
+        toleranceRadius: ANCHORS[id]?.toleranceRadius ?? 0,
+      }));
+    const result = {
+      scenario: this.active,
+      providerID: "mediapipe-facelandmarker",
+      durationSeconds: (performance.now() - this.startedAt) / 1000,
+      frameCount: this.frames,
+      lostRatio: this.frames ? this.lostFrames / this.frames : 0,
+      stability,
+    };
+    this.done.push(result);
+    this.active = null;
+    return result;
+  },
+};
+
+// ---------------------------------------------------------------------------
 // 播放计划：leftThenRight 展开成两段（与 PlaybackPlan.swift 对应）
 // ---------------------------------------------------------------------------
 function buildSegments(routine) {
@@ -446,6 +585,7 @@ document.getElementById("start").onclick = async () => {
     statusEl.textContent = "摄像头已开。选一个 routine 然后点「开始 routine」。";
     document.getElementById("play").disabled = false;
     document.getElementById("next").disabled = false;
+    recBtn.disabled = false;
     requestAnimationFrame(loop);
   } catch (e) {
     statusEl.textContent = "打不开摄像头：" + e;
@@ -460,6 +600,75 @@ document.getElementById("next").onclick = () => {
   segIndex = (segIndex + 1) % segments.length; segStart = performance.now();
 };
 document.getElementById("toggleMesh").onclick = () => { showMesh = !showMesh; };
+
+// --- 测量控件 ---
+const scenarioSel = document.getElementById("scenarioSel");
+const recBtn = document.getElementById("rec");
+const exportBtn = document.getElementById("exportBtn");
+const recStatus = document.getElementById("recStatus");
+const measureOut = document.getElementById("measureOut");
+
+for (const sc of SCENARIOS) {
+  const o = document.createElement("option");
+  o.value = sc.id;
+  o.textContent = `${sc.label}  (${sc.section})`;
+  scenarioSel.appendChild(o);
+}
+
+recBtn.onclick = () => {
+  if (recorder.active) {
+    const result = recorder.finish();
+    recBtn.textContent = "开始测量";
+    recBtn.classList.add("primary");
+    exportBtn.disabled = recorder.done.length === 0;
+    renderMeasurements();
+    if (result) recStatus.textContent = `已记录：${result.scenario.label}`;
+  } else {
+    const sc = SCENARIOS.find(x => x.id === scenarioSel.value);
+    recorder.begin(sc);
+    recBtn.textContent = "停止并记录";
+    recBtn.classList.remove("primary");
+  }
+};
+
+exportBtn.onclick = () => {
+  const payload = {
+    schemaVersion: 1,
+    recordedAt: new Date().toISOString(),
+    source: "browser-prototype",
+    userAgent: navigator.userAgent,
+    note: "MediaPipe FaceLandmarker，非 iOS 的 Vision/HRFFA。绝对值不可直接当作 iOS 预期值。",
+    measurements: recorder.done,
+  };
+  navigator.clipboard?.writeText(JSON.stringify(payload, null, 2));
+  measureOut.textContent = JSON.stringify(payload, null, 2);
+  recStatus.textContent = "已复制到剪贴板";
+};
+
+function renderMeasurements() {
+  if (!recorder.done.length) { measureOut.innerHTML = ""; return; }
+  let html = "<table><tr><th>场景</th><th>时长</th><th>帧</th><th>丢失</th>"
+           + "<th>最差 anchor</th><th>drift p95</th><th>/容差</th><th>jitter 中位</th></tr>";
+  for (const m of recorder.done) {
+    const worst = m.stability.reduce((a, b) => (a && a.driftP95 > b.driftP95 ? a : b), null);
+    const ratio = worst && worst.toleranceRadius > 0 ? worst.driftP95 / worst.toleranceRadius : 0;
+    html += `<tr><td>${m.scenario.label}</td><td>${m.durationSeconds.toFixed(0)}s</td>`
+          + `<td>${m.frameCount}</td><td>${(m.lostRatio * 100).toFixed(0)}%</td>`
+          + `<td>${worst ? worst.anchorID : "—"}</td>`
+          + `<td>${worst ? worst.driftP95.toFixed(4) : "—"}</td>`
+          + `<td class="${ratio > 1 ? "over" : ""}">${worst ? (ratio * 100).toFixed(0) + "%" : "—"}</td>`
+          + `<td>${worst ? worst.jitterMedian.toFixed(4) : "—"}</td></tr>`;
+  }
+  html += "</table><p>单位=瞳距。「/容差」是 drift p95 占该 anchor 容差圈的比例，"
+        + "超过 100% 会标黄 —— 那表示 95% 的帧都跑出了容差圈。</p>";
+  measureOut.innerHTML = html;
+}
+
+function updateRecStatus() {
+  if (!recorder.active) return;
+  const secs = ((performance.now() - recorder.startedAt) / 1000).toFixed(0);
+  recStatus.textContent = `测量中 · ${recorder.active.label} · ${secs}s · ${recorder.frames} 帧`;
+}
 
 const ACCENT = { left: "#74d4fb", right: "#ffb86b", none: "#b8d8ff", both: "#b8d8ff" };
 
@@ -478,13 +687,35 @@ function loop() {
   let result;
   try { result = landmarker.detectForVideo(video, now); } catch { return; }
   const raw = result?.faceLandmarks?.[0];
-  if (!raw) { lockEl.textContent = "未检测到人脸"; lockEl.className = "chip warn"; return; }
+  if (!raw) {
+    lockEl.textContent = "未检测到人脸"; lockEl.className = "chip warn";
+    recorder.sample(false, null);
+    updateRecStatus();
+    return;
+  }
 
   const lm = toSemantic(raw, canvas.width, canvas.height);
   const frame = lm && makeFaceFrame(lm);
-  if (!frame) { lockEl.textContent = "定位不足"; lockEl.className = "chip warn"; return; }
+  if (!frame) {
+    lockEl.textContent = "定位不足"; lockEl.className = "chip warn";
+    recorder.sample(false, null);
+    updateRecStatus();
+    return;
+  }
   lockEl.textContent = "已锁定 · 瞳距 " + frame.scale.toFixed(0) + "px";
   lockEl.className = "chip";
+
+  // 采样：把**全部** anchor 解析到脸部局部坐标喂给记录器。
+  // 挑几个来测的话，挑选规则本身就成了一个要维护、会静默失效的东西。
+  if (recorder.active) {
+    const localPoints = new Map();
+    for (const id of Object.keys(ANCHORS)) {
+      const view = evalRule(ANCHORS[id].rule, lm, frame);
+      if (view) localPoints.set(id, frame.toLocal(view));
+    }
+    recorder.sample(true, localPoints);
+    updateRecStatus();
+  }
 
   if (showMesh) {
     ctx.fillStyle = "rgba(120,255,140,.5)";

@@ -48,6 +48,11 @@ jobs:
         # 改了 anchors.json 却忘了重新生成 golden，会让 Swift 测试断言一份过期的期望值。
         run: python tools/golden/generate_golden.py --check
 
+      - name: 浏览器原型的统计实现是否与 Swift 一致
+        # 漂移测量有三份实现（Swift / JS / Python 期望值）。
+        # 算得不一样的话，浏览器上测的数就没法和 iPhone 上测的放在一起比。
+        run: python tools/check_prototype_math.py
+
       - name: 无头跑一遍全部 routine
         # 验证每个播放段都能真的在脸上画出东西，以及左右两段互为镜像。
         run: python tools/simulate_routine.py

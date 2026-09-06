@@ -113,6 +113,28 @@ errors=0 warnings=2（均为预期内：
 
 ## 2. 真机测试协议
 
+### 2.0 不用等 iPhone 也能先测一轮
+
+浏览器原型现在带同一套测量。**在 Windows 上今天就能拿到第一组真人脸数据。**
+
+```bash
+python tools/build_prototype.py
+cd prototype && python -m http.server 8000
+```
+
+Chrome 打开 `http://127.0.0.1:8000` → 开摄像头 → 选场景 → 点「开始测量」。
+
+统计实现与 Swift 侧**逐字段对应**，并由 `tools/check_prototype_math.py`
+在 CI 上交叉验证（4 组用例，容差 1e-9）—— 算得不一样的话两边数据就没法比，
+所以这条检查不是可选的。
+
+> ⚠️ **绝对值不可直接当作 iOS 的预期值。**
+> MediaPipe 与 Vision/HRFFA 是不同模型，笔记本摄像头也不是 iPhone 前摄。
+>
+> 能迁移的是这个问题的答案：**FaceFrame 这套坐标系在真人脸上站不站得住。**
+> 如果连浏览器上都测出巨大漂移，那不是 provider 的问题，是坐标系或 anchor
+> 定义的问题 —— 那种问题换到 iPhone 上也不会消失，早发现早改。
+
 ### 2.1 准备
 
 1. Mac 上：`make bootstrap && make open`，在 Xcode 填 Team，跑到 iPhone 上。

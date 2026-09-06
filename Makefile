@@ -38,6 +38,10 @@ refs: ## Swift 跨文件引用检查（枚举 case / init 标签 / 协议一致�
 simulate: ## 无头跑一遍全部 routine，验证每一段都能在脸上画出东西
 	python tools/simulate_routine.py
 
+.PHONY: protomath
+protomath: ## 交叉验证浏览器原型的统计实现与 Swift/Python 是否一致
+	python tools/check_prototype_math.py
+
 .PHONY: prototype
 prototype: ## 生成并打开浏览器版 AR 概念验证（不需要 Mac / iPhone）
 	python tools/build_prototype.py
@@ -48,7 +52,7 @@ prototype: ## 生成并打开浏览器版 AR 概念验证（不需要 Mac / iPho
 	@echo "必须走 http 而不是双击文件：file:// 下浏览器会拦掉 CDN 模块与摄像头权限。"
 
 .PHONY: check
-check: arch refs content teeth golden simulate ## 跑所有不依赖 Xcode 的校验
+check: arch refs content teeth golden simulate protomath ## 跑所有不依赖 Xcode 的校验
 
 # ---------------------------------------------------------------------------
 # 需要 macOS + Xcode
