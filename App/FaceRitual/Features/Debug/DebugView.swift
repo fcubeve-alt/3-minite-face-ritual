@@ -27,6 +27,12 @@ struct DebugView: View {
 
     private var toolsSection: some View {
         Section {
+            NavigationLink("POC 测量（真机）") {
+                POCMeasurementView(
+                    anchors: environment.content.anchors,
+                    provider: environment.settings.preferredProviderKind
+                )
+            }
             NavigationLink("ARKit 顶点标定") {
                 ARKitCalibrationView()
             }
@@ -39,7 +45,9 @@ struct DebugView: View {
         } header: {
             Text("Tools")
         } footer: {
-            Text("ARKit 的 1220 个顶点没有官方语义编号，需要在真机上手工标定一次。标定完成后 ARKit provider 才会变为可用。")
+            Text("POC 测量把 AR_POC_REPORT.md §2 的九项指标变成按场景标注的数值，测完导出 JSON —— 不用再人肉观察手填表格。
+
+ARKit 的 1220 个顶点没有官方语义编号，需要在真机上手工标定一次。标定完成后 ARKit provider 才会变为可用。")
         }
     }
 

@@ -171,6 +171,9 @@ class TypeInfo:
     inits: list[list[str]] = field(default_factory=list)  # 每个 init 的参数标签序列
     init_required: list[set[str]] = field(default_factory=list)  # 无默认值的标签
     requirements: set[str] = field(default_factory=set)   # 协议要求（仅 protocol）
+    # 成员名 → [(文件, 行号, 种类)]，种类为 "func" / "property"。
+    # members 是 set，同名会被吞掉，查重需要保留每一次声明。
+    member_sites: dict = field(default_factory=dict)
 
 
 DECL_RE = re.compile(
@@ -247,6 +250,7 @@ def parse_file(path: pathlib.Path, types: dict[str, TypeInfo]) -> None:
 
     # (类型名, 声明所在缩进, 是否是 extension) 栈
     stack: list[tuple[str, int, bool]] = []
+    conditional_depth = 0
 
     for lineno, line in enumerate(lines, 1):
         stripped = line.strip()
@@ -317,6 +321,11 @@ def parse_file(path: pathlib.Path, types: dict[str, TypeInfo]) -> None:
             name = member.group(2) or member.group(4)
             if name:
                 owner.members.add(name)
+                # 只在**没有条件编译**的地方记录：`#if DEBUG` 的两个分支里
+                # 出现同名成员是合法的，记进去会误报。
+                if conditional_depth == 0:
+                    kind = "func" if member.group(1) else "property"
+                    owner.member_sites.setdefault(name, []).append((rel(path), lineno, kind))
                 # 协议**本体**里的才是「要求」。
                 # 写在 `extension SomeProtocol` 里的是默认实现 ——
                 # 遵循者不需要再实现一遍，算成要求会大批误报。
@@ -327,6 +336,40 @@ def parse_file(path: pathlib.Path, types: dict[str, TypeInfo]) -> None:
 # ---------------------------------------------------------------------------
 # 检查
 # ---------------------------------------------------------------------------
+def check_duplicate_members(types: dict[str, TypeInfo]) -> None:
+    """同一个类型里重复声明同名**属性** —— Swift 直接编译失败。
+
+    加这条是因为它真的发生过：给 ARGuidanceController 加 POC 访问器时，
+    我写了一个和已有 `lockLossCount` 重名的属性。这类错误 Mac 上一编译就炸，
+    在 Windows 上完全看不出来，一次 CI 往返 7 分钟。
+
+    **只查属性（var / let），不查方法。** 第一版没区分，在干净的代码库上
+    报了 6 个误报 —— 因为 Swift 里：
+      - 方法可以重载：`decide(routine:level:)` 与 `decide(mode:routine:level:)`
+      - 属性和方法可以同名：`let routines` 与 `func routines(ofType:)`
+      - 委托方法天生成组同名：`speechSynthesizer(_:didFinish:)` / `(_:didCancel:)`
+    一条会喊狼来了的规则比没有规则更糟，所以宁可缩小范围。
+
+    同样只查**同一文件内**：跨文件 extension 之间重名也是错误，
+    但那需要更完整的解析才能不误报。
+    """
+    for info in types.values():
+        for name, sites in info.member_sites.items():
+            properties: dict = {}
+            for file, lineno, kind in sites:
+                if kind != "property":
+                    continue
+                properties.setdefault(file, []).append(lineno)
+            for file, lines_ in properties.items():
+                if len(lines_) > 1:
+                    ordered = sorted(lines_)
+                    error(
+                        f"{file}:{ordered[1]}",
+                        f"{info.name} 里重复声明了属性 {name!r}"
+                        f"（另一处在第 {ordered[0]} 行）。Swift 会编译失败。",
+                    )
+
+
 def check_enum_case_references(types: dict[str, TypeInfo], files: list[pathlib.Path]) -> None:
     """`OurEnum.someCase` 里的 someCase 必须真的存在。
 
@@ -457,6 +500,7 @@ def run(files: list[pathlib.Path]) -> None:
     check_enum_case_references(types, files)
     check_initializer_labels(types, files)
     check_protocol_conformance(types)
+    check_duplicate_members(types)
 
 
 SELF_TEST_SOURCE = '''
@@ -468,6 +512,12 @@ enum Fruit {
 protocol Greeter {
     func greet()
     var name: String { get }
+}
+
+struct Duplicated {
+    var lockLossCount: Int { 0 }
+    var other: Int { 1 }
+    var lockLossCount: Int { 2 }
 }
 
 struct Person: Greeter {
@@ -511,6 +561,7 @@ def self_test() -> int:
             "枚举不存在的 case": any("Fruit.cherry" in m for m in found),
             "init 标签对不上": any("Person(...)" in m for m in found),
             "协议要求未实现": any("greet" in m for m in found),
+            "重复声明属性": any("重复声明了属性" in m for m in found),
         }
 
         print("自测（用故意写错的代码验证检查器有效）:")

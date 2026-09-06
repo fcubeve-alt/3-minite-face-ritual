@@ -79,6 +79,12 @@ final class ARGuidanceController: ObservableObject {
     private let evaluator = GuidanceQualityEvaluator()
     private let performance = PerformanceMonitor()
 
+    /// POC 测量记录器。只有 Debug 里的 POC 页会装上它；平时是 nil，零开销。
+    ///
+    /// 它记录的是**系统自己的表现**（识别质量、帧率、位置稳定性），
+    /// 不是"用户做得对不对"—— 后者规格 §10 明确不做。
+    var pocRecorder: POCRecorder?
+
     private var smoother = FaceGeometrySmoother()
     private var lockTracker = FaceLockTracker()
     /// 最后一帧「可信」的 overlay。遮挡时冻结在这里，而不是让它消失。
@@ -292,7 +298,44 @@ final class ARGuidanceController: ObservableObject {
             next.overlays = lastGoodOverlays
         }
 
+        recordPOCSampleIfNeeded(quality: assessment.quality, geometry: geometry, frame: frame)
+
         guidanceFrame = next
+    }
+
+    /// 把这一帧喂给 POC 记录器。
+    ///
+    /// 关键点：喂进去的是**脸部局部坐标**，不是屏幕坐标。
+    /// 局部坐标对尺度/平移/roll 天然不变（golden vector 已离线证明），
+    /// 所以它的残余波动就是漂移本身 —— 不需要任何真值标注。
+    /// 传屏幕坐标的话，头真实移动了多少也会被算成"漂移"，数字就没意义了。
+    ///
+    /// 统计**全部** anchor 而不是挑几个：挑选规则本身会成为一个要维护的东西，
+    /// 而且内容改名后会静默失效。27 个 anchor 每帧解析一次的开销可以忽略。
+    private func recordPOCSampleIfNeeded(
+        quality: GuidanceQuality,
+        geometry: FaceGeometry,
+        frame: FaceFrame?
+    ) {
+        guard let pocRecorder, pocRecorder.isRecording else { return }
+        guard let frame else {
+            pocRecorder.record(quality: quality, anchorLocalPoints: [:], toleranceRadii: [:])
+            return
+        }
+
+        var localPoints: [FaceAnchorID: Point2D] = [:]
+        var radii: [FaceAnchorID: Double] = [:]
+        localPoints.reserveCapacity(anchors.count)
+        radii.reserveCapacity(anchors.count)
+
+        for (anchorID, anchor) in anchors {
+            guard case let .success(resolved) = resolver.resolve(anchor, geometry: geometry, frame: frame),
+                  resolved.meetsDisplayThreshold
+            else { continue }
+            localPoints[anchorID] = frame.toLocal(view: resolved.viewPoint)
+            radii[anchorID] = anchor.toleranceRadius
+        }
+        pocRecorder.record(quality: quality, anchorLocalPoints: localPoints, toleranceRadii: radii)
     }
 
     private var hasReportedFirstLock = false
