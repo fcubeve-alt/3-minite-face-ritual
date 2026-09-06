@@ -50,12 +50,76 @@ def swift_files(base: pathlib.Path) -> list[pathlib.Path]:
 
 
 def strip_comments_and_strings(text: str) -> str:
-    """粗略去掉注释与字符串字面量，避免在注释里误报。"""
-    text = re.sub(r"/\*.*?\*/", " ", text, flags=re.DOTALL)
-    text = re.sub(r"//[^\n]*", " ", text)
-    text = re.sub(r'"""(?:.|\n)*?"""', '""', text)
-    text = re.sub(r'"(?:\\.|[^"\\\n])*"', '""', text)
-    return text
+    """去掉注释与字符串字面量，保留行数与括号结构。
+
+    必须逐字符单遍扫描，不能用几个 re.sub 串起来。
+    之前那版先剥注释再剥字符串，于是 `URL(string: "https://…")` 里的 `//`
+    被当成行注释，把同一行后面的 `)` 一起吃掉 —— 括号配对检查就误报了。
+    任何含 URL 的字符串都会触发。
+    """
+    out: list[str] = []
+    index = 0
+    length = len(text)
+
+    while index < length:
+        char = text[index]
+
+        # 块注释（Swift 允许嵌套）
+        if text.startswith("/*", index):
+            depth = 1
+            index += 2
+            out.append("  ")
+            while index < length and depth > 0:
+                if text.startswith("/*", index):
+                    depth += 1
+                    out.append("  ")
+                    index += 2
+                elif text.startswith("*/", index):
+                    depth -= 1
+                    out.append("  ")
+                    index += 2
+                else:
+                    out.append("\n" if text[index] == "\n" else " ")
+                    index += 1
+            continue
+
+        # 行注释
+        if text.startswith("//", index):
+            while index < length and text[index] != "\n":
+                out.append(" ")
+                index += 1
+            continue
+
+        # 多行字符串
+        if text.startswith('"""', index):
+            out.append("   ")
+            index += 3
+            while index < length and not text.startswith('"""', index):
+                out.append("\n" if text[index] == "\n" else " ")
+                index += 1
+            out.append("   ")
+            index += 3
+            continue
+
+        # 单行字符串
+        if char == '"':
+            out.append(" ")
+            index += 1
+            while index < length and text[index] != '"':
+                if text[index] == "\\" and index + 1 < length:
+                    out.append("  ")
+                    index += 2
+                    continue
+                out.append("\n" if text[index] == "\n" else " ")
+                index += 1
+            out.append(" ")
+            index += 1
+            continue
+
+        out.append(char)
+        index += 1
+
+    return "".join(out)
 
 
 # ---------------------------------------------------------------------------

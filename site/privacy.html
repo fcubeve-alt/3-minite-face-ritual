@@ -1,0 +1,154 @@
+<!doctype html>
+<!--
+  隐私政策。
+
+  这份内容是**按代码实际行为写的**，不是套模板：
+    - 全工程没有任何联网 API（唯一出网 import 是 StoreKit，只走 Apple 的支付通道）
+    - 摄像头帧只在内存里过一遍，不落盘、不上传
+    - 练习记录与设置只存在设备本地
+    - 没有账号、没有第三方 SDK、没有广告标识符
+  tools/check_architecture.py 里有一条规则锁住「无联网」这个前提 ——
+  谁哪天加了网络请求，检查会失败并指回这里。
+
+  待 Owner 填写的位置都用 [[ ]] 标出来了，全文搜索 "[[" 就能找全。
+  改动后如果 App 的数据行为变了（尤其是接入第三方 analytics），
+  这份文件和 App 内的摄像头说明必须一起改。
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy — [[APP NAME]]</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    margin: 0 auto; padding: 2.5rem 1.25rem 5rem; max-width: 44rem;
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #1c1c1e; background: #fff;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { color: #e8e8ea; background: #121214; }
+    .card { background: #1e1e22 !important; border-color: #2e2e34 !important; }
+    a { color: #6cb6ff; }
+  }
+  h1 { font-size: 1.9rem; margin: 0 0 .35rem; letter-spacing: -.02em; }
+  h2 { font-size: 1.15rem; margin: 2.4rem 0 .6rem; letter-spacing: -.01em; }
+  .meta { color: #6b6b70; font-size: .9rem; margin-bottom: 2rem; }
+  .card {
+    background: #f5f5f7; border: 1px solid #e3e3e6; border-radius: 12px;
+    padding: 1.1rem 1.25rem; margin: 1.5rem 0;
+  }
+  .card p { margin: .4rem 0; }
+  ul { padding-left: 1.2rem; }
+  li { margin: .35rem 0; }
+  code { font-size: .9em; background: rgba(127,127,127,.15); padding: .1em .35em; border-radius: 4px; }
+  footer { margin-top: 3.5rem; font-size: .875rem; color: #6b6b70; }
+</style>
+</head>
+<body>
+
+<h1>Privacy Policy</h1>
+<p class="meta">[[APP NAME]] · Last updated [[DATE]]</p>
+
+<div class="card">
+  <p><strong>The short version:</strong> this app does not collect your personal data.</p>
+  <p>Camera video is processed on your device and never leaves it. There are no accounts,
+     no tracking, no advertising, and no third-party analytics.</p>
+</div>
+
+<h2>Who we are</h2>
+<p>
+  [[APP NAME]] is published by [[COMPANY OR INDIVIDUAL NAME]].
+  If you have a question about privacy, write to
+  <a href="mailto:[[SUPPORT EMAIL]]">[[SUPPORT EMAIL]]</a>.
+</p>
+
+<h2>The camera</h2>
+<p>
+  The AR Mirror feature uses your device's front camera to work out where your facial
+  features are, so it can draw the movement path onto your own face.
+</p>
+<ul>
+  <li>The camera runs <strong>only</strong> while AR Mirror is open, and only after you grant permission.</li>
+  <li>Camera frames are analysed on your device, in real time, and then discarded.
+      They are <strong>not recorded, not saved to disk, and not transmitted anywhere</strong>.</li>
+  <li>No photos or video of you are ever created.</li>
+  <li>You can withdraw camera access at any time in iOS Settings. Coach mode works without the camera.</li>
+</ul>
+
+<h2>What is stored on your device</h2>
+<p>The following is kept in the app's private storage on your device, and nowhere else:</p>
+<ul>
+  <li><strong>Practice records</strong> — which routine you did, when, how long, and whether you finished it.</li>
+  <li><strong>Settings</strong> — voice and haptics preferences, reminder times, preferred practice mode.</li>
+</ul>
+<p>
+  Deleting the app removes all of it. You can also clear your practice history at any time
+  from Settings inside the app.
+</p>
+
+<h2>Subscriptions</h2>
+<p>
+  Subscriptions are processed by Apple. We never receive or store your payment details.
+  Apple tells the app only whether an active subscription exists.
+</p>
+
+<h2>Reminders</h2>
+<p>
+  Reminders are scheduled locally by iOS on your device. No server is involved and no
+  reminder data is sent anywhere.
+</p>
+
+<h2>What we do not collect</h2>
+<ul>
+  <li>No name, email address, phone number or postal address</li>
+  <li>No health or medical data</li>
+  <li>No photos or video</li>
+  <li>No location data</li>
+  <li>No advertising identifiers</li>
+  <li>No tracking of your activity across other apps or websites</li>
+</ul>
+
+<h2>Information Apple provides</h2>
+<p>
+  If you download the app from the App Store, Apple may give us aggregated, anonymised
+  statistics such as download counts and crash reports. We cannot identify you from this
+  information. It is governed by
+  <a href="https://www.apple.com/legal/privacy/" rel="noopener">Apple's privacy policy</a>.
+</p>
+
+<h2>Children</h2>
+<p>
+  This app is not directed at children under 13, and we do not knowingly collect any
+  information from children.
+</p>
+
+<h2>Your rights</h2>
+<p>
+  Because we do not collect or hold your personal data, there is nothing for us to access,
+  correct, export or delete on your behalf. All of your data lives on your device and is
+  entirely under your control — you can remove it by clearing your history in Settings, or
+  by deleting the app.
+</p>
+<p>
+  This also means that requests under regulations such as the GDPR or the CCPA have no data
+  to act on. If you would like confirmation of that in writing, contact us at
+  <a href="mailto:[[SUPPORT EMAIL]]">[[SUPPORT EMAIL]]</a>.
+</p>
+
+<h2>Changes to this policy</h2>
+<p>
+  If a future version of the app collects any data, we will update this policy and the
+  in-app explanation <em>before</em> that feature ships, and note the change here.
+</p>
+
+<h2>Contact</h2>
+<p><a href="mailto:[[SUPPORT EMAIL]]">[[SUPPORT EMAIL]]</a></p>
+
+<footer>
+  <p>[[APP NAME]] provides everyday self-care guidance. It is not a medical service and does
+     not diagnose or treat any condition.</p>
+</footer>
+
+</body>
+</html>

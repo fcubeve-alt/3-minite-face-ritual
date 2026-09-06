@@ -32,6 +32,8 @@ M1 阶段的动作、路径、面部位置**全部是占位测试数据**，
 | [docs/ARKIT_VERTEX_CALIBRATION.md](docs/ARKIT_VERTEX_CALIBRATION.md) | ARKit 顶点索引标定 |
 | [docs/CONTENT_AUTHORING.md](docs/CONTENT_AUTHORING.md) | **替换正式动作内容的指南**（Owner 与专业审核人员看这份） |
 | [docs/COPY_REVIEW.md](docs/COPY_REVIEW.md) | **文案评审清单**（Owner 与法务看这份）：免责、Watch & Breathe、订阅披露、摄像头说明 |
+| [docs/APP_STORE_CHECKLIST.md](docs/APP_STORE_CHECKLIST.md) | **上架清单**：哪些是硬性要求、哪些已做好、哪些等你 |
+| [site/README.md](site/README.md) | 隐私政策与支持页的发布方法（GitHub Pages 免费） |
 
 ---
 

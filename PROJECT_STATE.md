@@ -207,11 +207,13 @@ CI 抓到的**真产品 bug**（不是测试问题）：
    注意它要和 `AppCopy.cameraNeededMessage` 语义一致。
 4. **四条 ⚠️ 文案已拟好草稿，待你与法务确认** —— 见 `docs/COPY_REVIEW.md`。
    每条都写了措辞依据和需要你判断的点。改的话只动 `AppCopy.swift`，不必碰视图。
-   其中两项是**硬性上架前置条件，缺了会被拒**：
-   - **Terms of Use (EULA) 的 URL**
-   - **Privacy Policy 的 URL**
-   （App Store 审核指南 3.1.2 要求 Paywall 上必须有这两个可点击链接。
-   填在 `SafetyView.swift` 的 `LegalLinks` 里；未填时 Debug 页与 Paywall 会红字提醒。）
+   硬性上架前置条件（审核指南 3.1.2 要求 Paywall 上有这两个可点击链接）：
+   - ~~Terms of Use (EULA)~~ ✅ 已解决 —— 改用 Apple 标准 EULA，不必自己写
+   - **Privacy Policy 的 URL** —— ❌ 仍缺。草稿已按代码实际行为写好（`site/privacy.html`），
+     发布方法见 `site/README.md`（GitHub Pages 免费，约十分钟）。
+     拿到网址填进 `SafetyView.swift` 的 `LegalLinks` 即可。
+     未填时 Debug 页与 Paywall 会红字提醒，不显示假链接。
+   完整上架要求见 `docs/APP_STORE_CHECKLIST.md`。
 
 ### 影响 M2
 4. **Morning / Evening / Quick Ritual 的正式动作清单**（顺序、时长、示范素材）—— 规格 §14 明确不得由 Claude 发明。

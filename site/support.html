@@ -1,0 +1,109 @@
+<!doctype html>
+<!--
+  客服支持页。App Store Connect 提交时「Support URL」是必填项，不能留空。
+
+  内容按 App 的实际行为写，不是空壳：
+  常见问题都对应代码里真实存在的行为（摄像头回落 Coach、清除记录、恢复购买…）。
+  待填位置用 [[ ]] 标出。
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Support — [[APP NAME]]</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    margin: 0 auto; padding: 2.5rem 1.25rem 5rem; max-width: 44rem;
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #1c1c1e; background: #fff;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { color: #e8e8ea; background: #121214; }
+    .card { background: #1e1e22 !important; border-color: #2e2e34 !important; }
+    a { color: #6cb6ff; }
+  }
+  h1 { font-size: 1.9rem; margin: 0 0 .35rem; letter-spacing: -.02em; }
+  h2 { font-size: 1.05rem; margin: 2rem 0 .4rem; letter-spacing: -.01em; }
+  .meta { color: #6b6b70; font-size: .9rem; margin-bottom: 2rem; }
+  .card {
+    background: #f5f5f7; border: 1px solid #e3e3e6; border-radius: 12px;
+    padding: 1.1rem 1.25rem; margin: 1.5rem 0;
+  }
+  ul { padding-left: 1.2rem; }
+  li { margin: .35rem 0; }
+  footer { margin-top: 3.5rem; font-size: .875rem; color: #6b6b70; }
+</style>
+</head>
+<body>
+
+<h1>Support</h1>
+<p class="meta">[[APP NAME]]</p>
+
+<div class="card">
+  <p>Can't find an answer here? Write to
+     <a href="mailto:[[SUPPORT EMAIL]]">[[SUPPORT EMAIL]]</a> and we'll get back to you.</p>
+</div>
+
+<h2>The AR Mirror can't find my face</h2>
+<p>
+  A few things usually help: face a window or lamp rather than having the light behind you,
+  hold the phone about an arm's length away, and keep your face roughly centred in the frame.
+</p>
+<p>
+  If it still doesn't lock on, the app will offer to switch to Coach mode — the timer keeps
+  running and the session still counts. Nothing is lost.
+</p>
+
+<h2>I said no to the camera. Can I still use the app?</h2>
+<p>
+  Yes. Coach mode never uses the camera and covers the whole routine. If you change your mind,
+  you can grant access later in iOS Settings → [[APP NAME]] → Camera.
+</p>
+
+<h2>Does my camera video get uploaded?</h2>
+<p>
+  No. Camera frames are analysed on your device and immediately discarded — nothing is
+  recorded, saved, or sent anywhere. See our
+  <a href="privacy.html">Privacy Policy</a>.
+</p>
+
+<h2>My hand covers my face during the movements</h2>
+<p>
+  That's expected, and the app is built for it. When your hand blocks the view, the guidance
+  holds its last known position and the routine keeps going. The app will never tell you that
+  you did a movement "wrong" — it can't see what's under your hand, so it doesn't guess.
+</p>
+
+<h2>How do I restore a subscription on a new device?</h2>
+<p>
+  Open the Premium screen and tap <strong>Restore</strong>. Make sure you're signed in with the
+  same Apple ID you used to subscribe.
+</p>
+
+<h2>How do I cancel my subscription?</h2>
+<p>
+  Subscriptions are managed by Apple, not by us. Open iOS Settings → tap your name →
+  Subscriptions, then choose this app and cancel. Cancelling at least 24 hours before the
+  period ends stops the next renewal.
+</p>
+
+<h2>How do I delete my data?</h2>
+<p>
+  Everything lives on your device. Settings → About &amp; Safety area has a
+  <strong>Clear practice history</strong> option, and deleting the app removes everything else.
+</p>
+
+<h2>Is this medical advice?</h2>
+<p>
+  No. [[APP NAME]] is a self-care routine guide. It doesn't diagnose or treat anything and makes
+  no promises about how your face will look. Use a light touch, stop if anything hurts, and
+  check with a qualified professional if you're unsure whether these movements suit you.
+</p>
+
+<footer>
+  <p><a href="privacy.html">Privacy Policy</a></p>
+</footer>
+
+</body>
+</html>

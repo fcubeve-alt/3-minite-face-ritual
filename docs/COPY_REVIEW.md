@@ -107,8 +107,8 @@ Paywall 上**必须**同时具备下面全部，少一项就会被拒：
 | 时长与周期 | ✅ 已有（StoreKit 返回） |
 | 价格 | ✅ 已有（StoreKit 返回，不写死） |
 | 自动续订说明 | ✅ 已拟（见下） |
-| **可点击的 Terms of Use (EULA) 链接** | ❌ **缺 URL** |
-| **可点击的 Privacy Policy 链接** | ❌ **缺 URL** |
+| **可点击的 Terms of Use (EULA) 链接** | ✅ 用 Apple 标准 EULA，已接进代码 |
+| **可点击的 Privacy Policy 链接** | ❌ **缺 URL** —— 草稿已写好，等发布 |
 
 自动续订说明草稿（价格与周期由 StoreKit 填入）：
 
@@ -120,10 +120,11 @@ Paywall 上**必须**同时具备下面全部，少一项就会被拒：
 
 ### 需要你提供
 
-- [ ] **Terms of Use (EULA) 的 URL** —— 没有它上不了架
-- [ ] **Privacy Policy 的 URL** —— 同上
-- [ ] 最终月费（规格 §11 的 $4.99 是待测试的工作价格）
-- [ ] 是否做年费方案、定价多少
+- [x] ~~Terms of Use (EULA) 的 URL~~ —— 改用 Apple 标准 EULA，不必自己写，已接进代码
+- [ ] **Privacy Policy 的 URL** —— 草稿已写好（`site/privacy.html`），
+      发布方法见 `site/README.md`，拿到网址给我即可
+- [x] ~~最终月费~~ $4.99（规格 §11 的工作价格，暂按此）
+- [x] ~~年费~~ $29.99（Owner 2026-09-06 定）
 
 填在 `App/FaceRitual/Features/Settings/SafetyView.swift` 的 `LegalLinks` 里。
 在填之前，Debug 诊断页会显示「缺失（上架会被拒）」，Paywall 在 DEBUG 构建下也会红字提醒。

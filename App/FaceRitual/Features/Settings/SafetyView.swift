@@ -76,14 +76,25 @@ struct SafetyView: View {
 
 /// 法务链接。
 ///
-/// ⚠️ 两个 URL 都是 Owner 待提供项（规格 §19）。
 /// App Store 审核指南 3.1.2 要求 **Paywall 上必须有可点击的 Terms of Use 与 Privacy Policy**，
-/// 缺任何一个都会被拒 —— 所以这不是可选项，是上架前置条件。
+/// 缺任何一个都会被拒 —— 这不是可选项，是上架前置条件。
 enum LegalLinks {
-    static let termsOfUse: URL? = nil
+
+    /// 用户协议用 **Apple 的标准 EULA**。
+    ///
+    /// 不必自己写一份：绝大多数不做自定义条款的 App 都直接链这个，
+    /// 合规、免费、不用请律师起草。
+    /// 只有当你确实需要自定义条款（例如特殊的退款或责任约定）时，才换成自己的 URL。
+    static let termsOfUse = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")
+
+    /// ⚠️ 隐私政策**必须自己提供**，没有标准版可用。
+    ///
+    /// 草稿已写好并且是照代码实际行为写的：`site/privacy.html`。
+    /// 发布方式见 `site/README.md`（GitHub Pages 免费即可），
+    /// 拿到网址后填在这里。
     static let privacyPolicy: URL? = nil
 
-    /// 上架前必须为 true。Debug 诊断页会显示当前状态。
+    /// 上架前必须为 true。Debug 诊断页与 Paywall 会显示当前状态。
     static var isComplete: Bool {
         termsOfUse != nil && privacyPolicy != nil
     }
