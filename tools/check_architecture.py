@@ -122,6 +122,102 @@ def strip_comments_and_strings(text: str) -> str:
     return "".join(out)
 
 
+def find_unterminated_string_literals(text: str) -> list[int]:
+    """找出跨越了换行的单行字符串字面量，返回它们的起始行号。
+
+    Swift 的单行字面量**不能包含裸换行** —— 那是编译错误
+    （error: unterminated string literal）。
+
+    加这条是因为它真的发生过：用 bash heredoc 生成 Swift 代码时，
+    `\\n` 被写成了真正的换行，于是 `Text("...\\n\\n...")` 变成了跨三行的
+    未闭合字面量。括号配对那条规则没发现 —— 扫描器把后面的内容
+    一路当成字符串吞掉，括号数恰好还是平的。Mac 上一编译就炸，
+    一次 CI 往返 7 分钟。
+    """
+    bad: list[int] = []
+    index = 0
+    length = len(text)
+    line = 1
+
+    while index < length:
+        char = text[index]
+
+        if char == "\n":
+            line += 1
+            index += 1
+            continue
+
+        if text.startswith("/*", index):
+            depth = 1
+            index += 2
+            while index < length and depth > 0:
+                if text.startswith("/*", index):
+                    depth += 1
+                    index += 2
+                elif text.startswith("*/", index):
+                    depth -= 1
+                    index += 2
+                else:
+                    if text[index] == "\n":
+                        line += 1
+                    index += 1
+            continue
+
+        if text.startswith("//", index):
+            while index < length and text[index] != "\n":
+                index += 1
+            continue
+
+        # 多行字面量：允许换行，跳过整段
+        if text.startswith('"""', index):
+            index += 3
+            while index < length and not text.startswith('"""', index):
+                if text[index] == "\n":
+                    line += 1
+                index += 1
+            index += 3
+            continue
+
+        if char == '"':
+            start_line = line
+            index += 1
+            closed = False
+            while index < length:
+                if text[index] == "\\" and index + 1 < length:
+                    # 行尾续行符（多行字面量里才合法，这里遇到就当普通转义）
+                    if text[index + 1] == "\n":
+                        line += 1
+                    index += 2
+                    continue
+                if text[index] == '"':
+                    closed = True
+                    index += 1
+                    break
+                if text[index] == "\n":
+                    break          # 裸换行 —— 字面量没闭合
+                index += 1
+            if not closed:
+                bad.append(start_line)
+            continue
+
+        index += 1
+
+    return bad
+
+
+def check_string_literals_are_terminated() -> None:
+    for base in (CORE, APP):
+        for path in swift_files(base):
+            text = path.read_text(encoding="utf-8")
+            for lineno in find_unterminated_string_literals(text):
+                error(
+                    f"{rel(path)}:{lineno}",
+                    "单行字符串字面量没有闭合就换行了。Swift 会编译失败"
+                    "（unterminated string literal）。"
+                    "需要多行文本请用 \"\"\" 三引号字面量。",
+                )
+
+
 # ---------------------------------------------------------------------------
 # 1. Core 不得依赖任何 Apple 平台框架
 # ---------------------------------------------------------------------------
@@ -584,6 +680,7 @@ def main() -> int:
         ("@objc 需 NSObject", check_objc_requires_nsobject),
         ("API 可用性 vs 部署目标", check_api_availability),
         ("括号配对", check_bracket_balance),
+        ("字符串字面量闭合", check_string_literals_are_terminated),
         ("动作内容零硬编码", check_no_hardcoded_content),
         ("用户面文案为英文", check_user_facing_copy_is_english),
         ("纯图标按钮有无障碍标签", check_icon_buttons_have_accessibility_labels),
