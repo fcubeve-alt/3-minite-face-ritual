@@ -62,7 +62,8 @@ Evening 5-minute 与 Quick Ritual **尚未设计**（Sprint 3 §11 标为「随�
 | [docs/COPY_REVIEW.md](docs/COPY_REVIEW.md) | **文案评审清单**（Owner 与法务看这份） |
 | [docs/DOMAIN_AND_GROWTH.md](docs/DOMAIN_AND_GROWTH.md) | 域名与获客：现在做什么、先不做什么 |
 | [docs/DECISION_AR_REMOVED.md](docs/DECISION_AR_REMOVED.md) | 为什么砍掉 AR Mirror，保留了什么 |
-| [docs/TESTFLIGHT_FROM_WINDOWS.md](docs/TESTFLIGHT_FROM_WINDOWS.md) | **在 Windows 上把 App 装进 iPhone**（不需要 Mac） |
+| [docs/TRY_ON_IPHONE.md](docs/TRY_ON_IPHONE.md) | **今天就在自己 iPhone 上试**（免费 Apple ID，20 分钟） |
+| [docs/TESTFLIGHT_FROM_WINDOWS.md](docs/TESTFLIGHT_FROM_WINDOWS.md) | TestFlight 分发（要 $99 开发者账号，上架前用） |
 | [site/README.md](site/README.md) | 官网发布方法（已上线，GitHub Pages） |
 
 ---
@@ -97,6 +98,6 @@ CI 在 GitHub 的 macOS 机器上真实编译、跑单元测试与端到端 UI �
 | --- | --- |
 | 已验证 | macOS 上零编译错误；单元测试 + 4 个端到端 UI 测试全绿 |
 | 内容 | 20 个动作、3 套 Morning 3 分钟原型（各 180s）、27 个位置 |
-| 未验证 | **从未在真 iPhone 上开过机** —— CI 用的是模拟器。<br>装机路线已建好：[TESTFLIGHT_FROM_WINDOWS.md](docs/TESTFLIGHT_FROM_WINDOWS.md) |
+| 未验证 | **从未在真 iPhone 上开过机** —— CI 用的是模拟器。<br>现在就能试：[TRY_ON_IPHONE.md](docs/TRY_ON_IPHONE.md)（免费 Apple ID，20 分钟） |
 | 订阅 | Release 走真实 StoreKit，但**需要你在 App Store Connect 配置商品** |
 | 下一步 | 见 [PROJECT_STATE.md](PROJECT_STATE.md) 的「等谁」一节 |

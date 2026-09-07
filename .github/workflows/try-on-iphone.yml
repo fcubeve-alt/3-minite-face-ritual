@@ -1,0 +1,104 @@
+name: 做一个能装到 iPhone 上试的包
+
+# 产出一个**未签名的 IPA**，你在 Windows 上用自己的免费 Apple ID 签名后装进 iPhone。
+#
+# 与 testflight.yml 的区别：
+#   这条  —— 不需要任何 Apple 账号、不需要 Secret、不需要审核。目的是**今天就能试**。
+#   那条  —— 需要 $99 开发者账号，目的是上架前的正式分发。
+#
+# 用 Debug 配置：
+#   Release 走真实 StoreKit，而商品还没在 App Store Connect 里配置，
+#   Paywall 会是空的 —— 试用时看到空白页只会让人以为坏了。
+#   Debug 用 Mock，订阅那部分可以点通。
+#   其余功能（播放器、示意脸、镜像、权限、计时、记录）两者完全一致。
+#
+# 触发：GitHub → Actions → 做一个能装到 iPhone 上试的包 → Run workflow
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "App/**"
+      - "Packages/**"
+      - "project.yml"
+      - ".github/workflows/try-on-iphone.yml"
+
+concurrency:
+  group: try-ipa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: 打未签名 IPA
+    runs-on: macos-15
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 XcodeGen 并生成工程
+        run: |
+          set -o pipefail
+          brew install xcodegen
+          xcodegen generate
+
+      - name: 编译（不签名）
+        # 不签名是关键：这样完全不需要证书。
+        # 签名交给你本机的 Sideloadly / AltStore 用你自己的 Apple ID 完成。
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project FaceRitual.xcodeproj \
+            -scheme FaceRitual \
+            -configuration Debug \
+            -sdk iphoneos \
+            -derivedDataPath "$RUNNER_TEMP/build" \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            | xcpretty || exit ${PIPESTATUS[0]}
+
+      - name: 打包成 IPA
+        run: |
+          set -o pipefail
+          APP="$RUNNER_TEMP/build/Build/Products/Debug-iphoneos/FaceRitual.app"
+          if [ ! -d "$APP" ]; then
+            echo "::error::没找到 .app，编译可能没真正成功"
+            ls -R "$RUNNER_TEMP/build/Build/Products" || true
+            exit 1
+          fi
+
+          # IPA 就是一个 zip，里面必须有且只有一个 Payload 目录 —— 这是格式要求。
+          mkdir -p "$RUNNER_TEMP/Payload"
+          cp -R "$APP" "$RUNNER_TEMP/Payload/"
+          cd "$RUNNER_TEMP"
+          zip -qr face3-unsigned.ipa Payload
+
+          SIZE=$(du -h face3-unsigned.ipa | cut -f1)
+          echo "IPA 大小：$SIZE"
+          echo "IPA_SIZE=$SIZE" >> $GITHUB_ENV
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: face3-unsigned-ipa
+          path: ${{ runner.temp }}/face3-unsigned.ipa
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: 怎么装
+        run: |
+          {
+            echo "### 包做好了 📦"
+            echo ""
+            echo "大小 \`${{ env.IPA_SIZE }}\`，构建号 \`${{ github.run_number }}\`。"
+            echo ""
+            echo "**这是未签名的包** —— 不需要任何 Apple 开发者账号，"
+            echo "用你自己的免费 Apple ID 在 Windows 上签名后就能装进 iPhone。"
+            echo ""
+            echo "1. 在这个页面最下面的 **Artifacts** 里下载 \`face3-unsigned-ipa\`"
+            echo "2. 解压得到 \`face3-unsigned.ipa\`"
+            echo "3. 按 [docs/TRY_ON_IPHONE.md](../blob/main/docs/TRY_ON_IPHONE.md) 装"
+            echo ""
+            echo "> 免费 Apple ID 签的包 **7 天后过期**，到期重签一次即可（App 数据不会丢）。"
+          } >> $GITHUB_STEP_SUMMARY
