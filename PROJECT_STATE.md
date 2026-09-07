@@ -68,7 +68,7 @@ Settings · 提醒 · 订阅（Release 走真实 StoreKit）· Paywall · Analyt
 | 事项 | 谁能做 | 挡不挡上架 |
 | --- | --- | --- |
 | **App Store Connect 配置订阅商品** | 只有 Owner | ✅ 挡 —— 没商品 Paywall 是空的 |
-| **一台 iPhone 跑一次** | 只有 Owner | ✅ 挡 —— **从未在真机上开过机** |
+| **一台 iPhone 跑一次** | 只有 Owner | ✅ 挡 —— **从未在真机上开过机**。不需要 Mac，走 TestFlight（`docs/TESTFLIGHT_FROM_WINDOWS.md`） |
 | 网页两个占位符（发布者名义、客服邮箱） | 只有 Owner | ✅ 挡 —— 上架必填 |
 | 专家审 20 个动作 | Owner 找人（`make review` 生成审阅表） | ⚠️ 不挡技术，挡良心 |
 | 示范视频 0/20 | Owner 找素材 | ❌ **不挡** —— 回落到示意脸，功能完整 |

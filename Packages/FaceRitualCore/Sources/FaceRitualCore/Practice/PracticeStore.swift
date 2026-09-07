@@ -31,7 +31,7 @@ public extension PracticeStore {
 public final class FilePracticeStore: PracticeStore {
 
     private let fileURL: URL
-    private let queue = DispatchQueue(label: "com.faceritual.practicestore")
+    private let queue = DispatchQueue(label: "com.face3.practicestore")
     private var cache: [PracticeSession]?
 
     public init(fileURL: URL) {

@@ -103,7 +103,9 @@ AR Mirror 与 Watch & Breathe 已移除，所以原来第 3 步的 AR Go/No-Go �
 3. [ ] **付费开发者账号 + App Store Connect 配置订阅商品**
        ⚠️ 这一步没做完，订阅在 Release 里拿不到商品，Paywall 是空的
 4. [ ] **真机跑一次**：装到 iPhone 上，走一遍完整 routine + 沙盒购买
-       ⚠️ App **从未在真机上开过机**，CI 用的是模拟器
+       ⚠️ App **从未在真机上开过机**，CI 用的是模拟器。
+       **不需要 Mac** —— 走 TestFlight，步骤见
+       [`TESTFLIGHT_FROM_WINDOWS.md`](TESTFLIGHT_FROM_WINDOWS.md)
 5. [ ] **专家审 20 个动作**（`make review` 生成审阅表）
 6. [ ] **示范视频**（`docs/COACH_VIDEO_SPEC.md`）——
        ⚠️ 这一项**不挡上架**：缺素材会回落到示意动画，功能完整

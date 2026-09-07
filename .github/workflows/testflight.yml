@@ -1,0 +1,193 @@
+name: TestFlight
+
+# 把 App 打包并上传到 TestFlight —— **不需要你有 Mac**。
+#
+# 这条流水线存在的唯一理由：Owner 用 Windows，而 App 从没在真机上跑过。
+# GitHub 的 macOS 机器替我们编译、签名、上传；你在 iPhone 上从 TestFlight 装。
+#
+# 首次配置见 docs/TESTFLIGHT_FROM_WINDOWS.md（证书与密钥全部可以在 Windows 上生成）。
+#
+# 手动触发：GitHub → Actions → TestFlight → Run workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      notes:
+        description: "这次构建改了什么（会显示在 TestFlight 里）"
+        required: false
+        default: "开发构建"
+
+concurrency:
+  group: testflight
+  cancel-in-progress: false
+
+jobs:
+  upload:
+    name: 构建并上传 TestFlight
+    runs-on: macos-15
+    timeout-minutes: 45
+
+    env:
+      SCHEME: FaceRitual
+      BUNDLE_ID: com.face3.app
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 检查必需的 Secrets
+        # 先查再干活：缺一个就会在十几分钟之后才失败，而且报错信息通常很难懂。
+        run: |
+          set -o pipefail
+          missing=""
+          for name in BUILD_CERTIFICATE_BASE64 P12_PASSWORD PROVISIONING_PROFILE_BASE64 \
+                      APPLE_TEAM_ID ASC_KEY_ID ASC_ISSUER_ID ASC_PRIVATE_KEY; do
+            eval "value=\${$name}"
+            if [ -z "$value" ]; then missing="$missing $name"; fi
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::缺少这些 Secret：$missing"
+            echo "配置方法见 docs/TESTFLIGHT_FROM_WINDOWS.md"
+            exit 1
+          fi
+          echo "全部 Secret 就位。"
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+          PROVISIONING_PROFILE_BASE64: ${{ secrets.PROVISIONING_PROFILE_BASE64 }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+
+      - name: 导入签名证书与描述文件
+        run: |
+          set -o pipefail
+          KEYCHAIN=$RUNNER_TEMP/signing.keychain-db
+          # 一次性密码：这个钥匙串随 runner 一起销毁，密码不需要外部保管。
+          KEYCHAIN_PASSWORD=$(uuidgen)
+
+          echo "$BUILD_CERTIFICATE_BASE64" | base64 --decode > $RUNNER_TEMP/cert.p12
+          echo "$PROVISIONING_PROFILE_BASE64" | base64 --decode > $RUNNER_TEMP/profile.mobileprovision
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security import $RUNNER_TEMP/cert.p12 -P "$P12_PASSWORD" -A \
+            -t cert -f pkcs12 -k "$KEYCHAIN"
+          # 不加这一句的话 xcodebuild 签名时会弹密码框，而 CI 上没人点。
+          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+            -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" > /dev/null
+          security list-keychain -d user -s "$KEYCHAIN" login.keychain-db
+
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          UUID=$(security cms -D -i $RUNNER_TEMP/profile.mobileprovision \
+                 | plutil -extract UUID raw -o - -)
+          cp $RUNNER_TEMP/profile.mobileprovision \
+             ~/Library/MobileDevice/Provisioning\ Profiles/$UUID.mobileprovision
+          echo "PROFILE_UUID=$UUID" >> $GITHUB_ENV
+
+          NAME=$(security cms -D -i $RUNNER_TEMP/profile.mobileprovision \
+                 | plutil -extract Name raw -o - -)
+          echo "描述文件：$NAME（$UUID）"
+          echo "PROFILE_NAME=$NAME" >> $GITHUB_ENV
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+          PROVISIONING_PROFILE_BASE64: ${{ secrets.PROVISIONING_PROFILE_BASE64 }}
+
+      - name: 安装 XcodeGen 并生成工程
+        run: |
+          set -o pipefail
+          brew install xcodegen
+          xcodegen generate
+
+      - name: 归档
+        run: |
+          set -o pipefail
+          # 构建号用流水线编号：TestFlight 要求同一版本下的构建号唯一且递增。
+          # 手工维护这个数字迟早会撞号，而撞号的报错发生在上传的最后一步。
+          xcodebuild archive \
+            -project FaceRitual.xcodeproj \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/FaceRitual.xcarchive" \
+            CODE_SIGN_STYLE=Manual \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            CURRENT_PROJECT_VERSION=${{ github.run_number }} \
+            | xcpretty || exit ${PIPESTATUS[0]}
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+      - name: 导出 IPA
+        run: |
+          set -o pipefail
+          cat > $RUNNER_TEMP/ExportOptions.plist <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>teamID</key><string>$APPLE_TEAM_ID</string>
+            <key>signingStyle</key><string>manual</string>
+            <key>uploadSymbols</key><true/>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>$BUNDLE_ID</key><string>$PROFILE_NAME</string>
+            </dict>
+          </dict>
+          </plist>
+          PLIST
+
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/FaceRitual.xcarchive" \
+            -exportPath "$RUNNER_TEMP/export" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            | xcpretty || exit ${PIPESTATUS[0]}
+
+          ls -lh "$RUNNER_TEMP/export"
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+      - name: 上传到 TestFlight
+        run: |
+          set -o pipefail
+          # App Store Connect API 密钥必须放在这个固定目录，altool 只认这里。
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "$ASC_PRIVATE_KEY" > ~/.appstoreconnect/private_keys/AuthKey_$ASC_KEY_ID.p8
+
+          IPA=$(ls "$RUNNER_TEMP/export"/*.ipa | head -1)
+          echo "上传：$IPA"
+
+          xcrun altool --upload-app \
+            --type ios \
+            --file "$IPA" \
+            --apiKey "$ASC_KEY_ID" \
+            --apiIssuer "$ASC_ISSUER_ID"
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+
+      - name: 说明
+        if: success()
+        run: |
+          echo "### 上传成功 🎉" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "构建号 \`${{ github.run_number }}\`：${{ inputs.notes }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Apple 处理需要 5–15 分钟。之后在 iPhone 的 **TestFlight** App 里就能装。" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "看不到的话：App Store Connect → TestFlight → 内部测试 → 确认自己在测试员列表里。" >> $GITHUB_STEP_SUMMARY
+
+      - name: 收集构建日志
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: testflight-logs
+          path: |
+            ${{ runner.temp }}/*.log
+            ${{ runner.temp }}/FaceRitual.xcarchive/Info.plist
+          if-no-files-found: ignore

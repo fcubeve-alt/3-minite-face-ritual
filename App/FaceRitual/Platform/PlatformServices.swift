@@ -264,7 +264,7 @@ final class ReminderScheduler {
 
 /// Core 不依赖 UserDefaults（它是平台 API），所以桥接放在 App 层。
 final class UserDefaultsEntitlementFlagStorage: EntitlementFlagStorage {
-    private let key = "com.faceritual.mockPremiumUnlocked"
+    private let key = "com.face3.mockPremiumUnlocked"
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {
