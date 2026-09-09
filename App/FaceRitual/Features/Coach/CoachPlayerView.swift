@@ -287,6 +287,9 @@ private struct CoachSchematic: View {
                     Path(ellipseIn: CGRect(x: start.x - 7, y: start.y - 7, width: 14, height: 14)),
                     with: .color(accent)
                 )
+                CoachSchematic.drawGesture(
+                    movement.gestureHint, at: start, context: &context, accent: accent
+                )
                 return
             }
 
@@ -312,6 +315,61 @@ private struct CoachSchematic: View {
                     lineWidth: 2.5
                 )
             }
+
+            CoachSchematic.drawGesture(
+                movement.gestureHint, at: start, context: &context, accent: accent
+            )
+        }
+    }
+
+    /// 在起点上方画一个手势提示：用几根手指、还是掌根、还是工具。
+    ///
+    /// 这个信息一直在数据里（`MovementSpec.gestureHint`），但之前从来没画出来 ——
+    /// 用户只看到一条线，看不出该用一根手指还是整个手掌。
+    /// 对按摩类动作，这是最基本的一条信息。
+    ///
+    /// 用简单图元而不是写实插画：它要在一张小示意脸上和路径共存，越简单越不挡视线。
+    static func drawGesture(
+        _ hint: GestureHint,
+        at point: Point2D,
+        context: inout GraphicsContext,
+        accent: Color
+    ) {
+        guard hint != .none else { return }
+        let origin = CGPoint(x: point.x, y: point.y - 30)
+
+        func dots(_ count: Int) {
+            let spacing: CGFloat = 9
+            let total = spacing * CGFloat(count - 1)
+            for index in 0..<count {
+                let x = origin.x - total / 2 + spacing * CGFloat(index)
+                context.fill(
+                    Path(ellipseIn: CGRect(x: x - 3.5, y: origin.y - 3.5, width: 7, height: 7)),
+                    with: .color(accent)
+                )
+            }
+        }
+
+        switch hint {
+        case .singleFinger: dots(1)
+        case .twoFinger:    dots(2)
+        case .fingertips:   dots(3)
+        case .palm:
+            context.stroke(
+                Path(roundedRect: CGRect(x: origin.x - 13, y: origin.y - 9, width: 26, height: 18),
+                     cornerRadius: 7),
+                with: .color(accent),
+                lineWidth: 2
+            )
+        case .tool:
+            context.stroke(
+                Path(roundedRect: CGRect(x: origin.x - 12, y: origin.y - 5, width: 24, height: 10),
+                     cornerRadius: 5),
+                with: .color(accent),
+                lineWidth: 2
+            )
+        case .none:
+            break
         }
     }
 

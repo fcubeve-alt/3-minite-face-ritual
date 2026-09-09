@@ -42,6 +42,10 @@ simulate: ## 无头跑一遍全部 routine，验证每一段都能在脸上画�
 videos: ## 检查示范视频素材到位情况与命名
 	python tools/check_coach_videos.py
 
+.PHONY: shotlist
+shotlist: ## 生成示范视频的拍摄脚本（照着拍，一下午能拍完）
+	python tools/export_shot_list.py
+
 .PHONY: review
 review: ## 导出给专家的动作审阅表（单文件 HTML，可打印）
 	python tools/export_review_sheet.py

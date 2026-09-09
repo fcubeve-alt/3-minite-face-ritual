@@ -108,7 +108,9 @@ AR Mirror 与 Watch & Breathe 已移除，所以原来第 3 步的 AR Go/No-Go �
        [`TESTFLIGHT_FROM_WINDOWS.md`](TESTFLIGHT_FROM_WINDOWS.md)
 5. [ ] **专家审 20 个动作**（`make review` 生成审阅表）
 6. [ ] **示范视频**（`docs/COACH_VIDEO_SPEC.md`）——
-       ⚠️ 这一项**不挡上架**：缺素材会回落到示意动画，功能完整
+       ⚠️ 技术上不挡提交（缺素材会回落到示意动画，App 不崩）。
+       但**产品上挡**：「上面老师做」那一半是空的，回落画面教不会新用户。
+       **不建议在没有视频的情况下正式上架。**
 7. [ ] 截图 → 提交
 
 第 2 步十分钟就能做完，做完上架的两个必填网址就彻底齐了。
