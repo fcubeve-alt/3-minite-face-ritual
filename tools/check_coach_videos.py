@@ -25,6 +25,16 @@ VIDEO_DIR = ROOT / "App" / "FaceRitual" / "Resources" / "CoachVideos"
 EXTENSIONS = (".mp4", ".mov", ".m4v")
 # 与 COACH_VIDEO_SPEC.md 的体积上限一致。
 MAX_BYTES = 3 * 1024 * 1024
+# make_test_videos.py 生成的占位片段清单。
+# 必须把它们和真素材分开报 —— 说"全部素材已到位"而其实全是占位，
+# 是最容易误导人的一种报告方式。
+TEST_MARKER = VIDEO_DIR / ".test-clips"
+
+
+def test_clip_names() -> set[str]:
+    if not TEST_MARKER.exists():
+        return set()
+    return set(TEST_MARKER.read_text(encoding="utf-8").split())
 
 
 def expected_asset_name(move_id: str) -> str:
@@ -59,9 +69,14 @@ def main() -> int:
                 strays.append(path)
 
     errors = 0
+    test_clips = test_clip_names()
+    real = {n for n in present if f"{n}.mp4" not in test_clips}
 
     print(f"素材目录：{VIDEO_DIR.relative_to(ROOT)}")
-    print(f"内容需要 {len(expected)} 段视频，已到位 {len(present)} 段\n")
+    print(f"内容需要 {len(expected)} 段视频")
+    print(f"  真实素材 {len(real)} 段")
+    print(f"  测试占位 {len(present) - len(real)} 段（make_test_videos.py 生成，画面上写着 TEST CLIP）")
+    print()
 
     for name, move in expected.items():
         path = present.get(name)
@@ -73,7 +88,8 @@ def main() -> int:
         if size > MAX_BYTES:
             flag = f"  ⚠️ {size / 1024 / 1024:.1f}MB 超过 3MB 上限"
             errors += 1
-        print(f"  [ 就位 ] {name:<16} {size / 1024:.0f}KB{flag}")
+        label = "占位" if path.name in test_clips else "就位"
+        print(f"  [ {label} ] {name:<16} {size / 1024:.0f}KB{flag}")
 
     if strays:
         print()
@@ -83,12 +99,23 @@ def main() -> int:
             print(f"           规则：GM-01 → coach_gm_01.mp4（见 docs/COACH_VIDEO_SPEC.md）")
             errors += 1
 
-    missing = len(expected) - len(present)
+    missing = len(expected) - len(real)
     print()
-    if missing:
-        print(f"还缺 {missing} 段 —— 这是正常的进行中状态，缺的动作会回落到示意动画。")
+    if missing == len(expected):
+        if test_clips:
+            print("还没有任何真实素材 —— 现在播的全是占位片段。")
+        else:
+            print("还没有任何真实素材。缺的动作会回落到示意动画，流程不断。")
+    elif missing:
+        print(f"还缺 {missing} 段**真实**素材 —— 这是正常的进行中状态。")
     else:
-        print("全部素材已到位。")
+        print("全部真实素材已到位。")
+
+    if test_clips:
+        print()
+        print("⚠️ 其中有测试占位片段，画面上写着 TEST CLIP。")
+        print("   它们只是为了验证「视频那条路」跑得通，**不是示范内容**。")
+        print("   真素材到位后：python tools/make_test_videos.py --clean")
 
     if errors:
         print(f"\n{errors} 个问题需要处理（命名或体积）。")

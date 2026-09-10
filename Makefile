@@ -42,6 +42,10 @@ simulate: ## 无头跑一遍全部 routine，验证每一段都能在脸上画�
 videos: ## 检查示范视频素材到位情况与命名
 	python tools/check_coach_videos.py
 
+.PHONY: testvideos
+testvideos: ## 生成占位测试片段（验证视频通路，画面上写着 TEST CLIP）
+	python tools/make_test_videos.py
+
 .PHONY: shotlist
 shotlist: ## 生成示范视频的拍摄脚本（照着拍，一下午能拍完）
 	python tools/export_shot_list.py
